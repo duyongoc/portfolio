@@ -1,2 +1,5 @@
 
 *.DS_Store
+
+# regenerable: tools/ogimage.py re-captures this, see its docstring
+tools/og-source.png

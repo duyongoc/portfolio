@@ -1,0 +1,572 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>O Ngoc Duy — Unity Game Developer</title>
+<meta name="description" content="Unity &amp; Unreal developer, 6+ years. 33 shipped titles: gameplay systems, multiplayer netcode, AR and C++ tools.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="O Ngoc Duy">
+<meta property="og:title" content="O Ngoc Duy — Unity Game Developer">
+<meta property="og:description" content="6+ years in production. 33 shipped titles: gameplay systems, multiplayer netcode, AR and C++ tools.">
+<meta property="og:url" content="https://duyongoc.github.io/profile/demos/portfolio-2d.html">
+<meta property="og:image" content="https://duyongoc.github.io/profile/demos/models/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="A cyberpunk studio at night: three monitors, a wall of game covers, a neon skyline through the glass.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#04070d">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2304060c'/%3E%3Ccircle cx='16' cy='16' r='7' fill='none' stroke='%235ad0ff' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.5' fill='%23ff5aa0'/%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#04070d; --bg2:#070c14; --line:rgba(120,205,255,.15); --line2:rgba(120,205,255,.30);
+  --paper:#e9f3fb; --dim:#8ea4b8; --dim2:#71879b;
+  --cy:#5ad0ff; --acc:#ff5aa0; --lm:#8affc0; --vi:#c98aff; --am:#ffc85a;
+  --max:1220px; --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--paper);
+  font:15.5px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+img{display:block}
+a:focus-visible,button:focus-visible{outline:2px solid var(--cy);outline-offset:3px}
+
+/* the two fixed backdrops: a survey grid and a faint scan raster */
+body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:linear-gradient(rgba(120,205,255,.05) 1px,transparent 1px),
+                   linear-gradient(90deg,rgba(120,205,255,.05) 1px,transparent 1px);
+  background-size:64px 64px;
+  mask-image:radial-gradient(ellipse 90% 70% at 55% 25%,#000 30%,transparent 78%)}
+body::after{content:"";position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.24;
+  background:repeating-linear-gradient(180deg,rgba(0,0,0,0) 0 2px,rgba(0,0,0,.22) 2px 3px)}
+.glowmap{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse 62% 48% at 70% 18%,rgba(90,208,255,.14),transparent 62%),
+             radial-gradient(ellipse 52% 44% at 8% 76%,rgba(255,90,160,.10),transparent 66%)}
+
+.wrap{max-width:var(--max);margin:0 auto;padding:0 26px;position:relative;z-index:2}
+.mono{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase}
+/* the cut corner is the whole sci-fi vocabulary here — one shape, used everywhere */
+.cut{clip-path:polygon(11px 0,100% 0,100% calc(100% - 11px),calc(100% - 11px) 100%,0 100%,0 11px)}
+
+/* ── nav ── */
+nav{position:fixed;inset:0 0 auto;z-index:80;transition:.3s;border-bottom:1px solid transparent}
+nav.on{background:rgba(4,7,13,.86);backdrop-filter:blur(16px);border-color:var(--line)}
+nav .in{max-width:var(--max);margin:0 auto;padding:15px 26px;display:flex;align-items:center;gap:24px}
+.brand{display:flex;align-items:center;gap:10px;font:700 12.5px/1 var(--mono);
+  letter-spacing:.17em;text-transform:uppercase}
+.brand i{width:9px;height:9px;border-radius:50%;background:var(--cy);box-shadow:0 0 12px var(--cy)}
+nav .links{margin-left:auto;display:flex;gap:22px;font:600 10.5px/1 var(--mono);
+  letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
+nav .links a:hover{color:var(--cy)}
+.btn{display:inline-block;font:600 10.5px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;
+  padding:11px 17px;border:1px solid var(--line2);color:var(--paper);transition:.2s;white-space:nowrap;
+  clip-path:polygon(9px 0,100% 0,100% calc(100% - 9px),calc(100% - 9px) 100%,0 100%,0 9px)}
+.btn:hover{background:rgba(90,208,255,.15);border-color:var(--cy)}
+.btn.fill{background:var(--cy);color:#04121c;border-color:var(--cy);font-weight:700}
+.btn.fill:hover{background:#9ae4ff;color:#04121c}
+.btn.room{border-color:rgba(255,90,160,.5);color:#ffd0e2}
+.btn.room:hover{background:var(--acc);color:#1a0410;border-color:var(--acc)}
+
+/* ── hero ── */
+header{padding:124px 0 40px}
+.hero{display:grid;grid-template-columns:1.04fr .96fr;gap:44px;align-items:center;
+  min-height:calc(100svh - 168px)}
+.eyebrow{display:inline-flex;align-items:center;gap:9px;font:600 10.5px/1 var(--mono);
+  letter-spacing:.2em;text-transform:uppercase;color:var(--cy);border:1px solid var(--line2);
+  padding:8px 14px;background:rgba(90,208,255,.06)}
+.eyebrow i{width:6px;height:6px;border-radius:50%;background:var(--lm);
+  box-shadow:0 0 0 0 rgba(138,255,192,.6);animation:pl 2.2s infinite}
+@keyframes pl{70%{box-shadow:0 0 0 9px rgba(138,255,192,0)}100%{box-shadow:0 0 0 0 rgba(138,255,192,0)}}
+h1{font-size:clamp(40px,6.1vw,76px);line-height:.98;letter-spacing:-.045em;font-weight:800;margin-top:22px}
+h1 .gr{background:linear-gradient(100deg,var(--cy),var(--lm) 72%);
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+header p{color:var(--dim);font-size:17px;max-width:53ch;margin-top:20px}
+header p b{color:var(--paper);font-weight:600}
+.cta{display:flex;gap:11px;margin-top:30px;flex-wrap:wrap}
+.hstats{display:grid;grid-template-columns:repeat(4,auto);margin-top:40px;
+  border-top:1px solid var(--line);padding-top:18px}
+.hstats div{padding-right:26px}
+.hstats span{display:block;font:600 9.5px/1 var(--mono);letter-spacing:.16em;
+  text-transform:uppercase;color:var(--dim2)}
+.hstats b{display:block;font-size:21px;font-weight:650;letter-spacing:-.03em;margin-top:7px}
+
+/* ── the radar ── */
+.orb{position:relative;aspect-ratio:1;max-height:min(70vh,620px);justify-self:center;width:100%}
+#net{width:100%;height:100%;display:block;cursor:grab;touch-action:pan-y}
+#net.drag{cursor:grabbing}
+.orb .brk{position:absolute;width:26px;height:26px;border:1px solid var(--line2);pointer-events:none}
+.orb .brk:nth-of-type(1){top:0;left:0;border-right:0;border-bottom:0}
+.orb .brk:nth-of-type(2){top:0;right:0;border-left:0;border-bottom:0}
+.orb .brk:nth-of-type(3){bottom:0;left:0;border-right:0;border-top:0}
+.orb .brk:nth-of-type(4){bottom:0;right:0;border-left:0;border-top:0}
+.orb .cap{position:absolute;left:0;bottom:-8px;font:600 9.5px/1 var(--mono);
+  letter-spacing:.18em;text-transform:uppercase;color:var(--dim2)}
+.tip{position:absolute;z-index:20;pointer-events:none;opacity:0;
+  transform:translate(-50%,-124%) scale(.96);transition:opacity .18s,transform .18s;
+  background:rgba(5,10,17,.95);border:1px solid var(--line2);backdrop-filter:blur(10px);
+  padding:11px 13px;min-width:190px;max-width:250px}
+.tip.on{opacity:1;transform:translate(-50%,-114%) scale(1)}
+.tip b{display:block;font-size:14px;font-weight:650}
+.tip .c{font:600 9px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;
+  margin-top:6px;color:var(--cy)}
+.tip .go{margin-top:9px;font:600 9px/1 var(--mono);letter-spacing:.16em;
+  text-transform:uppercase;color:var(--lm)}
+
+/* ── sections ── */
+section{padding:88px 0;position:relative;z-index:2}
+.sh{display:flex;align-items:flex-end;gap:18px;border-bottom:1px solid var(--line);
+  padding-bottom:15px;margin-bottom:34px;flex-wrap:wrap}
+.sh .k{font:700 10.5px/1 var(--mono);letter-spacing:.2em;color:var(--cy)}
+.sh h2{font-size:clamp(25px,3.5vw,40px);letter-spacing:-.04em;font-weight:750;line-height:1}
+.sh .r{margin-left:auto;font:600 10.5px/1 var(--mono);letter-spacing:.16em;
+  text-transform:uppercase;color:var(--dim2)}
+
+.clusters{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-bottom:52px}
+.cl{border:1px solid var(--line);background:rgba(255,255,255,.028);padding:19px;transition:.25s;display:block}
+.cl:hover{background:rgba(90,208,255,.08);border-color:var(--line2);transform:translateY(-4px)}
+.cl i{display:block;width:8px;height:8px;border-radius:50%}
+.cl b{display:block;font-size:33px;font-weight:750;letter-spacing:-.04em;margin-top:13px;line-height:1}
+.cl span{display:block;font:600 9.5px/1 var(--mono);letter-spacing:.16em;
+  text-transform:uppercase;color:var(--dim2);margin-top:9px}
+
+.feat{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}
+.fc{border:1px solid var(--line);background:rgba(255,255,255,.028);overflow:hidden;transition:.3s}
+.fc:hover{border-color:var(--line2);transform:translateY(-5px);box-shadow:0 26px 56px -32px var(--cy)}
+.fc .im{position:relative;aspect-ratio:16/9;overflow:hidden;background:#08111a}
+.fc img{width:100%;height:100%;object-fit:cover;filter:brightness(.82);transition:.55s cubic-bezier(.2,.7,.3,1)}
+.fc:hover img{transform:scale(1.06);filter:brightness(1)}
+.fc .id{position:absolute;top:9px;left:9px;font:600 9px/1 var(--mono);letter-spacing:.14em;
+  background:rgba(4,7,13,.84);border:1px solid var(--line);padding:5px 8px;color:var(--cy)}
+.fc .bd{padding:15px 16px 17px}
+.fc h3{font-size:17.5px;font-weight:650;letter-spacing:-.02em}
+.fc p{color:var(--dim);font-size:13.5px;margin-top:7px;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.fc .lk{display:flex;gap:7px;flex-wrap:wrap;margin-top:13px}
+.fc .lk a{font:600 9.5px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;
+  padding:8px 11px;border:1px solid var(--line);color:var(--dim);transition:.2s}
+.fc .lk a:hover{color:#04121c;background:var(--cy);border-color:var(--cy)}
+
+/* ── the index grid ── */
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.fbtn{background:none;border:1px solid var(--line);color:var(--dim);
+  font:600 10px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;
+  padding:9px 14px;cursor:pointer;transition:.2s}
+.fbtn:hover{color:var(--paper);border-color:var(--line2)}
+.fbtn.on{background:var(--cy);color:#04121c;border-color:var(--cy);font-weight:700}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(216px,1fr));gap:13px}
+.card{border:1px solid var(--line);background:rgba(255,255,255,.026);overflow:hidden;
+  transition:.22s;display:block;position:relative}
+.card:hover{border-color:var(--line2);background:rgba(90,208,255,.07);transform:translateY(-3px)}
+.card .im{position:relative;aspect-ratio:16/10;background:#08111a;overflow:hidden}
+/* .8 was dark enough that the art — the only reason the card exists — arrived
+   already dimmed, and half the thumbnails are night scenes to begin with */
+.card img{width:100%;height:100%;object-fit:cover;filter:brightness(.94);transition:.4s}
+.card:hover img{filter:brightness(1.03);transform:scale(1.05)}
+.card .no{position:absolute;top:0;left:0;font:600 9px/1 var(--mono);letter-spacing:.12em;
+  background:rgba(4,7,13,.86);padding:5px 7px;color:var(--dim)}
+.card .st{position:absolute;top:0;right:0;bottom:auto;width:3px;height:100%}
+.card .bd{padding:10px 11px 12px}
+.card h4{font-size:13.5px;font-weight:600;letter-spacing:-.015em;line-height:1.25}
+/* This was one non-wrapping row with the tag list set to ellipsis, and at
+   216px of card the tags lost the fight every time: nearly every card in the
+   archive ended on a clipped word — "PROTOTYPE WEBGL · YOUTU…". Letting the
+   row wrap costs one line on the narrow cards and nothing on the wide ones,
+   and no card shows half a word. */
+.card .mt{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 7px;margin-top:7px;
+  font:600 8.5px/1.5 var(--mono);letter-spacing:.13em;text-transform:uppercase;color:var(--dim2)}
+.card .mt .stack{color:var(--dim)}
+.card .mt em{font-style:normal;margin-left:auto;color:var(--lm);white-space:nowrap}
+.card .wip{color:var(--acc)}
+
+/* ── timeline ── */
+.log{border-left:1px solid var(--line);padding-left:26px;max-width:940px}
+.ent{position:relative;padding:19px 0}
+.ent+.ent{border-top:1px solid rgba(120,205,255,.09)}
+.ent::before{content:"";position:absolute;left:-31px;top:27px;width:10px;height:10px;
+  background:var(--bg);border:1px solid var(--cy);box-shadow:0 0 12px var(--cy);transform:rotate(45deg)}
+.ent .yr{font:600 10px/1 var(--mono);letter-spacing:.16em;color:var(--dim2)}
+.ent h3{font-size:18.5px;font-weight:650;letter-spacing:-.025em;margin-top:7px}
+.ent .co{font:600 10.5px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--lm);margin-top:6px}
+.ent p,.ent li{color:var(--dim);font-size:14.5px;margin-top:9px}
+.ent ul{margin:4px 0 0 18px}
+.ent li{margin-top:5px}
+.ent li b{color:var(--paper);font-weight:600}
+
+/* ── contact ── */
+.cbox{border:1px solid var(--line);background:rgba(255,255,255,.028);
+  padding:54px 38px;text-align:center;position:relative;overflow:hidden}
+.cbox::before{content:"";position:absolute;inset:auto -20% -70%;height:110%;pointer-events:none;
+  background:radial-gradient(ellipse 40% 60% at 50% 100%,rgba(90,208,255,.22),transparent 70%)}
+/* Five sections of work and no face anywhere. The room has one; on the flat
+   page the contact block is the right place for it — it is the only section
+   that is about the person rather than the output. */
+.cbox .face{width:96px;height:96px;border-radius:50%;object-fit:cover;margin:0 auto 20px;
+  border:1px solid rgba(90,208,255,.5);background:#0d1428;position:relative;display:block;
+  box-shadow:0 0 0 6px rgba(90,208,255,.07)}
+.cbox h2{font-size:clamp(27px,4.8vw,54px);letter-spacing:-.045em;font-weight:780;
+  line-height:1.02;position:relative}
+.cbox p{color:var(--dim);margin-top:15px;position:relative}
+.cbox .row{display:flex;gap:11px;justify-content:center;margin-top:28px;flex-wrap:wrap;position:relative}
+.cmeta{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1px;
+  background:var(--line);border:1px solid var(--line);margin-top:15px}
+.cmeta a,.cmeta div{background:var(--bg2);padding:15px 17px;transition:.2s}
+.cmeta a:hover{background:rgba(90,208,255,.12)}
+.cmeta span{display:block;font:600 9px/1 var(--mono);letter-spacing:.18em;
+  text-transform:uppercase;color:var(--dim2);margin-bottom:6px}
+footer{border-top:1px solid var(--line);margin-top:60px;padding:21px 0 44px;color:var(--dim2);
+  font:600 9.5px/1.7 var(--mono);letter-spacing:.16em;text-transform:uppercase;
+  display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;position:relative;z-index:2}
+
+.reveal{opacity:0;transform:translateY(18px);transition:.65s cubic-bezier(.2,.7,.3,1)}
+.reveal.in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){
+  .reveal{opacity:1;transform:none;transition:none}
+  .eyebrow i{animation:none}
+  html{scroll-behavior:auto}
+}
+@media(max-width:960px){
+  .hero{grid-template-columns:1fr;gap:24px;min-height:0}
+  .orb{max-height:50vh;margin-top:16px}
+  .clusters{grid-template-columns:1fr 1fr}
+  .feat{grid-template-columns:1fr}
+  .hstats{grid-template-columns:1fr 1fr;gap:14px 0}
+  nav .links{display:none}
+  header{padding:92px 0 18px}
+  section{padding:58px 0}
+}
+@media(max-width:640px){
+  .wrap{padding:0 16px}
+  nav .in{padding:12px 14px;gap:8px}
+  .brand{margin-right:auto;font-size:10px;letter-spacing:.11em}
+  nav .btn{min-height:42px;display:inline-flex;align-items:center;justify-content:center;
+    padding:9px 10px;font-size:8.5px}
+  header{padding-top:76px}
+  .hero{gap:14px}
+  .orb{width:min(100%,430px);max-height:43vh;margin-top:8px}
+  .clusters{gap:9px}
+  .cl{padding:15px}
+  .fbtn,.fc .lk a{min-height:44px}
+  .fbtn,.fc .lk a{display:inline-flex;align-items:center}
+  .cbox{padding:38px 18px}
+  section{padding:48px 0}
+}
+@media(max-width:380px){.brandWide{display:none}}
+</style>
+
+<div class="glowmap"></div>
+
+<nav id="nav" aria-label="Primary navigation"><div class="in">
+  <a class="brand" href="#"><i></i>DUY<span class="brandWide">_NGOC // ARCHIVE</span></a>
+  <!-- CV used to sit in .links AND as the filled button, so the contact screen
+       showed the same PDF three times. One link per destination. -->
+  <div class="links">
+    <a href="#index">Build archive</a><a href="#exp">Service log</a><a href="#contact">Comms</a>
+  </div>
+  <a class="btn room" href="room-3d.html">◧ Room mode</a>
+  <a class="btn fill" href="https://drive.google.com/file/d/1Dg0RwxwD1Mo2dcrAQM__pCDnZUCc6c6g/view?usp=sharing" target="_blank" rel="noopener">My CV ↗</a>
+</div></nav>
+
+<header><div class="wrap"><div class="hero">
+  <div>
+    <span class="eyebrow"><i></i>System status // open to work</span>
+    <h1>A command archive of<br><span class="gr" id="hn">33 playable</span><br>game builds.</h1>
+    <p>I'm <b>Duy</b> — Unity &amp; Unreal developer, <b>6+ years</b> in production: gameplay
+      systems, multiplayer netcode, AR and C++ tools at <b>Gameloft</b>, <b>Sipher</b> and
+      <b>Bacoor</b>. Every node in that sphere is a real build. <b>Drag or swipe it, then hover or tap a node.</b></p>
+    <!-- Room mode is already a persistent button in the nav; a second copy here
+         spends the hero's one strong call to action on a destination the
+         visitor can reach from every scroll position anyway. -->
+    <div class="cta">
+      <a class="btn fill" href="#index">Open build archive</a>
+      <a class="btn" href="mailto:ongocduy.dev@gmail.com">Hire me ↗</a>
+    </div>
+    <div class="hstats">
+      <div><span>Experience</span><b>6+ yrs</b></div>
+      <div><span>Engines</span><b>Unity · Unreal</b></div>
+      <div><span>Languages</span><b>C# · C++</b></div>
+      <div><span>Archive nodes</span><b id="hn2">33</b></div>
+    </div>
+  </div>
+  <div class="orb">
+    <span class="brk"></span><span class="brk"></span><span class="brk"></span><span class="brk"></span>
+    <canvas id="net" aria-label="Interactive map of portfolio projects" aria-describedby="netHelp"></canvas>
+    <div class="cap" id="netHelp">Drag or swipe · hover or tap a node · play</div>
+    <div class="tip" id="tip"></div>
+  </div>
+</div></div></header>
+
+<section id="work"><div class="wrap">
+  <div class="sh reveal"><span class="k">01</span><h2>Project clusters</h2><span class="r">By project type</span></div>
+  <div class="clusters" id="clusters"></div>
+  <div class="sh reveal"><span class="k">02</span><h2>Priority case files</h2><span class="r">Playable now</span></div>
+  <div class="feat" id="feat"></div>
+</div></section>
+
+<section id="index"><div class="wrap">
+  <div class="sh reveal"><span class="k">03</span><h2>Build archive</h2><span class="r" id="cnt" aria-live="polite">33 builds</span></div>
+  <div class="filters reveal" id="filters"></div>
+  <div class="grid reveal" id="grid"></div>
+</div></section>
+
+<section id="exp"><div class="wrap">
+  <div class="sh reveal"><span class="k">04</span><h2>Service log</h2><span class="r">2016 — present</span></div>
+  <div class="log" id="log"></div>
+</div></section>
+
+<section id="contact"><div class="wrap">
+  <div class="cbox reveal">
+    <img class="face" src="models/avatar.jpg" width="96" height="96"
+      alt="O Ngoc Duy" loading="lazy" decoding="async">
+    <h2>Open a new channel.</h2>
+    <p>Open to Unity / Unreal roles — gameplay, multiplayer netcode and tools.</p>
+    <div class="row">
+      <a class="btn fill" href="mailto:ongocduy.dev@gmail.com">ongocduy.dev@gmail.com</a>
+      <a class="btn" href="https://drive.google.com/file/d/1Dg0RwxwD1Mo2dcrAQM__pCDnZUCc6c6g/view?usp=sharing" target="_blank" rel="noopener">My CV ↗</a>
+    </div>
+  </div>
+  <div class="cmeta reveal">
+    <a href="tel:+84345877070"><span>Phone</span>0345 877 070</a>
+    <a href="https://github.com/duyongoc" target="_blank" rel="noopener"><span>Github</span>github.com/duyongoc</a>
+    <a href="https://play.google.com/store/apps/developer?id=duy.ongoc" target="_blank" rel="noopener"><span>Google Play</span>Published games</a>
+    <a href="https://www.youtube.com/playlist?list=PLClQCm2rPi2VSzjd5MXOX40sx4GdrVJHk" target="_blank" rel="noopener"><span>Youtube</span>Demo playlist</a>
+  </div>
+  <footer><span>© <span id="yr"></span> O Ngoc Duy</span>
+    <span>Unity · Unreal · C# · C++ · Ho Chi Minh City</span></footer>
+</div></section>
+
+<script src="portfolio-data.js"></script>
+<script src="portfolio-shared.js"></script>
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   The flat companion to room-3d.html. Same 33 builds, same links,
+   no WebGL: the room needs three.js, a 700 kB texture atlas and a
+   GPU, and none of that should stand between a recruiter and the
+   list of what I shipped. Canvas 2D only, one script, no imports.
+   ═══════════════════════════════════════════════════════════════ */
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>
+  ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]);
+/* the room bakes its own thumbnail sheet; here we point at the same
+   downscaled files rather than the full-size art */
+const thumb=p=>p?p.replace('../images/','../images/thumb/')
+                  .replace(/\.(jpe?g|png)$/i,'.jpg'):'';
+/* The fallback used to be the full-size original, which meant shipping 6 MB of
+   art to insure against a 404 on a file sitting in the same commit as its own
+   fallback. It falls back to the other thumbnail instead — the same thing the
+   room does — so a project whose `info` shot is missing still shows its
+   `intro` one, and nothing on the page depends on the originals existing. */
+const img=g=>`<img loading="lazy" decoding="async" alt="" src="${esc(thumb(g.info))}"
+  onerror="this.onerror=null;this.src='${esc(thumb(g.intro))}'">`;
+
+document.getElementById('yr').textContent=new Date().getFullYear();
+document.getElementById('hn').textContent=GAMES.length+' playable';
+document.getElementById('hn2').textContent=GAMES.length;
+document.getElementById('cnt').textContent=GAMES.length+' builds';
+
+/* ═══ the node sphere ═══════════════════════════════════════════
+   33 points spread by the golden-angle spiral so they space evenly
+   without clumping at the poles, projected by hand and drawn back
+   to front. A scan line sweeps the sphere on the same clock as the
+   room's day cycle, which is the only thing tying the two pages
+   together visually. */
+(function(){
+  const cv=document.getElementById('net'), ctx=cv.getContext('2d');
+  const tip=document.getElementById('tip');
+  let W=0,H=0,R=0; const dpr=Math.min(devicePixelRatio||1,2);
+  const N=GAMES.length;
+  const pts=GAMES.map((g,i)=>{
+    const y=1-(i/(N-1))*2, r=Math.sqrt(Math.max(0,1-y*y)), th=i*Math.PI*(3-Math.sqrt(5));
+    return {x:Math.cos(th)*r,y,z:Math.sin(th)*r,g,c:CAT[g.cat].c,ph:Math.random()*6.28};
+  });
+  const pairs=[];
+  for(let i=0;i<N;i++) for(let j=i+1;j<N;j++){
+    const d=pts[i].x*pts[j].x+pts[i].y*pts[j].y+pts[i].z*pts[j].z;
+    if(d>.62) pairs.push([i,j,d]);
+  }
+  const reduceMotion=matchMedia('(prefers-reduced-motion:reduce)').matches;
+  const coarsePointer=matchMedia('(pointer:coarse)').matches;
+  const hitRadiusSq=coarsePointer?900:340;
+  const cruise=reduceMotion?0:.0022;
+  let ry=0,rx=-.32,vy=cruise,vx=0,drag=false,lx=0,ly=0,moved=0,hover=-1,t=0;
+  function size(){
+    const b=cv.getBoundingClientRect();
+    W=b.width; H=b.height; R=Math.min(W,H)*.37;
+    cv.width=Math.max(1,W*dpr); cv.height=Math.max(1,H*dpr);
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  addEventListener('resize',size);
+  const rot=p=>{
+    const cy=Math.cos(ry),sy=Math.sin(ry),cx=Math.cos(rx),sx=Math.sin(rx);
+    const x=p.x*cy-p.z*sy, z0=p.x*sy+p.z*cy;
+    return {x,y:p.y*cx-z0*sx,z:p.y*sx+z0*cx};
+  };
+  const F=2.9;
+  const proj=v=>{const s=R*(F/(F-v.z));return {x:W/2+v.x*s,y:H/2+v.y*s,d:(v.z+1)/2}};
+
+  function pick(clientX,clientY){
+    const b=cv.getBoundingClientRect(), mx=clientX-b.left, my=clientY-b.top;
+    let best=-1,bd=1e9;
+    pts.forEach((p,i)=>{
+      const v=rot(p); if(v.z<-.25) return;
+      const s=proj(v), dx=s.x-mx, dy=s.y-my, d=dx*dx+dy*dy;
+      if(d<hitRadiusSq&&d<bd){bd=d;best=i}
+    });
+    if(best!==hover){
+      hover=best;
+      if(best>=0){
+        const g=pts[best].g, p=playOf(g);
+        tip.innerHTML=`<b>${esc(g.title)}</b>
+          <div class="c">${esc(CAT[g.cat].n)} · node ${String(best+1).padStart(2,'0')}</div>
+          <div class="go">${esc(actionOf(p))} ↗</div>`;
+        tip.classList.add('on');
+      } else tip.classList.remove('on');
+    }
+    if(hover>=0){ const s=proj(rot(pts[hover])); tip.style.left=s.x+'px'; tip.style.top=s.y+'px' }
+    return best;
+  }
+  cv.addEventListener('pointerdown',e=>{drag=true;moved=0;lx=e.clientX;ly=e.clientY;
+    pick(e.clientX,e.clientY);cv.classList.add('drag');
+    try{cv.setPointerCapture(e.pointerId)}catch(_){}});
+  const endDrag=e=>{drag=false;cv.classList.remove('drag');
+    try{cv.releasePointerCapture(e.pointerId)}catch(_){}};
+  cv.addEventListener('pointerup',endDrag);
+  cv.addEventListener('pointercancel',endDrag);
+  cv.addEventListener('pointermove',e=>{
+    if(drag){
+      const dx=e.clientX-lx,dy=e.clientY-ly;
+      moved+=Math.abs(dx)+Math.abs(dy);
+      vy=dx*.00042; vx=dy*.00035;
+      ry+=dx*.006; rx+=dy*.005;
+      rx=Math.max(-1.15,Math.min(1.15,rx)); lx=e.clientX; ly=e.clientY;
+    }
+    pick(e.clientX,e.clientY);
+  });
+  cv.addEventListener('pointerleave',()=>{hover=-1;tip.classList.remove('on')});
+  cv.addEventListener('click',e=>{
+    const hit=pick(e.clientX,e.clientY);
+    if(moved<6&&hit>=0) open(playOf(pts[hit].g).url,'_blank','noopener,noreferrer');
+  });
+
+  /* Paused off-screen and when the tab is hidden: this canvas is the only
+     thing on the page that costs anything once it has loaded. */
+  let documentVisible=!document.hidden,canvasVisible=true,run=true;
+  const updateRun=()=>run=documentVisible&&canvasVisible;
+  document.addEventListener('visibilitychange',()=>{documentVisible=!document.hidden;updateRun()});
+  new IntersectionObserver(es=>{canvasVisible=es[0].isIntersecting;updateRun()},
+    {threshold:.02}).observe(cv);
+
+  let previous=performance.now();
+  (function loop(now=performance.now()){
+    requestAnimationFrame(loop);
+    const dt=Math.min(.05,Math.max(0,(now-previous)/1000));previous=now;
+    if(!run||!W) return;
+    if(!reduceMotion) t+=dt;
+    if(!drag){ ry+=vy; rx+=vx; vy+=(cruise-vy)*.02; vx*=.94; rx+=(-.32-rx)*.004 }
+    ctx.clearRect(0,0,W,H);
+
+    // horizon rings, drawn behind everything
+    ctx.strokeStyle='rgba(120,205,255,.16)'; ctx.lineWidth=1;
+    for(const k of [1,.72,.44]){
+      ctx.beginPath(); ctx.ellipse(W/2,H/2,R*k,R*k*Math.abs(Math.sin(rx))*.9+2,0,0,6.283);
+      ctx.stroke();
+    }
+    const P=pts.map(p=>proj(rot(p)));
+
+    for(const [i,j,d] of pairs){
+      const a=P[i],b=P[j], depth=(a.d+b.d)/2;
+      const al=Math.pow(depth,2.1)*(d-.62)/.38*.8;
+      if(al<.02) continue;
+      ctx.strokeStyle=(hover>=0&&(i===hover||j===hover))
+        ? 'rgba(138,255,192,'+Math.min(al*3+.25,.85).toFixed(3)+')'
+        : 'rgba(120,205,255,'+al.toFixed(3)+')';
+      ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
+    }
+
+    // the sweep: a band of latitude that lights the nodes it crosses
+    const sweep=((t*.16)%1)*2-1;
+    ctx.strokeStyle='rgba(90,208,255,.30)'; ctx.lineWidth=1.4;
+    ctx.beginPath(); ctx.moveTo(W/2-R*1.02,H/2+sweep*R); ctx.lineTo(W/2+R*1.02,H/2+sweep*R);
+    ctx.stroke();
+
+    const order=P.map((p,i)=>i).sort((a,b)=>P[a].d-P[b].d);
+    for(const i of order){
+      const s=P[i], p=pts[i];
+      const near=Math.max(0,1-Math.abs((s.y-H/2)/R-sweep)*7);
+      const r=(1.6+s.d*3.5)*(hover===i?1.9:1)+near*1.6;
+      const al=.25+s.d*.75;
+      ctx.globalAlpha=al; ctx.fillStyle=p.c;
+      ctx.shadowBlur=hover===i?22:(8*s.d+near*14); ctx.shadowColor=p.c;
+      ctx.beginPath(); ctx.arc(s.x,s.y,r,0,6.283); ctx.fill();
+      ctx.shadowBlur=0;
+      const ph=(t*.6+p.ph)%6.283;
+      if(s.d>.55){
+        ctx.globalAlpha=al*.22*(1-ph/6.283);
+        ctx.beginPath(); ctx.arc(s.x,s.y,r+ph*2.6,0,6.283);
+        ctx.strokeStyle=p.c; ctx.lineWidth=1; ctx.stroke();
+      }
+      ctx.globalAlpha=1;
+    }
+  })();
+  size();
+})();
+
+/* ═══ clusters ══════════════════════════════════════════════════ */
+document.getElementById('clusters').innerHTML=CAT_KEYS.map(k=>{
+  const v=CAT[k], n=GAMES.filter(g=>g.cat===k).length;
+  return `<a class="cl reveal cut" href="#index" data-k="${k}">
+    <i style="background:${v.c};box-shadow:0 0 12px ${v.c}"></i>
+    <b>${String(n).padStart(2,'0')}</b><span>${esc(v.long)}</span></a>`;
+}).join('');
+
+/* ═══ featured ══════════════════════════════════════════════════ */
+document.getElementById('feat').innerHTML=feat().map((g,i)=>{
+  const p=playOf(g), rest=g.links.filter(l=>l!==p).slice(0,2);
+  return `<article class="fc reveal cut" style="transition-delay:${Math.min(i*60,260)}ms">
+    <div class="im">${img(g)}
+      <span class="id">NODE ${String(GAMES.indexOf(g)+1).padStart(2,'0')} · ${esc(CAT[g.cat].n)}</span></div>
+    <div class="bd"><h3>${esc(g.title)}</h3><p>${esc(g.desc||g.sub)}</p>
+      <div class="lk"><a href="${esc(p.url)}" target="_blank" rel="noopener">${esc(shortOf(p))} ↗</a>
+      ${rest.map(l=>`<a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label)}</a>`).join('')}</div>
+    </div></article>`;
+}).join('');
+
+/* ═══ index grid ════════════════════════════════════════════════ */
+const grid=document.getElementById('grid'), fbox=document.getElementById('filters');
+function render(k){
+  const list=GAMES.filter(g=>k==='all'||g.cat===k);
+  grid.innerHTML=list.map(g=>{
+    const p=playOf(g), v=CAT[g.cat], n=GAMES.indexOf(g)+1;
+    return `<a class="card cut" href="${esc(p.url)}" target="_blank" rel="noopener">
+      <div class="im">${img(g)}<span class="no">${String(n).padStart(2,'0')}</span>
+        <span class="st" style="background:${v.c}"></span></div>
+      <div class="bd"><h4>${esc(g.title)}${g.wip?' <span class="wip">WIP</span>':''}</h4>
+        <div class="mt"><span>${esc(v.n)}</span><span class="stack">${esc(g.tags.slice(0,2).join(' · '))}</span>
+          <em>${esc(shortOf(p))} ↗</em></div></div></a>`;
+  }).join('');
+  document.getElementById('cnt').textContent=list.length+' builds';
+  watch(grid);
+}
+buildFilters(fbox,render);
+/* buildFilters names its buttons but does not tag them, and the cluster cards
+   need something to match against to drive the filter they belong to */
+['all',...CAT_KEYS].forEach((k,i)=>{
+  const b=fbox.children[i]; if(b) b.dataset.k=k;
+});
+render('all');
+/* clicking a cluster jumps to the index already filtered to it */
+document.getElementById('clusters').addEventListener('click',e=>{
+  const a=e.target.closest('[data-k]'); if(!a) return;
+  const b=[...fbox.querySelectorAll('.fbtn')].find(x=>x.dataset.k===a.dataset.k);
+  if(b) b.click();
+});
+
+/* ═══ timeline ══════════════════════════════════════════════════ */
+document.getElementById('log').innerHTML=JOBS.map(j=>`
+  <div class="ent reveal"><div class="yr">${esc(j.yr)}</div><h3>${esc(j.t)}</h3>
+    <div class="co">${esc(j.co)}</div>${j.p?`<p>${esc(j.p)}</p>`:''}
+    ${j.ul?'<ul><li>'+j.ul.join('</li><li>')+'</li></ul>':''}</div>`).join('');
+
+watch();
+navScroll('nav');
+</script>
