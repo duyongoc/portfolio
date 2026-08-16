@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>O Ngoc Duy — Unity Game Developer</title>
+<style>
+:root{
+  --top:#171a21; --bg:#1b2838; --bg-2:#16202d; --panel:#2a475e; --panel-2:#1f3549;
+  --txt:#e6eef5; --txt-2:#a7bccd; --txt-3:#7b93a8;
+  --blue:#66c0f4; --blue-2:#417a9b; --green:#a4d007; --green-2:#5c7e10;
+  --max:1180px; --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--txt);font:15px/1.55 "Motiva Sans",-apple-system,"Segoe UI",Arial,system-ui,sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0;z-index:-1;background:
+  radial-gradient(ellipse 80% 60% at 50% 0%,#2a4a63 0%,transparent 60%),
+  linear-gradient(180deg,#1b2838 0%,#16202d 100%)}
+a{color:inherit;text-decoration:none}
+img{display:block}
+.wrap{max-width:var(--max);margin:0 auto;padding:0 22px}
+.mono{font-family:var(--mono);letter-spacing:.12em;text-transform:uppercase;font-size:11px}
+
+/* ── top bars ── */
+.tbar{background:var(--top);border-bottom:1px solid #000}
+.tbar .in{max-width:var(--max);margin:0 auto;padding:12px 22px;display:flex;align-items:center;gap:26px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:-.01em;font-size:17px}
+.logo i{width:26px;height:26px;border-radius:50%;background:linear-gradient(145deg,#66c0f4,#2f5f80);display:grid;place-items:center;font-size:12px;color:#0c1620;font-weight:900}
+.tnav{display:flex;gap:22px;color:#b8b6b4;font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.tnav a:hover{color:#fff}
+.tbar .r{margin-left:auto;display:flex;gap:14px;align-items:center;font-size:12.5px;color:var(--txt-3)}
+.tbar .r a:hover{color:var(--blue)}
+.sbar{background:linear-gradient(180deg,#3d6c8d,#2a475e);border-bottom:1px solid #0e1620}
+.sbar .in{max-width:var(--max);margin:0 auto;padding:0 22px;display:flex;align-items:center;gap:4px;height:38px}
+.sbar a{padding:0 16px;height:38px;display:flex;align-items:center;font-size:13px;font-weight:600;color:#d6e3ee}
+.sbar a:hover,.sbar a.on{background:rgba(0,0,0,.24);color:#fff}
+.sbar .r{margin-left:auto;display:flex;align-items:center}
+.sbar input{background:linear-gradient(180deg,#111c26,#1b2f41);border:1px solid #0d161f;border-radius:3px;color:var(--txt);padding:5px 12px;font:inherit;font-size:12.5px;width:190px;outline:none}
+.sbar input:focus{border-color:var(--blue)}
+
+/* ── breadcrumb / title ── */
+.crumb{color:var(--txt-3);font-size:12px;padding:16px 0 8px}
+.crumb a:hover{color:var(--blue)}
+.ptitle{font-size:clamp(24px,3.6vw,34px);font-weight:400;letter-spacing:-.01em;padding-bottom:14px}
+.ptitle b{font-weight:700}
+
+/* ── hero (store capsule) ── */
+.hero{display:grid;grid-template-columns:1fr 324px;gap:16px;padding-bottom:26px}
+.stage{background:#000;border-radius:3px;overflow:hidden;position:relative;aspect-ratio:16/9}
+.stage img{width:100%;height:100%;object-fit:cover}
+.stage .lab{position:absolute;left:0;bottom:0;right:0;background:linear-gradient(180deg,transparent,rgba(0,0,0,.85));padding:38px 20px 16px;display:flex;align-items:flex-end;gap:12px}
+.stage .lab h2{font-size:22px;font-weight:700;letter-spacing:-.01em}
+.stage .lab .k{margin-left:auto;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--blue);font-family:var(--mono)}
+.thumbs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}
+.thumbs img{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:2px;opacity:.55;cursor:pointer;border:2px solid transparent;transition:.18s}
+.thumbs img:hover{opacity:1}
+.thumbs img.on{opacity:1;border-color:var(--blue)}
+.side{background:linear-gradient(180deg,rgba(42,71,94,.7),rgba(30,52,71,.7));border-radius:3px;padding:16px;display:flex;flex-direction:column;gap:14px}
+.side .cap{border-radius:3px;overflow:hidden;background:#000}
+.side .cap img{width:100%;aspect-ratio:2/1;object-fit:cover}
+.side p{color:var(--txt-2);font-size:13.5px;line-height:1.6}
+.meta{display:grid;gap:7px;font-size:12.5px}
+.meta div{display:grid;grid-template-columns:82px 1fr;gap:10px}
+.meta span{color:var(--txt-3)}
+.meta b{font-weight:400;color:var(--blue)}
+.tagrow{display:flex;flex-wrap:wrap;gap:5px}
+.tg{background:rgba(103,193,245,.14);color:#9fd2ee;font-size:11.5px;padding:3px 9px;border-radius:2px}
+.tg:hover{background:rgba(103,193,245,.3);color:#fff}
+.buy{background:linear-gradient(180deg,#1f2f3d,#16222d);border-radius:3px;padding:12px;display:flex;align-items:center;gap:12px;margin-top:auto}
+.buy .price{font-size:14px;color:var(--green);font-weight:700;letter-spacing:.02em}
+.gbtn{margin-left:auto;background:linear-gradient(180deg,#a1cd44,#6b8c22);color:#12240a;font-weight:700;font-size:14px;padding:9px 18px;border-radius:2px;transition:.16s;white-space:nowrap}
+.gbtn:hover{background:linear-gradient(180deg,#b6e04f,#7ea329);color:#0d1a06}
+.gbtn.blue{background:linear-gradient(180deg,#67c1f5,#417a9b);color:#0a1a24}
+.gbtn.blue:hover{background:linear-gradient(180deg,#8fd4ff,#4d8fb5)}
+
+/* ── section frames ── */
+.h2{font-size:15px;font-weight:400;letter-spacing:.06em;text-transform:uppercase;color:#c6dbeb;border-bottom:1px solid rgba(103,193,245,.22);padding-bottom:8px;margin:36px 0 16px;display:flex;align-items:baseline;gap:12px}
+.h2 span{margin-left:auto;font-size:11.5px;color:var(--txt-3);letter-spacing:.1em}
+.panel{background:linear-gradient(180deg,rgba(42,71,94,.55),rgba(30,52,71,.55));border-radius:3px;padding:22px}
+
+/* about */
+.about{display:grid;grid-template-columns:1fr 320px;gap:16px;align-items:start}
+.about .por{display:flex;gap:18px;align-items:flex-start;margin-bottom:16px}
+.about .por img{width:88px;height:88px;border-radius:3px;object-fit:cover;border:1px solid #3c5f7c;flex:none}
+.about h3{font-size:26px;font-weight:700;letter-spacing:-.02em}
+.about .role{color:var(--blue);font-size:14px;margin-top:4px}
+.about p{color:var(--txt-2);font-size:14.5px;margin-top:12px;line-height:1.7}
+.about p b{color:#fff;font-weight:600}
+.specs{display:grid;gap:1px;background:rgba(0,0,0,.28);border-radius:3px;overflow:hidden}
+.specs div,.specs a{background:rgba(23,38,52,.7);padding:11px 14px;display:grid;grid-template-columns:104px 1fr;gap:10px;font-size:13px}
+.specs a:hover{background:rgba(65,122,155,.45)}
+.specs span{color:var(--txt-3)}
+.specs b{font-weight:400}
+.rev{display:flex;align-items:center;gap:12px;background:rgba(0,0,0,.22);border-radius:3px;padding:13px 16px;margin-top:14px}
+.rev .score{color:var(--blue);font-size:16px;font-weight:700}
+.rev small{color:var(--txt-3);font-size:12px}
+
+/* library rows */
+.tabs{display:flex;gap:2px;margin-bottom:12px;flex-wrap:wrap}
+.tab{background:rgba(0,0,0,.22);color:var(--txt-2);font:inherit;font-size:13px;padding:8px 16px;border:0;border-radius:2px;cursor:pointer;transition:.16s}
+.tab:hover{background:rgba(103,193,245,.16);color:#fff}
+.tab.on{background:linear-gradient(180deg,#67c1f5,#417a9b);color:#0a1a24;font-weight:700}
+.tab sup{font-size:10px;opacity:.7;margin-left:4px}
+.rows{display:grid;gap:3px}
+.row{display:grid;grid-template-columns:250px 1fr auto;gap:16px;align-items:center;background:rgba(0,0,0,.2);padding:8px;border-radius:2px;transition:.16s}
+.row:hover{background:linear-gradient(90deg,#4b7fa8,#2e5473)}
+.row .sh{width:250px;aspect-ratio:2/1;object-fit:cover;border-radius:2px;background:#0d1620}
+.row h4{font-size:15.5px;font-weight:600}
+.row .plat{display:flex;gap:7px;margin-top:6px;color:var(--txt-3);font-size:11.5px;flex-wrap:wrap}
+.row .plat i{font-style:normal;background:rgba(255,255,255,.07);padding:2px 7px;border-radius:2px;letter-spacing:.06em;text-transform:uppercase;font-size:10px;font-family:var(--mono)}
+.row .d{color:var(--txt-3);font-size:12.5px;margin-top:7px;max-width:62ch;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.row:hover .d{color:#cfe2f0}
+.row .go{text-align:right;padding-right:8px}
+.row .free{color:var(--green);font-size:12.5px;font-weight:700;letter-spacing:.03em}
+.row .arr{color:var(--blue);font-size:12px;margin-top:5px;opacity:0;transition:.16s}
+.row:hover .arr{opacity:1}
+.row .wip{color:#e8c34a;font-size:11px;font-weight:600;margin-left:6px}
+
+/* news / career */
+.news{display:grid;gap:10px}
+.post{background:linear-gradient(180deg,rgba(42,71,94,.5),rgba(30,52,71,.5));border-radius:3px;padding:18px 20px;border-left:2px solid var(--blue-2);transition:.2s}
+.post:hover{border-left-color:var(--blue);background:linear-gradient(180deg,rgba(52,86,113,.6),rgba(34,60,82,.6))}
+.post .dt{font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--txt-3)}
+.post h4{font-size:18px;font-weight:700;margin-top:6px;letter-spacing:-.01em}
+.post .co{color:var(--blue);font-size:13.5px;margin-top:3px}
+.post p,.post li{color:var(--txt-2);font-size:14px;margin-top:9px}
+.post ul{margin:4px 0 0 18px}
+.post li{margin-top:5px}
+.post li b{color:#fff;font-weight:600}
+
+/* contact */
+.contact{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.cbig{font-size:clamp(26px,4vw,40px);font-weight:700;letter-spacing:-.03em;line-height:1.12}
+.cbig a{color:var(--blue)}
+.cbig a:hover{text-decoration:underline}
+.clist{display:grid;gap:1px;background:rgba(0,0,0,.28);border-radius:3px;overflow:hidden;align-self:start}
+.clist a,.clist div{background:rgba(23,38,52,.75);padding:13px 16px;display:grid;grid-template-columns:90px 1fr;gap:12px;font-size:13.5px}
+.clist span{color:var(--txt-3);font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;align-self:center}
+.clist a:hover{background:rgba(65,122,155,.5);color:#fff}
+footer{border-top:1px solid rgba(103,193,245,.14);margin-top:36px;padding:22px 0 44px;color:var(--txt-3);font-size:12.5px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+
+.reveal{opacity:0;transform:translateY(14px);transition:.6s cubic-bezier(.2,.7,.3,1)}
+.reveal.in{opacity:1;transform:none}
+
+@media(max-width:980px){
+  .hero{grid-template-columns:1fr}
+  .about{grid-template-columns:1fr}
+  .contact{grid-template-columns:1fr}
+  .row{grid-template-columns:160px 1fr;gap:12px}
+  .row .sh{width:160px}
+  .row .go{grid-column:2;text-align:left;padding:0}
+  .tnav,.tbar .r{display:none}
+  .sbar .in{overflow-x:auto}
+  .sbar input{width:130px}
+}
+</style>
+</head>
+<body>
+
+<div class="tbar"><div class="in">
+  <a class="logo" href="#"><i>D</i>O NGOC DUY</a>
+  <div class="tnav"><a href="#library">Library</a><a href="#career">Career</a><a href="#contact">Contact</a></div>
+  <div class="r">
+    <a href="https://drive.google.com/file/d/1Dg0RwxwD1Mo2dcrAQM__pCDnZUCc6c6g/view?usp=sharing" target="_blank">CV ↗</a>
+    <a href="https://github.com/duyongoc" target="_blank">Github</a>
+    <a href="mailto:ongocduy.dev@gmail.com">Email</a>
+  </div>
+</div></div>
+
+<div class="sbar"><div class="in">
+  <a class="on" href="#featured">Featured</a><a href="#library">All games</a><a href="#about">About the dev</a><a href="#career">Career</a>
+  <div class="r"><input id="q" placeholder="search games…"></div>
+</div></div>
+
+<div class="wrap">
+  <div class="crumb"><a href="#">All Games</a> &nbsp;›&nbsp; <a href="#">Developers</a> &nbsp;›&nbsp; O Ngoc Duy</div>
+  <h1 class="ptitle" id="featured">Games by <b>O Ngoc Duy</b> — Unity Game Developer</h1>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div>
+      <div class="stage">
+        <img id="shot" alt="">
+        <div class="lab"><h2 id="hTitle">—</h2><span class="k" id="hCat"></span></div>
+      </div>
+      <div class="thumbs" id="thumbs"></div>
+    </div>
+    <div class="side">
+      <div class="cap"><img id="cap" alt=""></div>
+      <p id="hDesc"></p>
+      <div class="meta">
+        <div><span>Developer</span><b>O Ngoc Duy</b></div>
+        <div><span>Engine</span><b id="hEngine">Unity</b></div>
+        <div><span>Category</span><b id="hCat2">—</b></div>
+        <div><span>Status</span><b id="hStat">Released</b></div>
+      </div>
+      <div class="tagrow" id="hTags"></div>
+      <div class="specs" id="hBuilds" style="margin-top:2px"></div>
+      <div class="buy"><span class="price">Free to play</span><a class="gbtn" id="hPlay" href="#" target="_blank">Play now</a></div>
+    </div>
+  </div>
+
+  <!-- ABOUT -->
+  <div id="about">
+    <div class="h2">About the developer <span>6+ years in production</span></div>
+    <div class="about">
+      <div class="panel">
+        <div class="por">
+          <img src="../images/user.jpg" alt="O Ngoc Duy">
+          <div><h3>O Ngoc Duy</h3><div class="role">Unity Game Developer · Ho Chi Minh City</div></div>
+        </div>
+        <p>I build games that people can actually open and play. <b>6+ years</b> of production experience across gameplay systems, multiplayer netcode, AR and C++ tooling — shipping at <b>Gameloft</b>, <b>Sipher</b> and <b>Bacoor</b>.</p>
+        <p>Everything on this page is a real build: <b id="n1">33</b> personal projects, most of them running in your browser via WebGL, many on Google Play, all with demo videos. No slides, no mockups — just press Play.</p>
+        <div class="rev">
+          <span class="score">Very Positive</span>
+          <small>— <b id="n2">33</b> playable builds · Unity · Unreal · C# · C++</small>
+        </div>
+      </div>
+      <div>
+        <div class="specs">
+          <div><span>Experience</span><b>6+ years</b></div>
+          <div><span>Engines</span><b>Unity · Unreal</b></div>
+          <div><span>Languages</span><b>C# · C++</b></div>
+          <div><span>Specialty</span><b>Gameplay · Netcode</b></div>
+          <div><span>Also</span><b>AR · UI · Asset bundles</b></div>
+          <div><span>Location</span><b>Ho Chi Minh City, VN</b></div>
+          <div><span>Available</span><b style="color:var(--green)">Open to work</b></div>
+        </div>
+        <div class="buy" style="margin-top:10px">
+          <span class="price" style="color:var(--txt-2);font-weight:400;font-size:13px">Want the full CV?</span>
+          <a class="gbtn blue" href="https://drive.google.com/file/d/1Dg0RwxwD1Mo2dcrAQM__pCDnZUCc6c6g/view?usp=sharing" target="_blank">Download</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LIBRARY -->
+  <div id="library">
+    <div class="h2">All games <span id="cnt">33 titles</span></div>
+    <div class="tabs" id="tabs"></div>
+    <div class="rows" id="rows"></div>
+  </div>
+
+  <!-- CAREER -->
+  <div id="career">
+    <div class="h2">Career updates <span>2016 — Present</span></div>
+    <div class="news">
+      <div class="post reveal"><div class="dt">10/2024 — PRESENT</div><h4>Unity Game Developer</h4><div class="co">Optimizer · Team Leader</div>
+        <p>Responsible for project stability, task assignment, team support and reporting.</p></div>
+      <div class="post reveal"><div class="dt">9/2022 — 10/2024</div><h4>Unity Game Developer</h4><div class="co">Bacoor — bountykinds.com</div>
+        <p>Built ~70% of the project on the front-end side: main menu UI, map, items, data, gameplay and asset bundles.</p></div>
+      <div class="post reveal"><div class="dt">2/2022 — 8/2022</div><h4>Unreal Game Developer (C++)</h4><div class="co">Sipher — playsipher.com</div>
+        <p>Built the enemy core system, movement, weapon modules, animator, data and AI.</p></div>
+      <div class="post reveal"><div class="dt">7/2019 — 2/2022</div><h4>Unity Game Developer</h4><div class="co">Gameloft</div>
+        <p>Worked on several projects — these are the publicly available titles:</p>
+        <ul>
+          <li><b>Applaydu &amp; Friends</b> — 12-player party royale: main menu UI, chat feature, gameplay bug fixing.</li>
+          <li><b>Kinder Easter</b> — main menu UI, QR code scanning, AR toys, gameplay bug fixing.</li>
+          <li><b>Dragon Mania Legends</b> — DLC updates, Ads integration, gameplay bug fixing.</li>
+        </ul></div>
+      <div class="post reveal"><div class="dt">2016 — 2019</div><h4>Cao Thang Technical College</h4><div class="co">Education</div></div>
+    </div>
+  </div>
+
+  <!-- CONTACT -->
+  <div id="contact">
+    <div class="h2">Contact</div>
+    <div class="contact">
+      <div class="panel">
+        <p class="cbig">Have a game to build?<br><a href="mailto:ongocduy.dev@gmail.com">Let's talk.</a></p>
+        <p style="color:var(--txt-2);margin-top:16px;font-size:14px">Open to Unity / Unreal roles — gameplay, multiplayer netcode, tools.</p>
+      </div>
+      <div class="clist">
+        <a href="mailto:ongocduy.dev@gmail.com"><span>Email</span>ongocduy.dev@gmail.com</a>
+        <div><span>Phone</span>0345 877 070</div>
+        <a href="https://github.com/duyongoc" target="_blank"><span>Github</span>github.com/duyongoc</a>
+        <a href="https://play.google.com/store/apps/developer?id=duy.ongoc" target="_blank"><span>Store</span>Google Play — all published games</a>
+        <a href="https://www.youtube.com/playlist?list=PLClQCm2rPi2VSzjd5MXOX40sx4GdrVJHk" target="_blank"><span>Youtube</span>Game demo playlist</a>
+      </div>
+    </div>
+  </div>
+
+  <footer><span>© <span id="yr"></span> O Ngoc Duy — Unity Game Developer</span><span>Built with Unity · WebGL · Android</span></footer>
+</div>
+
+<script src="data.js"></script>
+<script>
+document.getElementById('yr').textContent=new Date().getFullYear();
+['n1','n2'].forEach(id=>document.getElementById(id).textContent=GAMES.length);
+document.getElementById('cnt').textContent=GAMES.length+' titles';
+
+const LBL={multiplayer:'Multiplayer / Netcode',ar:'Augmented Reality',personal:'Personal game',reskin:'Prototype'};
+const playOf=g=>g.links.find(l=>l.kind==='WebGL')||g.links.find(l=>l.kind==='Android')||g.links[0];
+const label=p=>p.kind==='WebGL'?'Play now':p.kind==='Android'?'Google Play':'Watch demo';
+
+/* ── hero carousel ── */
+const HERO=['Netcode Battle','POLYGON Battle','Netcode Shooter2D','Kinder Easter']
+  .map(t=>GAMES.find(g=>g.title===t)).filter(Boolean);
+const thumbs=document.getElementById('thumbs');
+let hi=0,timer;
+HERO.forEach((g,i)=>{
+  const im=document.createElement('img');
+  im.loading='lazy';im.src=g.info;im.onerror=()=>im.src=g.intro;im.alt=g.title;
+  im.onclick=()=>{setHero(i);restart()};
+  thumbs.appendChild(im);
+});
+function setHero(i){
+  hi=i;const g=HERO[i],p=playOf(g);
+  const shot=document.getElementById('shot');
+  shot.src=g.info;shot.onerror=()=>shot.src=g.intro;
+  const cap=document.getElementById('cap');
+  cap.src=g.intro;cap.onerror=()=>cap.src=g.info;
+  document.getElementById('hTitle').textContent=g.title;
+  document.getElementById('hCat').textContent=LBL[g.cat];
+  document.getElementById('hCat2').textContent=LBL[g.cat];
+  document.getElementById('hDesc').textContent=g.desc||g.sub;
+  document.getElementById('hStat').textContent=g.wip?'In development':'Released';
+  document.getElementById('hTags').innerHTML=g.tags.map(t=>`<span class="tg">${t}</span>`).join('')+`<span class="tg">Unity</span>`;
+  document.getElementById('hBuilds').innerHTML=g.links.map(l=>
+    `<a href="${l.url}" target="_blank" style="color:inherit"><span>${l.kind}</span><b style="color:var(--blue)">${l.label} ↗</b></a>`).join('');
+  const b=document.getElementById('hPlay');b.href=p.url;b.textContent=label(p);
+  [...thumbs.children].forEach((c,j)=>c.classList.toggle('on',j===i));
+}
+function restart(){clearInterval(timer);timer=setInterval(()=>setHero((hi+1)%HERO.length),6500)}
+setHero(0);restart();
+
+/* ── library ── */
+const CATS=[{k:'all',n:'All games'},{k:'multiplayer',n:'Multiplayer'},{k:'ar',n:'AR'},{k:'personal',n:'Personal'},{k:'reskin',n:'Prototypes'}];
+const rows=document.getElementById('rows'),tabs=document.getElementById('tabs'),q=document.getElementById('q');
+let curCat='all',query='';
+CATS.forEach((c,i)=>{
+  const n=c.k==='all'?GAMES.length:GAMES.filter(g=>g.cat===c.k).length;
+  const b=document.createElement('button');
+  b.className='tab'+(i?'':' on');b.innerHTML=c.n+'<sup>'+n+'</sup>';
+  b.onclick=()=>{curCat=c.k;tabs.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));b.classList.add('on');render()};
+  tabs.appendChild(b);
+});
+q.oninput=e=>{query=e.target.value.toLowerCase().trim();render()};
+function render(){
+  const list=GAMES.filter(g=>(curCat==='all'||g.cat===curCat)&&g.title.toLowerCase().includes(query));
+  rows.innerHTML=list.length?'':'<div class="panel" style="color:var(--txt-3)">No games matched that search.</div>';
+  list.forEach((g,i)=>{
+    const p=playOf(g);
+    const a=document.createElement('a');
+    a.className='row reveal';a.href=p.url;a.target='_blank';
+    a.style.transitionDelay=Math.min(i*18,240)+'ms';
+    a.innerHTML=`
+      <img class="sh" loading="lazy" src="${g.info}" onerror="this.src='${g.intro}'" alt="${g.title}">
+      <div>
+        <h4>${g.title}${g.wip?'<span class="wip">EARLY ACCESS</span>':''}</h4>
+        <div class="plat">${g.tags.map(t=>`<i>${t}</i>`).join('')}<i>${LBL[g.cat]}</i></div>
+        <div class="d">${g.desc||g.sub}</div>
+      </div>
+      <div class="go"><div class="free">Free</div><div class="arr">${label(p)} ↗</div></div>`;
+    rows.appendChild(a);
+  });
+  document.querySelectorAll('.reveal:not(.in)').forEach(e=>obs.observe(e));
+}
+const obs=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');obs.unobserve(e.target)}}),{threshold:.05,rootMargin:'0px 0px -30px'});
+render();
+document.querySelectorAll('.reveal').forEach(e=>obs.observe(e));
+</script>
+</body>
+</html>

@@ -1,0 +1,705 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Unity Editor — mockup</title>
+<style>
+/* ── Unity dark theme ─────────────────────────────────────────── */
+:root{
+  --bg:#1e1e1e; --panel:#383838; --panel2:#2f2f2f; --head:#2d2d2d;
+  --line:#232323; --txt:#d2d2d2; --txt2:#8f8f8f;
+  --sel:#2c5d87; --acc:#ff8c1a; --ok:#7ddc6a; --warn:#ffd24a;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --tint:0;                      /* play-mode blue wash over the whole editor */
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{
+  background:var(--bg);color:var(--txt);
+  font:12px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;user-select:none;
+}
+#app{display:grid;height:100%;
+  grid-template-columns:236px 1fr 320px;
+  grid-template-rows:34px 1fr 132px;
+  grid-template-areas:"bar bar bar" "hier view insp" "cons cons cons";
+  gap:2px;padding:2px;background:var(--line)}
+.pane{background:var(--panel);display:flex;flex-direction:column;min-height:0;overflow:hidden}
+.tab{background:var(--head);height:24px;display:flex;align-items:center;gap:7px;
+  padding:0 11px;font-size:11.5px;color:var(--txt);flex:none;border-bottom:1px solid var(--line)}
+.tab s{width:11px;height:11px;border-radius:2px;text-decoration:none;flex:none;opacity:.8}
+.body{flex:1;overflow-y:auto;overflow-x:hidden}
+
+/* ── toolbar ──────────────────────────────────────────────────── */
+#bar{grid-area:bar;background:var(--head);display:flex;align-items:center;
+  padding:0 10px;gap:14px;border-bottom:1px solid var(--line)}
+#bar .grp{display:flex;gap:2px}
+#bar button{background:#454545;border:1px solid #2a2a2a;color:var(--txt);
+  height:22px;min-width:30px;padding:0 8px;cursor:pointer;font:12px/1 var(--mono);
+  display:grid;place-items:center}
+#bar button:hover{background:#525252}
+#bar button.on{background:var(--sel);border-color:#1d3e5c;color:#fff}
+#play{min-width:40px!important;font-size:13px!important}
+#bar .sp{flex:1}
+#bar .who{display:flex;align-items:center;gap:8px;color:var(--txt2);font-size:11.5px}
+#bar .who img{width:20px;height:20px;border-radius:3px;object-fit:cover}
+#bar .ttl{font-weight:600;letter-spacing:.01em}
+#bar .ttl b{color:var(--acc)}
+
+/* ── hierarchy ────────────────────────────────────────────────── */
+#hier{grid-area:hier}
+.row{display:flex;align-items:center;gap:6px;height:21px;padding:0 8px;cursor:pointer;
+  white-space:nowrap;font-size:12px}
+.row:hover{background:#434343}
+.row.sel{background:var(--sel);color:#fff}
+.row .tw{width:11px;text-align:center;color:var(--txt2);font-size:8px;flex:none}
+.row.sel .tw{color:#cfe4f5}
+.row .ico{width:13px;height:13px;border-radius:2px;flex:none}
+.row .nm{overflow:hidden;text-overflow:ellipsis}
+.row .ct{margin-left:auto;color:var(--txt2);font:10px/1 var(--mono);flex:none}
+.row.sel .ct{color:#bdd8ee}
+.kid{padding-left:26px}
+.kid2{padding-left:44px}
+.grp0>.nm{font-weight:600}
+
+/* ── inspector ────────────────────────────────────────────────── */
+#insp{grid-area:insp}
+#insp .body{padding:0 0 12px}
+.ihead{display:flex;align-items:center;gap:8px;padding:9px 10px;border-bottom:1px solid var(--line)}
+.ihead .ico{width:18px;height:18px;border-radius:3px;flex:none}
+.ihead input{background:#2b2b2b;border:1px solid #1f1f1f;color:var(--txt);
+  font:600 12px/1 inherit;padding:5px 7px;flex:1;min-width:0}
+.comp{border-bottom:1px solid var(--line)}
+.chead{display:flex;align-items:center;gap:7px;padding:7px 10px;background:var(--panel2);
+  font-weight:600;font-size:11.5px}
+.chead s{width:13px;height:13px;border-radius:2px;text-decoration:none;flex:none}
+.chead .tw{color:var(--txt2);font-size:8px}
+.cbody{padding:7px 10px 10px}
+.f{display:grid;grid-template-columns:88px 1fr;gap:6px;align-items:center;
+  padding:2.5px 0;font-size:11.5px}
+.f>span{color:var(--txt2);overflow:hidden;text-overflow:ellipsis}
+.f>div{background:#2b2b2b;border:1px solid #1f1f1f;padding:3.5px 7px;
+  font:11.5px/1.35 var(--mono);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.f>div.plain{background:none;border:0;padding:3.5px 0;white-space:normal;font-family:inherit}
+.v3{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+.v3 i{display:flex;align-items:center;gap:4px;background:#2b2b2b;border:1px solid #1f1f1f;
+  padding:3.5px 5px;font:11px/1 var(--mono);font-style:normal;color:var(--txt2)}
+.v3 i b{color:var(--txt);font-weight:400}
+.thumb{width:100%;aspect-ratio:16/10;object-fit:cover;background:#2b2b2b;
+  border:1px solid #1f1f1f;display:block}
+.btns{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}
+.btns a{background:#454545;border:1px solid #2a2a2a;color:var(--txt);padding:6px 10px;
+  text-decoration:none;font:11.5px/1 var(--mono);cursor:pointer}
+.btns a:hover{background:#525252}
+.btns a.pri{background:var(--acc);border-color:#c96b0c;color:#231204;font-weight:700}
+.tagrow{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}
+.tagrow i{font-style:normal;font:10px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;
+  border:1px solid #4a4a4a;color:var(--txt2);padding:4px 7px;border-radius:2px}
+.empty{padding:26px 16px;color:var(--txt2);text-align:center;font-size:11.5px;line-height:1.8}
+
+/* ── scene view ───────────────────────────────────────────────── */
+#view{grid-area:view;position:relative;background:#2b2b2b}
+#cv{position:absolute;inset:0;width:100%;height:100%;display:block}
+#vbar{position:absolute;left:0;right:0;top:0;height:24px;background:rgba(45,45,45,.94);
+  display:flex;align-items:center;gap:8px;padding:0 10px;font-size:11.5px;
+  border-bottom:1px solid var(--line);pointer-events:none;z-index:2}
+#vbar s{width:11px;height:11px;border-radius:2px;text-decoration:none}
+#vbar .sp{flex:1}
+#vbar em{font-style:normal;color:var(--txt2);font:10.5px/1 var(--mono)}
+#stats{position:absolute;right:8px;bottom:8px;background:rgba(28,28,28,.9);
+  border:1px solid #111;padding:8px 11px;font:10.5px/1.7 var(--mono);color:var(--txt2);z-index:2;
+  pointer-events:none}
+#stats b{color:var(--txt);font-weight:400}
+#hint{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);z-index:2;
+  background:rgba(28,28,28,.88);border:1px solid #111;padding:7px 13px;
+  font:11px/1 var(--mono);color:var(--txt2);pointer-events:none;white-space:nowrap;
+  transition:opacity .35s}
+#hint b{color:var(--acc)}
+#label{position:absolute;z-index:2;pointer-events:none;opacity:0;transition:opacity .12s;
+  background:rgba(20,20,20,.92);border:1px solid var(--acc);padding:5px 9px;
+  font:11.5px/1 var(--mono);color:#fff;white-space:nowrap;transform:translate(-50%,-190%)}
+#label.on{opacity:1}
+#playfx{position:absolute;inset:0;z-index:1;pointer-events:none;opacity:0;
+  transition:opacity .5s;background:radial-gradient(ellipse at 50% 62%,transparent 30%,rgba(4,6,20,.55) 100%)}
+body.play #playfx{opacity:1}
+
+/* the whole editor takes a blue wash in play mode, exactly like Unity */
+#tint{position:fixed;inset:0;background:#1b3a6b;opacity:0;pointer-events:none;z-index:50;
+  mix-blend-mode:soft-light;transition:opacity .45s}
+body.play #tint{opacity:.3}
+
+/* ── console ──────────────────────────────────────────────────── */
+#cons{grid-area:cons}
+#cons .body{padding:2px 0;font:11.5px/1.55 var(--mono)}
+.log{display:flex;gap:9px;padding:3px 11px;border-bottom:1px solid #303030;color:var(--txt2)}
+.log s{text-decoration:none;flex:none;width:12px;text-align:center}
+.log.i s{color:#7fb3e8}.log.k s{color:var(--ok)}.log.w s{color:var(--warn)}
+.log b{color:var(--txt);font-weight:400}
+.log .t{margin-left:auto;color:#666;flex:none}
+
+#note{position:fixed;left:0;right:0;bottom:0;z-index:60;background:#0d1330;color:#fff3e2;
+  padding:11px 18px;font:12px/1.6 -apple-system,system-ui,sans-serif;display:flex;
+  align-items:center;gap:14px;border-top:2px solid var(--acc)}
+#note b{color:var(--acc)}
+#note a{color:#7ee0ff}
+#note button{margin-left:auto;background:none;border:1px solid #ffffff40;color:#fff3e2;
+  padding:5px 12px;cursor:pointer;font:11px/1 var(--mono);flex:none}
+#note.off{display:none}
+
+@media (max-width:1080px){
+  #app{grid-template-columns:1fr;grid-template-rows:34px 42vh 1fr 96px;
+    grid-template-areas:"bar" "view" "insp" "cons"}
+  #hier{display:none}
+}
+</style>
+
+<div id="app">
+  <!-- ── toolbar ── -->
+  <div id="bar">
+    <div class="grp">
+      <button title="Hand">✋</button><button title="Move" class="on">✥</button>
+      <button title="Rotate">⟳</button><button title="Scale">⤡</button>
+    </div>
+    <div class="sp"></div>
+    <div class="grp">
+      <button id="play" title="Play">▶</button>
+      <button id="pause" title="Pause">❚❚</button>
+      <button title="Step">▶❙</button>
+    </div>
+    <div class="sp"></div>
+    <div class="ttl">Portfolio<b>.unity</b> — Duy Ngoc</div>
+    <div class="who"><img src="../images/user.jpg" alt=""><span>duy.ongoc</span></div>
+  </div>
+
+  <!-- ── hierarchy ── -->
+  <div class="pane" id="hier">
+    <div class="tab"><s style="background:#8fb4d9"></s>Hierarchy</div>
+    <div class="body" id="tree"></div>
+  </div>
+
+  <!-- ── scene view ── -->
+  <div id="view">
+    <div id="vbar">
+      <s style="background:#8fd9b4"></s><span id="vmode">Scene</span>
+      <em>· Shaded · 2D off · Gizmos on</em>
+      <div class="sp"></div>
+      <em id="vsel">Nothing selected</em>
+    </div>
+    <canvas id="cv"></canvas>
+    <div id="playfx"></div>
+    <div id="label"></div>
+    <div id="stats">
+      Tris <b id="sTris">—</b><br>Batches <b id="sBat">—</b><br>FPS <b id="sFps">—</b>
+    </div>
+    <div id="hint">Kéo chuột để xoay · rê vào một khối để chọn · bấm <b>▶</b> để vào Play Mode</div>
+  </div>
+
+  <!-- ── inspector ── -->
+  <div class="pane" id="insp">
+    <div class="tab"><s style="background:#d9c48f"></s>Inspector</div>
+    <div class="body" id="ibody"></div>
+  </div>
+
+  <!-- ── console ── -->
+  <div class="pane" id="cons">
+    <div class="tab"><s style="background:#d98f8f"></s>Console</div>
+    <div class="body" id="clog"></div>
+  </div>
+</div>
+<div id="tint"></div>
+
+<div id="note">
+  <div><b>Đây là mockup bố cục</b> — khối xám trong scene là chỗ dành cho model của bạn.
+  Cái cần cảm nhận là <b>khoảnh khắc bấm ▶</b>: cùng một scene, đổi hoàn toàn.
+  <a href="index.html">← các bản thiết kế khác</a></div>
+  <button onclick="document.getElementById('note').classList.add('off')">Ẩn</button>
+</div>
+
+<script src="data.js"></script>
+<script src="vshared.js"></script>
+<script>
+addEventListener('error',e=>{
+  const l=document.getElementById('hint');
+  if(l){l.innerHTML='<b>Lỗi:</b> '+(e.message||e.error);l.style.opacity=1}
+});
+</script>
+<script type="module">
+import * as T from './lib/three.module.min.js';
+
+const V=(x,y,z)=>new T.Vector3(x,y,z);
+const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+const hexs=c=>'#'+c.toString(16).padStart(6,'0');
+const games=(typeof GAMES!=='undefined'?GAMES:[]);
+const bySec=s=>games.filter(g=>g.section===s);
+const thumb=p=>p?p.replace('../images/','../images/thumb/').replace(/\.(jpe?g|png)$/i,'.jpg'):'';
+
+/* ═══ what lives in the scene ═══════════════════════════════════
+   Each entry becomes one selectable GameObject in the viewport and one row
+   in the Hierarchy. The geometry here is deliberately blank grey massing —
+   it is the footprint your real models drop into. */
+const NODES=[
+  {id:'career', name:'Career_Street',  col:0xffb46a, kind:'jobs',
+   items:(typeof JOBS!=='undefined'?JOBS:[]), pos:[-30,0,-14], build:'row'},
+  {id:'ar',     name:'AR_Lab',         col:0xff5c8a, kind:'games',
+   items:bySec('AR Games'),               pos:[-16,0,26],  build:'booth'},
+  {id:'mp',     name:'Netcode_Server',  col:0x22e0ff, kind:'games',
+   items:bySec('Multiplayer Games'),      pos:[14,0,-24],  build:'racks'},
+  {id:'mine',   name:'Arcade_Hall',     col:0xb6ff3a, kind:'games',
+   items:bySec('MY GAMES'),               pos:[16,0,10],   build:'hall'},
+  {id:'reskin', name:'Prototype_Yard',  col:0x9b8bff, kind:'games',
+   items:bySec('RESKIN'),                 pos:[-6,0,-40],  build:'yard'},
+  {id:'contact',name:'Mailbox',         col:0xffe08a, kind:'links',
+   items:[{title:'Email',desc:'ongocduy.dev@gmail.com',url:'mailto:ongocduy.dev@gmail.com'},
+          {title:'Github',desc:'github.com/duyongoc',url:'https://github.com/duyongoc'},
+          {title:'CV',desc:'PDF mới nhất',url:'https://drive.google.com/file/d/1Dg0RwxwD1Mo2dcrAQM__pCDnZUCc6c6g/view?usp=sharing'}],
+   pos:[30,0,20], build:'post'}
+];
+
+/* ═══ renderer ══════════════════════════════════════════════════ */
+const cv=document.getElementById('cv');
+let renderer;
+try{ renderer=new T.WebGLRenderer({canvas:cv,antialias:true}); }
+catch(e){ document.getElementById('hint').textContent='Trình duyệt không bật được WebGL.'; throw e }
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.75));
+
+const scene=new T.Scene();
+const camera=new T.PerspectiveCamera(42,1,.5,900);
+const EDIT_BG=new T.Color(0x323232), PLAY_BG=new T.Color(0x0b1024);
+scene.background=EDIT_BG.clone();
+/* Fog stays attached in both modes and is pushed past the far plane instead of
+   being removed — swapping scene.fog on and off changes the shader defines and
+   forces every material to recompile. near must never exceed far: GLSL
+   smoothstep with edge0 > edge1 returns 1, which fogs the whole scene to solid
+   colour (that is what turned every block black in edit mode). */
+scene.fog=new T.Fog(EDIT_BG.getHex(),960,1220);
+
+/* ── lights: an unlit-looking edit mode, a lit play mode ── */
+const amb=new T.HemisphereLight(0xdfe6ef,0x5c6470,1.55); scene.add(amb);
+const key=new T.DirectionalLight(0xffffff,.35); key.position.set(40,70,30); scene.add(key);
+const moon=new T.DirectionalLight(0x8fb8ff,0); moon.position.set(-40,60,-30); scene.add(moon);
+const lamps=[];                                   // warm point lights, dark until Play
+
+/* ═══ the Unity grid ════════════════════════════════════════════
+   Drawn in world space on a big plane and faded by distance, so it reads as
+   the editor's infinite grid rather than a texture. */
+const grid=new T.Mesh(new T.PlaneGeometry(900,900),new T.ShaderMaterial({
+  transparent:true,depthWrite:false,fog:false,
+  uniforms:{op:{value:1}},
+  vertexShader:'varying vec3 w;void main(){w=(modelMatrix*vec4(position,1.)).xyz;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
+  fragmentShader:`
+    varying vec3 w;uniform float op;
+    float line(vec2 p,float s){
+      vec2 g=abs(fract(p/s-.5)-.5)/fwidth(p/s);
+      return 1.-min(min(g.x,g.y),1.);
+    }
+    void main(){
+      float f=line(w.xz,1.)*.28+line(w.xz,10.)*.5;
+      float d=1.-smoothstep(60.,230.,length(w.xz));
+      float ax=1.-min(abs(w.x)/fwidth(w.x)*.5,1.);
+      float az=1.-min(abs(w.z)/fwidth(w.z)*.5,1.);
+      vec3 c=vec3(.42);
+      c=mix(c,vec3(.55,.25,.25),az); c=mix(c,vec3(.25,.35,.55),ax);
+      float a=max(f,max(ax,az))*d*op;
+      if(a<.004) discard;
+      gl_FragColor=vec4(c,a);
+    }`
+}));
+grid.rotation.x=-Math.PI/2; grid.position.y=.01; scene.add(grid);
+
+const ground=new T.Mesh(new T.PlaneGeometry(400,400),
+  new T.MeshLambertMaterial({color:0x3a3d42}));
+ground.rotation.x=-Math.PI/2; ground.position.y=-.02; scene.add(ground);
+
+/* ═══ placeholder massing ═══════════════════════════════════════
+   Grey untextured boxes: obviously stand-ins. Each NODE is one Group and the
+   whole Group is the selectable unit. */
+const GREY=0x9aa0a8;
+const box=(w,h,d,x,y,z,tone=1)=>{
+  const m=new T.Mesh(new T.BoxGeometry(w,h,d),
+    new T.MeshLambertMaterial({color:new T.Color(GREY).multiplyScalar(tone)}));
+  m.position.set(x,y+h/2,z); return m;
+};
+const rng=s=>()=>((s=s*16807%2147483647)/2147483647);
+
+/* ── the glow rig ───────────────────────────────────────────────
+   What actually sells a night scene is surfaces that emit, not lamps that
+   shine: lit windows, cabinet screens, rack LEDs. These quads sit dead grey in
+   edit mode and blaze in play mode, each backed by an additive sprite that
+   fakes the bloom we cannot afford a post-processing pass for. */
+const DARK=new T.Color(0x2b2f36);
+const glows=[], halos=[];
+const haloTex=(()=>{
+  const c=document.createElement('canvas'); c.width=c.height=128;
+  const x=c.getContext('2d'), g=x.createRadialGradient(64,64,0,64,64,64);
+  g.addColorStop(0,'rgba(255,255,255,1)'); g.addColorStop(.35,'rgba(255,255,255,.42)');
+  g.addColorStop(1,'rgba(255,255,255,0)');
+  x.fillStyle=g; x.fillRect(0,0,128,128);
+  return new T.CanvasTexture(c);
+})();
+const glow=(g,w,h,x,y,z,col,ry=0)=>{
+  const m=new T.Mesh(new T.PlaneGeometry(w,h),
+    new T.MeshBasicMaterial({color:DARK.clone(),toneMapped:false,side:T.DoubleSide,fog:false}));
+  m.position.set(x,y,z); m.rotation.y=ry;
+  g.add(m); glows.push({m,col:new T.Color(col)});
+  return m;
+};
+const halo=(g,x,y,z,size,col)=>{
+  const s=new T.Sprite(new T.SpriteMaterial({map:haloTex,color:new T.Color(col),
+    transparent:true,blending:T.AdditiveBlending,depthWrite:false,opacity:0,fog:false}));
+  s.position.set(x,y,z); s.scale.setScalar(size); g.add(s); halos.push(s);
+};
+
+const picks=[];
+NODES.forEach((n,ni)=>{
+  const g=new T.Group(); g.position.set(n.pos[0],0,n.pos[2]);
+  const r=rng(17+ni*13);
+  const N=n.items.length;
+
+  if(n.build==='row'){                    // four storefronts, one per studio
+    for(let i=0;i<Math.max(4,N);i++){
+      const h=7+ (i%3)*2.4, x=i*8.4-13;
+      g.add(box(7,h,8,x,0,0,.92+ (i%2)*.1));
+      g.add(box(7.8,.6,8.8,x,h,0,.72));              // cornice
+      glow(g,4.6,1.5,x,h*.62,4.06,n.col);            // shop sign
+      glow(g,1.5,1.9,x-1.6,h*.28,4.06,0xffe6b8);     // windows
+      glow(g,1.5,1.9,x+1.6,h*.28,4.06,0xffe6b8);
+      halo(g,x,h*.62,5,9,n.col);
+    }
+  }else if(n.build==='booth'){
+    g.add(box(9,4,9,0,0,0,.9));
+    g.add(box(1,7,1,0,4,0,.7));
+    const ico=new T.Mesh(new T.IcosahedronGeometry(2.4,0),
+      new T.MeshBasicMaterial({color:DARK.clone(),flatShading:true,toneMapped:false,fog:false}));
+    ico.position.set(0,11.5,0); ico.userData.spin=1; g.add(ico);
+    glows.push({m:ico,col:new T.Color(n.col)});
+    halo(g,0,11.5,0,9,n.col);
+    glow(g,6,.4,0,4.1,4.56,n.col);
+  }else if(n.build==='racks'){
+    for(let i=0;i<Math.max(3,N);i++){
+      const x=i*4.6-4.6;
+      g.add(box(3.4,9,6,x,0,0,.85+(i%2)*.12));
+      for(let k=0;k<5;k++) glow(g,2.5,.22,x,1.6+k*1.5,3.06,n.col);   // rack LEDs
+      halo(g,x,5,3.6,7,n.col);
+    }
+    g.add(box(16,.7,8,0,9,0,.7));
+  }else if(n.build==='hall'){             // arcade: one shed + a cabinet per game
+    g.add(box(26,11,16,0,0,0,.95));
+    g.add(box(27.5,.9,17.5,0,11,0,.72));
+    glow(g,15,2.2,0,8,8.06,n.col);                   // the ARCADE sign
+    halo(g,0,8,9.5,26,n.col);
+    for(let i=0;i<N;i++){
+      const c=Math.floor(i/2), s=i%2?1:-1, x=c*4-10, z=s*9.2;
+      g.add(box(2.2,4.2,1.6,x,0,z,.8));
+      glow(g,1.6,1.5,x,2.9,z+s*.83,0x9fe8ff);        // 12 cabinet screens
+      halo(g,x,2.9,z+s*1.6,5.5,0x7fd8ff);
+    }
+  }else if(n.build==='yard'){             // a crate per prototype
+    for(let i=0;i<N;i++){
+      const c=i%5, rw=Math.floor(i/5), x=c*4.2-8.4, z=rw*4.2-4.2;
+      g.add(box(3.2,3.2,3.2,x,0,z,.82+(i%3)*.08));
+      if(i%3===0){ glow(g,1.8,.3,x,2.2,z+1.63,n.col); halo(g,x,2.2,z+2,4.5,n.col) }
+    }
+    g.add(box(24,.5,16,0,-.5,0,.7));
+  }else{                                  // mailbox + lamp post
+    g.add(box(2.4,3,1.8,0,3.2,0,.9));
+    g.add(box(.7,3.2,.7,0,0,0,.7));
+    g.add(box(.6,9,.6,4.4,0,0,.7));
+    g.add(box(1.8,1.8,1.8,4.4,9,0,1.05));
+    [[0,0,.91],[0,Math.PI/2,.91]].forEach(([,ry])=>glow(g,1.7,1.7,4.4,9.9,0,0xffd58a,ry));
+    halo(g,4.4,9.9,0,17,0xffb44a);
+    glow(g,1.6,.5,0,4.4,.92,n.col);
+  }
+
+  // warm point light per node. PointLight intensity is candela with decay 2, so
+  // it falls off as 1/d² — the numbers have to be in the hundreds, not single
+  // digits, or nothing reaches the ground at all.
+  const L=new T.PointLight(n.col,0,110,2);
+  L.position.set(0,n.build==='hall'?12:8,n.build==='hall'?11:4);
+  g.add(L); lamps.push({L,col:n.col,peak:n.build==='hall'?900:520});
+
+  scene.add(g);
+  n.grp=g;
+  n.bbox=new T.Box3().setFromObject(g);
+  g.traverse(o=>{ if(o.isMesh){ o.userData.node=n; picks.push(o) } });
+});
+
+/* ── selection: Unity draws orange bounds + a move gizmo ── */
+const bounds=new T.Box3Helper(new T.Box3(),new T.Color(0xff8c1a));
+bounds.visible=false; scene.add(bounds);
+
+const gizmo=new T.Group(); gizmo.visible=false; scene.add(gizmo);
+[[0xff4d4d,V(1,0,0)],[0x66dd55,V(0,1,0)],[0x4d8cff,V(0,0,1)]].forEach(([c,d])=>{
+  const m=new T.MeshBasicMaterial({color:c,depthTest:false,transparent:true});
+  const sh=new T.Mesh(new T.CylinderGeometry(.13,.13,5,6),m);
+  const tp=new T.Mesh(new T.ConeGeometry(.42,1.3,7),m);
+  const q=new T.Quaternion().setFromUnitVectors(V(0,1,0),d);
+  sh.position.copy(d).multiplyScalar(2.5); sh.quaternion.copy(q);
+  tp.position.copy(d).multiplyScalar(5.6); tp.quaternion.copy(q);
+  gizmo.add(sh,tp);
+});
+
+/* ═══ camera orbit — drag to move ═══════════════════════════════ */
+const TARGET=V(2,4,-2);
+let yaw=-.72, pit=.60, dist=126;
+let tYaw=yaw, tPit=pit, tDist=dist;
+let drag=false, lx=0, ly=0, moved=0;
+
+cv.addEventListener('pointerdown',e=>{drag=true;moved=0;lx=e.clientX;ly=e.clientY;cv.setPointerCapture(e.pointerId)});
+cv.addEventListener('pointerup',e=>{drag=false;cv.releasePointerCapture(e.pointerId)});
+cv.addEventListener('pointerleave',()=>drag=false);
+addEventListener('pointermove',e=>{
+  const r=cv.getBoundingClientRect();
+  ptr.set(((e.clientX-r.left)/r.width)*2-1,-((e.clientY-r.top)/r.height)*2+1);
+  mx=e.clientX-r.left; my=e.clientY-r.top;
+  if(drag){
+    const dx=e.clientX-lx, dy=e.clientY-ly; lx=e.clientX; ly=e.clientY;
+    moved+=Math.abs(dx)+Math.abs(dy);
+    tYaw-=dx*.0055; tPit=clamp(tPit-dy*.004,.12,1.32);
+  }
+});
+cv.addEventListener('wheel',e=>{e.preventDefault();tDist=clamp(tDist+e.deltaY*.12,42,240)},{passive:false});
+
+/* ═══ hover + select ════════════════════════════════════════════ */
+const ray=new T.Raycaster(), ptr=new T.Vector2(-9,-9);
+let mx=0,my=0, hover=null, selected=null;
+const label=document.getElementById('label');
+const vsel=document.getElementById('vsel');
+
+function setHover(n){
+  if(n===hover) return;
+  hover=n; cv.style.cursor=n?'pointer':(drag?'grabbing':'grab');
+  if(n){ label.textContent=n.name; label.classList.add('on') }
+  else label.classList.remove('on');
+  paintTree();
+}
+function select(n){
+  selected=n; paintTree(); paintInspector();
+  vsel.textContent=n?n.name:'Nothing selected';
+  if(n){
+    n.bbox.setFromObject(n.grp);
+    bounds.box.copy(n.bbox); bounds.visible=!play;
+    const c=n.bbox.getCenter(new T.Vector3());
+    gizmo.position.set(c.x,n.bbox.min.y+.5,c.z); gizmo.visible=!play;
+  }else{ bounds.visible=false; gizmo.visible=false }
+}
+
+/* ═══ hierarchy ═════════════════════════════════════════════════ */
+const tree=document.getElementById('tree');
+const open={};
+function paintTree(){
+  const rows=[];
+  rows.push(`<div class="row grp0" data-r="root"><s class="tw">▼</s>
+    <s class="ico" style="background:#7fb3e8"></s><span class="nm">Portfolio</span>
+    <span class="ct">${NODES.length}</span></div>`);
+  NODES.forEach(n=>{
+    const on=selected===n, hv=hover===n;
+    rows.push(`<div class="row kid ${on?'sel':''}" data-n="${n.id}"
+      style="${hv&&!on?'background:#4a4a4a':''}">
+      <s class="tw">${open[n.id]?'▼':'▶'}</s>
+      <s class="ico" style="background:${hexs(n.col)}"></s>
+      <span class="nm">${n.name}</span><span class="ct">${n.items.length}</span></div>`);
+    if(open[n.id]) n.items.forEach((it,i)=>{
+      const t=it.title||it.t||'—';
+      const on2=selected===n&&selIdx===i;
+      rows.push(`<div class="row kid2 ${on2?'sel':''}" data-n="${n.id}" data-i="${i}">
+        <s class="tw"></s><s class="ico" style="background:#6e6e6e"></s>
+        <span class="nm">${t}</span></div>`);
+    });
+  });
+  tree.innerHTML=rows.join('');
+}
+let selIdx=-1;
+tree.onclick=e=>{
+  const r=e.target.closest('.row'); if(!r) return;
+  const id=r.dataset.n; if(!id) return;
+  const n=NODES.find(q=>q.id===id);
+  if(r.dataset.i!==undefined){ selIdx=+r.dataset.i; select(n) }
+  else{ open[id]=!open[id]; selIdx=-1; select(n) }
+};
+tree.onmousemove=e=>{
+  const r=e.target.closest('.row');
+  setHover(r&&r.dataset.n?NODES.find(q=>q.id===r.dataset.n):null);
+};
+tree.onmouseleave=()=>setHover(null);
+
+/* ═══ inspector ═════════════════════════════════════════════════ */
+const ibody=document.getElementById('ibody');
+const F=(k,v,mono=true)=>`<div class="f"><span>${k}</span><div class="${mono?'':'plain'}">${v}</div></div>`;
+function paintInspector(){
+  if(!selected){
+    ibody.innerHTML=`<div class="empty">Chưa chọn gì.<br>Rê chuột vào một khối trong Scene<br>hoặc bấm một dòng trong Hierarchy.</div>`;
+    return;
+  }
+  const n=selected;
+  const it=selIdx>=0?n.items[selIdx]:null;
+  const name=it?(it.title||it.t):n.name;
+  const P=n.pos;
+  let h=`<div class="ihead"><s class="ico" style="background:${hexs(n.col)}"></s>
+    <input value="${name}" readonly></div>`;
+
+  h+=`<div class="comp"><div class="chead"><s class="tw">▼</s>
+      <s style="background:#8f8f8f"></s>Transform</div><div class="cbody">
+      <div class="f"><span>Position</span><div class="v3" style="background:none;border:0;padding:0">
+        <i>X<b>${P[0].toFixed(1)}</b></i><i>Y<b>0.0</b></i><i>Z<b>${P[2].toFixed(1)}</b></i></div></div>
+      <div class="f"><span>Rotation</span><div class="v3" style="background:none;border:0;padding:0">
+        <i>X<b>0</b></i><i>Y<b>0</b></i><i>Z<b>0</b></i></div></div>
+      <div class="f"><span>Scale</span><div class="v3" style="background:none;border:0;padding:0">
+        <i>X<b>1</b></i><i>Y<b>1</b></i><i>Z<b>1</b></i></div></div>
+    </div></div>`;
+
+  if(!it){
+    h+=`<div class="comp"><div class="chead"><s class="tw">▼</s>
+      <s style="background:${hexs(n.col)}"></s>Portfolio Section (Script)</div><div class="cbody">
+      ${F('Section',n.name)}
+      ${F('Entries',n.items.length)}
+      ${F('Status','<span style="color:var(--ok)">● Shipped</span>')}
+      <div class="f"><span>Children</span><div class="plain" style="color:var(--txt2)">
+        Mở mũi tên ▶ bên Hierarchy để xem từng mục</div></div>
+    </div></div>`;
+  }else if(n.kind==='games'){
+    const play0=(typeof playOf!=='undefined')?playOf(it):it.links[0];
+    const cat=(typeof CAT!=='undefined'&&CAT[it.cat])?CAT[it.cat].long:it.cat;
+    h+=`<div class="comp"><div class="chead"><s class="tw">▼</s>
+      <s style="background:${hexs(n.col)}"></s>Game Project (Script)</div><div class="cbody">
+      <img class="thumb" src="${thumb(it.info)}" onerror="this.onerror=null;this.src='${thumb(it.intro)}'">
+      <div style="height:8px"></div>
+      ${F('Title',it.title)}
+      ${F('Category',cat)}
+      ${F('Section',it.section)}
+      ${F('Engine',it.sub||'Unity · C#')}
+      ${F('Status',it.wip?'<span style="color:var(--warn)">● In progress</span>':'<span style="color:var(--ok)">● Shipped</span>')}
+      <div class="f" style="grid-template-columns:1fr;gap:2px"><span>Description</span>
+        <div class="plain">${it.desc||'—'}</div></div>
+      <div class="btns">${it.links.map(l=>
+        `<a class="${l===play0?'pri':''}" href="${l.url}" target="_blank" rel="noopener">${l.label||l.kind}</a>`).join('')}</div>
+      <div class="tagrow">${(it.tags||[]).map(t=>`<i>${t}</i>`).join('')}</div>
+    </div></div>`;
+  }else if(n.kind==='jobs'){
+    h+=`<div class="comp"><div class="chead"><s class="tw">▼</s>
+      <s style="background:${hexs(n.col)}"></s>Career Entry (Script)</div><div class="cbody">
+      ${F('Period',it.yr||'—')}
+      ${F('Role',it.t||'—')}
+      ${F('Company',it.co||'—')}
+      <div class="f" style="grid-template-columns:1fr;gap:2px"><span>Notes</span>
+        <div class="plain">${(it.p||'')+(it.ul?'<br>• '+it.ul.join('<br>• '):'')}</div></div>
+    </div></div>`;
+  }else{
+    h+=`<div class="comp"><div class="chead"><s class="tw">▼</s>
+      <s style="background:${hexs(n.col)}"></s>Contact (Script)</div><div class="cbody">
+      ${F('Channel',it.title)}
+      ${F('Value',it.desc)}
+      <div class="btns"><a class="pri" href="${it.url}" target="_blank" rel="noopener">Mở ${it.title}</a></div>
+    </div></div>`;
+  }
+  ibody.innerHTML=h;
+}
+
+/* ═══ console ═══════════════════════════════════════════════════ */
+const nWebgl=games.filter(g=>g.links.some(l=>l.kind==='WebGL')).length;
+const nPlay=games.filter(g=>g.links.some(l=>l.kind==='Android')).length;
+const LOGS=[
+  ['k','Build succeeded — <b>'+games.length+'</b> projects imported'],
+  ['i','<b>'+nWebgl+'</b> WebGL builds · <b>'+nPlay+'</b> Google Play releases'],
+  ['i','Career_Street: 4 studios linked (Gameloft → Sipher → Bacoor → Optimizer)'],
+  ['k','Netcode_Server: 0 desync reported in 6 years'],
+  ['w','Arcade_Hall: 12 cabinets waiting for art — placeholder mesh in use'],
+  ['i','Prototype_Yard: 15 crates instanced'],
+  ['k','Ready. Press <b>Play</b> to enter Play Mode.']
+];
+document.getElementById('clog').innerHTML=LOGS.map(([k,t],i)=>
+  `<div class="log ${k}"><s>${k==='k'?'✔':k==='w'?'▲':'ⓘ'}</s><span>${t}</span>
+   <span class="t">0${i}:0${(i*7)%6}${i}</span></div>`).join('');
+
+/* ═══ PLAY MODE — same scene, different world ═══════════════════ */
+let play=false, blend=0;
+const btnPlay=document.getElementById('play'), btnPause=document.getElementById('pause');
+const vmode=document.getElementById('vmode'), hint=document.getElementById('hint');
+
+function setPlay(on){
+  if(play===on) return;
+  play=on;
+  document.body.classList.toggle('play',on);
+  btnPlay.classList.toggle('on',on);
+  btnPlay.textContent=on?'❚❚':'▶';
+  vmode.textContent=on?'Game':'Scene';
+  document.querySelector('#vbar em').textContent=on?'· Play Mode · 60 fps':'· Shaded · 2D off · Gizmos on';
+  bounds.visible=!!selected&&!on; gizmo.visible=!!selected&&!on;
+  hint.innerHTML=on
+    ? 'Đang ở <b>Play Mode</b> — vẫn đúng scene đó, chỉ đổi ánh sáng và vật liệu. Bấm <b>❚❚</b> để về Editor.'
+    : 'Kéo chuột để xoay · rê vào một khối để chọn · bấm <b>▶</b> để vào Play Mode';
+  if(on){ tPit=.28; tDist=104 } else { tPit=.60; tDist=126 }
+}
+btnPlay.onclick=()=>setPlay(!play);
+btnPause.onclick=()=>setPlay(false);
+addEventListener('keydown',e=>{
+  if(e.key==='Escape'){ play?setPlay(false):select(null) }
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='p'){ e.preventDefault(); setPlay(!play) }
+});
+
+cv.addEventListener('click',()=>{ if(moved<6) select(hover) });
+
+/* ═══ loop ══════════════════════════════════════════════════════ */
+let fps=60, last=performance.now(), tris=0, alive=true;
+document.addEventListener('visibilitychange',()=>alive=!document.hidden);
+const sTris=document.getElementById('sTris'), sBat=document.getElementById('sBat'), sFps=document.getElementById('sFps');
+
+function resize(){
+  const r=cv.getBoundingClientRect();
+  if(!r.width||!r.height) return;
+  camera.aspect=r.width/r.height; camera.updateProjectionMatrix();
+  renderer.setSize(r.width,r.height,false);
+}
+new ResizeObserver(resize).observe(document.getElementById('view'));
+resize();
+
+const camPos=new T.Vector3();
+function tick(now){
+  requestAnimationFrame(tick);
+  if(!alive) return;
+  const dt=Math.min(50,now-last); last=now;
+  fps+=((1000/Math.max(1,dt))-fps)*.06;
+
+  yaw+=(tYaw-yaw)*.11; pit+=(tPit-pit)*.11; dist+=(tDist-dist)*.09;
+  camPos.set(Math.sin(yaw)*Math.cos(pit),Math.sin(pit),Math.cos(yaw)*Math.cos(pit))
+        .multiplyScalar(dist).add(TARGET);
+  camera.position.copy(camPos); camera.lookAt(TARGET);
+
+  /* the one transition that carries the whole idea */
+  blend+=((play?1:0)-blend)*.055;
+  const b=blend<.001?0:blend>.999?1:blend;
+  scene.background.lerpColors(EDIT_BG,PLAY_BG,b);
+  scene.fog.color.lerpColors(EDIT_BG,PLAY_BG,b);
+  scene.fog.near=60+(1-b)*900;                  // edit: starts past the far plane
+  scene.fog.far =320+(1-b)*900;
+  grid.material.uniforms.op.value=1-b;
+  grid.visible=b<.99;
+  amb.intensity=1.55-b*1.42;
+  key.intensity=.35-b*.32;
+  moon.intensity=b*.55;
+  lamps.forEach(({L,peak},i)=>L.intensity=b*peak*(1+Math.sin(now*.0018+i)*.06));
+  const gc=new T.Color();
+  glows.forEach(({m,col})=>m.material.color.copy(gc.copy(DARK).lerp(col,b)));
+  halos.forEach(s=>{s.material.opacity=b*.5;s.visible=b>.02});
+
+  // hover only picks in edit mode; play mode is a view, not a tool
+  if(!drag&&b<.5){
+    ray.setFromCamera(ptr,camera);
+    const hit=ray.intersectObjects(picks,false)[0];
+    setHover(hit?hit.object.userData.node:null);
+  }else if(b>=.5) setHover(null);
+
+  if(hover){ label.style.left=mx+'px'; label.style.top=my+'px' }
+  if(selected&&!play){
+    selected.bbox.setFromObject(selected.grp);
+    bounds.box.copy(selected.bbox);
+    gizmo.scale.setScalar(dist/95);
+  }
+
+  scene.traverse(o=>{ if(o.userData.spin) o.rotation.y+=.006 });
+
+  renderer.render(scene,camera);
+  const info=renderer.info.render;
+  sTris.textContent=(info.triangles/1000).toFixed(1)+'k';
+  sBat.textContent=info.calls;
+  sFps.textContent=Math.round(fps);
+}
+paintTree(); paintInspector(); requestAnimationFrame(tick);
+</script>

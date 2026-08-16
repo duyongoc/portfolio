@@ -1,0 +1,1166 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Room — cyber setup, real-time light</title>
+<style>
+:root{
+  --paper:#eaf2ff; --acc:#ff5aa0; --cy:#5ad0ff;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;overscroll-behavior:none}
+body{background:#04060c;color:var(--paper);
+  font:400 15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;touch-action:none;user-select:none}
+#cv{position:fixed;inset:0;width:100%;height:100%;display:block;z-index:0;cursor:grab}
+#cv.drag{cursor:grabbing}#cv.hot{cursor:pointer}
+#ui{position:fixed;inset:0;z-index:3;pointer-events:none}
+#vig{position:fixed;inset:0;z-index:1;pointer-events:none;
+  background:radial-gradient(ellipse at 52% 54%,transparent 42%,rgba(2,3,9,.78) 100%)}
+
+#brand{position:absolute;top:24px;left:clamp(16px,3.4vw,44px);
+  font:700 11.5px/1 var(--mono);letter-spacing:.2em;text-transform:uppercase;
+  display:flex;align-items:center;gap:9px;text-shadow:0 2px 16px #000;transition:opacity .4s}
+#brand s{width:8px;height:8px;border-radius:50%;background:var(--cy);text-decoration:none;
+  box-shadow:0 0 12px var(--cy)}
+
+#hero{position:absolute;left:clamp(16px,3.4vw,44px);bottom:clamp(84px,13vh,120px);
+  max-width:min(390px,42vw);transition:opacity .45s,transform .45s}
+#hero .kick{font:600 10px/1 var(--mono);letter-spacing:.26em;text-transform:uppercase;
+  color:var(--cy);margin-bottom:12px}
+#hero h1{font-size:clamp(28px,4.2vw,48px);line-height:1;letter-spacing:-.035em;font-weight:800;
+  text-shadow:0 4px 30px rgba(0,0,0,.9)}
+#hero h1 em{font-style:normal;color:var(--acc)}
+#hero p{margin-top:12px;color:#dae4f7c4;font-size:14px;max-width:32ch;text-shadow:0 2px 12px #000}
+.dim{opacity:0!important;transform:translateY(12px);pointer-events:none!important}
+
+#clock{position:absolute;left:50%;bottom:clamp(20px,3.4vh,30px);transform:translateX(-50%);
+  pointer-events:auto;display:flex;align-items:center;gap:14px;padding:10px 16px;
+  background:rgba(6,9,20,.66);border:1px solid rgba(255,255,255,.14);backdrop-filter:blur(14px);
+  transition:opacity .4s}
+#clock .now{font:700 15px/1 var(--mono);letter-spacing:.06em;min-width:52px;text-align:center}
+#clock .lbl{font:600 9px/1.5 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:#dae4f78c}
+#clock .lbl b{display:block;color:var(--cy);font-weight:700}
+#scrub{-webkit-appearance:none;appearance:none;width:min(300px,38vw);height:3px;
+  background:linear-gradient(90deg,#101a3a,#3a6ab0 26%,#ffd7a0 50%,#ff5aa0 76%,#101a3a);
+  outline:0;cursor:pointer;border-radius:9px}
+#scrub::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:50%;
+  background:var(--paper);box-shadow:0 0 12px rgba(255,255,255,.7);cursor:grab}
+#scrub::-moz-range-thumb{width:13px;height:13px;border-radius:50%;border:0;background:var(--paper)}
+#real{background:none;border:1px solid rgba(255,255,255,.22);color:var(--paper);
+  padding:7px 11px;cursor:pointer;font:600 9px/1 var(--mono);letter-spacing:.12em;
+  text-transform:uppercase;transition:.18s;white-space:nowrap}
+#real:hover{background:var(--cy);color:#04121c;border-color:var(--cy)}
+#real.on{opacity:.4;pointer-events:none}
+#vn{position:absolute;right:clamp(16px,3.4vw,44px);top:24px;text-align:right;
+  font:600 9px/1.7 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:#dae4f78c;
+  transition:opacity .4s}
+#vn b{display:block;font-size:14px;letter-spacing:.05em;color:var(--paper);font-weight:700}
+
+#idxBtn{position:absolute;right:clamp(16px,3.4vw,44px);top:74px;pointer-events:auto;
+  background:rgba(6,9,20,.66);border:1px solid rgba(255,255,255,.16);color:var(--paper);
+  padding:8px 12px;cursor:pointer;font:600 9px/1 var(--mono);letter-spacing:.14em;
+  text-transform:uppercase;backdrop-filter:blur(12px);transition:.18s}
+#idxBtn:hover,#idxBtn.on{background:var(--cy);color:#04121c;border-color:var(--cy)}
+#idx{position:absolute;right:clamp(16px,3.4vw,44px);top:110px;width:250px;pointer-events:auto;
+  background:rgba(6,9,20,.9);border:1px solid rgba(255,255,255,.14);backdrop-filter:blur(16px);
+  opacity:0;transform:translateY(-8px);transition:.2s;pointer-events:none}
+#idx.on{opacity:1;transform:none;pointer-events:auto}
+#idx button{display:flex;gap:9px;align-items:center;width:100%;text-align:left;background:none;
+  border:0;border-bottom:1px solid rgba(255,255,255,.07);color:inherit;padding:9px 12px;
+  cursor:pointer;font:inherit;transition:.14s}
+#idx button:hover{background:rgba(90,208,255,.12)}
+#idx button s{width:7px;height:7px;border-radius:50%;text-decoration:none;flex:none}
+#idx button u{text-decoration:none;font-size:12.5px;font-weight:600;display:block}
+#idx button i{font-style:normal;font:500 8.5px/1.4 var(--mono);letter-spacing:.09em;
+  text-transform:uppercase;color:#dae4f775;display:block}
+#hint{position:absolute;right:clamp(16px,3.4vw,44px);bottom:clamp(84px,13vh,120px);
+  text-align:right;font:600 9px/1.9 var(--mono);letter-spacing:.16em;text-transform:uppercase;
+  color:#dae4f77c;transition:opacity .4s}
+#hint em{font-style:normal;color:var(--cy)}
+
+#tip{position:absolute;padding:8px 13px;opacity:0;transform:translate(-50%,-170%);
+  background:rgba(6,9,20,.86);border:1px solid var(--cy);backdrop-filter:blur(10px);
+  transition:opacity .13s;white-space:nowrap}
+#tip.on{opacity:1}
+#tip b{display:block;font:700 13.5px/1.3 inherit}
+#tip span{font:600 9px/1.6 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--cy)}
+
+#css3d{position:fixed;inset:0;z-index:2;overflow:hidden;pointer-events:none}
+#c3d{position:absolute;top:0;left:0;width:100%;height:100%;transform-style:preserve-3d}
+#glass{position:absolute;top:0;left:0;opacity:0;transition:opacity .25s;pointer-events:none;
+  overflow:hidden;background:#070b16;display:flex;flex-direction:column;
+  transform-origin:50% 50%;backface-visibility:hidden}
+#glass.on{opacity:1;pointer-events:auto}
+#gh{display:flex;align-items:center;gap:9px;padding:8px 12px;flex:none;
+  background:rgba(255,255,255,.05);border-bottom:1px solid rgba(255,255,255,.09)}
+#gh s{width:8px;height:8px;border-radius:50%;text-decoration:none;flex:none}
+#gh b{font:700 11px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase}
+#gh i{margin-left:auto;font-style:normal;font:600 10px/1 var(--mono);color:#dae4f780}
+#gx{flex:none;width:22px;height:22px;padding:0;display:grid;place-items:center;cursor:pointer;
+  background:none;border:1px solid rgba(255,255,255,.22);color:var(--paper);
+  font:600 11px/1 var(--mono);transition:.15s}
+#gx:hover{background:var(--cy);color:#04121c;border-color:var(--cy)}
+#gb{flex:1;overflow-y:auto;padding:11px}
+#gb::-webkit-scrollbar{width:5px}#gb::-webkit-scrollbar-thumb{background:#ffffff26}
+.gr{display:grid;gap:8px}
+.tile{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);
+  cursor:pointer;transition:.15s;overflow:hidden;text-decoration:none;color:inherit;display:block}
+.tile:hover{border-color:var(--cy);background:rgba(90,208,255,.1)}
+.tile img{width:100%;aspect-ratio:16/10;object-fit:cover;display:block;background:#0d1428}
+.tile b{display:block;padding:6px 8px 2px;font-size:12px;line-height:1.2;font-weight:600}
+.tile i{display:block;padding:0 8px 7px;font:500 8.5px/1.3 var(--mono);letter-spacing:.08em;
+  text-transform:uppercase;color:#dae4f775;font-style:normal}
+.lrow{display:flex;gap:9px;align-items:center;padding:7px;background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.08);text-decoration:none;color:inherit;transition:.15s}
+.lrow:hover{border-color:var(--cy)}
+.lrow img{width:52px;height:34px;object-fit:cover;flex:none;background:#0d1428}
+.lrow b{font-size:12px;font-weight:600;display:block;line-height:1.25}
+.lrow i{font-style:normal;font:500 8.5px/1.4 var(--mono);letter-spacing:.08em;
+  text-transform:uppercase;color:#dae4f775}
+.jr{padding:9px 0;border-bottom:1px solid rgba(255,255,255,.08)}
+.jr b{display:block;font-size:13px}
+.jr u{display:block;text-decoration:none;font:600 8.5px/1.5 var(--mono);letter-spacing:.1em;
+  text-transform:uppercase;color:var(--cy);margin-top:2px}
+.jr p{color:#dae4f7a8;font-size:11.5px;margin-top:4px;line-height:1.45}
+.jr ul{margin:6px 0 0 16px;color:#dae4f79c;font-size:11px;line-height:1.5}
+.cr{display:block;padding:11px;margin-bottom:8px;text-decoration:none;color:inherit;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);transition:.15s}
+.cr:hover{border-color:var(--cy)}
+.cr b{display:block;font-size:14px}
+.cr i{font-style:normal;font:500 10px/1.5 var(--mono);color:#dae4f790}
+
+#back{position:absolute;left:50%;bottom:clamp(76px,12vh,108px);transform:translateX(-50%);
+  pointer-events:auto;opacity:0;transition:opacity .3s;
+  background:rgba(6,9,20,.72);border:1px solid rgba(255,255,255,.2);color:var(--paper);
+  padding:11px 20px;cursor:pointer;font:600 10px/1 var(--mono);letter-spacing:.14em;
+  text-transform:uppercase;backdrop-filter:blur(12px)}
+#back.on{opacity:1}
+#back:hover{background:var(--cy);color:#04121c;border-color:var(--cy)}
+
+#load{position:fixed;inset:0;z-index:9;display:grid;place-items:center;background:#04060c;
+  transition:opacity .8s;font:600 10px/1 var(--mono);letter-spacing:.26em;
+  text-transform:uppercase;color:#dae4f77c;text-align:center;padding:24px}
+#load.off{opacity:0;pointer-events:none}
+#nogl{position:fixed;inset:0;z-index:20;display:none;place-items:center;text-align:center;
+  background:#04060c;padding:30px}#nogl a{color:var(--cy)}
+
+@media (max-width:820px){
+  #hero{max-width:72vw;bottom:104px}#hero p{display:none}
+  #hint,#vn{display:none}
+  #clock{flex-wrap:wrap;justify-content:center;width:calc(100% - 24px)}
+  #scrub{width:100%;order:3}
+}
+</style>
+
+<canvas id="cv"></canvas>
+<div id="vig"></div>
+
+<div id="ui">
+  <div id="brand"><s></s>Duy Ngoc · Unity Developer</div>
+  <div id="vn">Ho Chi Minh City<b id="vnT">—</b></div>
+
+  <div id="hero">
+    <div class="kick">Portfolio 2026 · The Room</div>
+    <h1>Phòng của tôi,<br><em>lúc này.</em></h1>
+    <p>Cả một ngày trôi qua trong 5 phút — và bạn vào lúc nào là ngẫu nhiên. Kéo chuột nhìn quanh, bấm vào một món đồ để mở nó ra.</p>
+  </div>
+
+  <button id="idxBtn">☰ Mục lục</button>
+  <div id="idx"></div>
+
+  <div id="hint">Kéo <em>·</em> nhìn quanh<br>Bấm đồ vật <em>·</em> mở<br>Mở rồi <em>·</em> vẫn kéo xoay<br>Thanh giờ <em>·</em> 5 phút = 1 ngày</div>
+
+  <div id="clock">
+    <div class="now" id="nowT">—</div>
+    <input id="scrub" type="range" min="0" max="1440" step="1" value="780">
+    <div class="lbl" id="phase">Đang tua<b>một ngày</b></div>
+    <button id="real" class="on">▶ Chạy tiếp</button>
+  </div>
+
+  <div id="tip"></div>
+  <button id="back">← Lùi lại · hoặc kéo chuột</button>
+</div>
+
+<div id="css3d"><div id="c3d">
+  <div id="glass"><div id="gh"><s></s><b></b><i></i><button id="gx" title="Đóng (Esc)">✕</button></div><div id="gb"></div></div>
+</div></div>
+
+<div id="load">Loading the room…</div>
+<div id="nogl"><div><p>Trình duyệt này không bật được WebGL.</p>
+  <p style="margin-top:12px"><a href="index.html">→ Xem các bản thiết kế tĩnh</a></p></div></div>
+
+<script src="data.js"></script>
+<script src="vshared.js"></script>
+<script>
+addEventListener('error',e=>{
+  const l=document.getElementById('load');
+  if(l&&!l.classList.contains('off')) l.textContent='Lỗi: '+(e.message||e.error);
+});
+</script>
+<script type="module">
+import * as T from './lib/three.module.min.js';
+import {GLTFLoader} from './lib/GLTFLoader.js';
+
+const V=(x,y,z)=>new T.Vector3(x,y,z);
+const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+const lerp=(a,b,t)=>a+(b-a)*t;
+const games=(typeof GAMES!=='undefined'?GAMES:[]);
+const jobs=(typeof JOBS!=='undefined'?JOBS:[]);
+const thumb=p=>p?p.replace('../images/','../images/thumb/').replace(/\.(jpe?g|png)$/i,'.jpg'):'';
+const has=(g,k)=>g.links.some(l=>l.kind===k);
+const linkOf=(g,k)=>g.links.find(l=>l.kind===k)||g.links[0];
+
+/* ═══ boot ══════════════════════════════════════════════════════ */
+const cv=document.getElementById('cv');
+let renderer;
+try{ renderer=new T.WebGLRenderer({canvas:cv,antialias:true,powerPreference:'high-performance'}); }
+catch(e){ document.getElementById('nogl').style.display='grid';
+  document.getElementById('load').classList.add('off'); throw e }
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.6));
+renderer.setSize(innerWidth,innerHeight,false);
+renderer.shadowMap.enabled=true;
+renderer.shadowMap.type=T.PCFSoftShadowMap;
+
+const scene=new T.Scene();
+/* 48° is deliberately wide. A real room photographed from inside is always shot
+   wide — at 42° the desk wall and the window wall cannot both stay in frame. */
+const camera=new T.PerspectiveCamera(48,innerWidth/innerHeight,.4,900);
+
+const mat=(c,o={})=>new T.MeshLambertMaterial(Object.assign({color:c},o));
+
+/* ═══ Synty props ═══════════════════════════════════════════════
+   The pack ships .fbx + Unity prefabs, so tools/fbx2glb.py converts the
+   geometry and every prop shares one 1024² atlas — 17 models plus both
+   atlases come to 2.1 MB total.
+
+   Each prop is fitted to the box the room was already authored around rather
+   than dropped in at its own size: the layout was tuned against primitives,
+   and re-tuning the whole room around each model's native dimensions would
+   throw away work that is already correct. */
+const gltf=new GLTFLoader(), texL=new T.TextureLoader();
+/* Both atlases are requested up front, not lazily from inside a GLTFLoader
+   callback. Created late, the texture never made it onto the props — every
+   model rendered as a black silhouette while the identical texture on a plane
+   was fine. Two requests at startup, and the ordering stops mattering. */
+const ATLAS={cybercity:texL.load('models/cybercity.png'),
+             scifi:texL.load('models/scifi.png')};
+for(const k in ATLAS){ ATLAS[k].colorSpace=T.SRGBColorSpace; ATLAS[k].flipY=false }
+const atlas=n=>ATLAS[n];
+let pending=0;
+const _bb=new T.Box3(), _sz=new T.Vector3();
+function prop(name,o){
+  const g=new T.Group();
+  g.position.set(o.x,o.y||0,o.z); g.rotation.y=o.ry||0; scene.add(g);
+  pending++;
+  gltf.load('models/'+name+'.glb',res=>{
+    const root=res.scene, m=atlas(o.tex||'cybercity');
+    root.traverse(n2=>{ if(n2.isMesh){
+      n2.material=new T.MeshLambertMaterial({map:m});
+      n2.castShadow=true; n2.receiveShadow=true;
+    }});
+    _bb.setFromObject(root); _bb.getSize(_sz);
+    let sx=o.w?o.w/_sz.x:0, sy=o.h?o.h/_sz.y:0, sz2=o.d?o.d/_sz.z:0;
+    if(o.uniform){ const u=sx||sy||sz2; sx=sy=sz2=u }
+    else { const f=sx||sy||sz2; sx=sx||f; sy=sy||f; sz2=sz2||f }
+    root.scale.set(sx,sy,sz2); root.updateMatrixWorld(true);
+    _bb.setFromObject(root); root.position.y-=_bb.min.y;   // sit on its own base
+    g.add(root);
+    // props arrive after occCand was built, so enrol them for occlusion fading
+    root.traverse(n2=>{ if(n2.isMesh) occCand.push(n2) });
+    sun.shadow.needsUpdate=true;
+    if(--pending===0) modelsIn=true;
+    if(o.done) o.done(g,root);
+  },undefined,()=>{ if(--pending===0) modelsIn=true });
+  return g;
+}
+let modelsIn=false;
+const occCand=[];
+const box=(p,w,h,d,x,y,z,m)=>{                       // y = BOTTOM of the box
+  const b=new T.Mesh(new T.BoxGeometry(w,h,d),m);
+  b.position.set(x,y+h/2,z); b.castShadow=true; b.receiveShadow=true;
+  p.add(b); return b;
+};
+const emit=(p,w,h,x,y,z,col,op=1,add=true)=>{
+  const q=new T.Mesh(new T.PlaneGeometry(w,h),new T.MeshBasicMaterial({
+    color:new T.Color(col),toneMapped:false,fog:false,transparent:true,opacity:op,
+    side:T.DoubleSide,depthWrite:false,blending:add?T.AdditiveBlending:T.NormalBlending}));
+  q.position.set(x,y,z); p.add(q); return q;
+};
+
+/* ═══ room shell ════════════════════════════════════════════════
+   Two walls meet at a corner in the middle of the frame: the desk wall
+   recedes left, the glass wall recedes right — the layout of the reference
+   photo. The glass wraps that corner, so the skyline reads as one L-shaped
+   opening rather than a punched hole. */
+const BZ=-30, RX=22, LX=-34, FZ=50, CY=36;        // back / right / left / front / ceiling
+const W0=3, W1=30;                                 // glass sill and head
+const GZ0=-30, GZ1=-2;                             // glass run along the right wall
+const GX0=6,  GX1=22;                              // glass run along the back wall
+const DY=8.4;                                      // desk surface
+
+const mWall =mat(0x343a45), mWall2=mat(0x2a303a),
+      mFloor=mat(0x372e26), mCeil =mat(0x1a1e25),
+      mMetal=mat(0x2b313b), mDark =mat(0x171a21),
+      mDesk =mat(0x3a2e24), mFab  =mat(0x343a45), mRug=mat(0x24282f);
+{
+  const f=new T.Mesh(new T.PlaneGeometry(300,300),mFloor);
+  f.rotation.x=-Math.PI/2; f.receiveShadow=true; scene.add(f);
+
+  // back wall: solid to x=GX0, then the glass bay, then the corner post
+  box(scene,GX0-LX,CY,1.4,(LX+GX0)/2,0,BZ,mWall);
+  box(scene,GX1-GX0,W0,1.4,(GX0+GX1)/2,0,BZ,mWall2);
+  box(scene,GX1-GX0,CY-W1,1.4,(GX0+GX1)/2,W1,BZ,mWall2);
+
+  // right wall: glass bay at the back, solid from z=GZ1 forward
+  box(scene,1.4,CY,FZ-GZ1,RX,0,(GZ1+FZ)/2,mWall);
+  box(scene,1.4,W0,GZ1-GZ0,RX,0,(GZ0+GZ1)/2,mWall2);
+  box(scene,1.4,CY-W1,GZ1-GZ0,RX,W1,(GZ0+GZ1)/2,mWall2);
+
+  // left wall + ceiling
+  box(scene,1.4,CY,FZ-BZ,LX,0,(BZ+FZ)/2,mWall);
+  const c=new T.Mesh(new T.PlaneGeometry(RX-LX,FZ-BZ),mCeil);
+  c.rotation.x=Math.PI/2; c.position.set((LX+RX)/2,CY,(BZ+FZ)/2);
+  c.receiveShadow=true; scene.add(c);
+
+  box(scene,GX0-LX,1.4,.4,(LX+GX0)/2,0,BZ+.9,mDark);   // skirting
+  box(scene,.4,1.4,FZ-BZ,LX+.9,0,(BZ+FZ)/2,mDark);
+}
+
+/* ── window frame: corner post, sill, head, vertical mullions ── */
+const mFrame=mat(0x2c333f);
+{
+  box(scene,1.7,CY,1.7,RX-.2,0,BZ+.2,mFrame);                       // corner post
+  box(scene,1.7,.9,GZ1-GZ0,RX-.35,W0-.9,(GZ0+GZ1)/2,mFrame);        // sills
+  box(scene,GX1-GX0,.9,1.7,(GX0+GX1)/2,W0-.9,BZ+.35,mFrame);
+  box(scene,1.7,.9,GZ1-GZ0,RX-.35,W1,(GZ0+GZ1)/2,mFrame);           // heads
+  box(scene,GX1-GX0,.9,1.7,(GX0+GX1)/2,W1,BZ+.35,mFrame);
+  for(let z=GZ0+9;z<GZ1-1;z+=9)  box(scene,1.7,W1-W0,.8,RX-.35,W0,z,mFrame);
+  for(let x=GX0+8;x<GX1-1;x+=8)  box(scene,.8,W1-W0,1.7,x,W0,BZ+.35,mFrame);
+  box(scene,1.5,23,13.4,LX+.9,0,22,mFrame);           // door
+  box(scene,1.1,22,12,LX+1.1,0,22,mDark);
+}
+
+/* ── the glass itself: a faint tinted sheet plus rain that never stops ──
+   The rain is the only thing on the page that moves with nobody touching it.
+   A still 3D scene reads as a picture; a scene with weather reads as a place. */
+const rainTex=(()=>{
+  const c=document.createElement('canvas'); c.width=256; c.height=512;
+  const g=c.getContext('2d'); g.clearRect(0,0,256,512);
+  let s=7;const r=()=>((s=s*16807%2147483647)/2147483647);
+  for(let i=0;i<190;i++){
+    const x=r()*256, y=r()*512, h=8+r()*40;
+    g.strokeStyle='rgba(190,225,255,'+(.10+r()*.28)+')';
+    g.lineWidth=r()<.75?1:1.8;
+    g.beginPath(); g.moveTo(x,y); g.lineTo(x+2,y+h); g.stroke();
+  }
+  const t=new T.CanvasTexture(c);
+  t.wrapS=t.wrapT=T.RepeatWrapping; t.colorSpace=T.SRGBColorSpace; return t;
+})();
+const rains=[];
+{
+  const glassMat=new T.MeshBasicMaterial({color:0x8fc8ff,transparent:true,opacity:.05,
+    fog:false,toneMapped:false,side:T.DoubleSide,depthWrite:false});
+  const pane=(w,h,x,y,z,ry)=>{
+    const q=new T.Mesh(new T.PlaneGeometry(w,h),glassMat);
+    q.position.set(x,y,z); q.rotation.y=ry; scene.add(q);
+    const rm=new T.MeshBasicMaterial({map:rainTex.clone(),transparent:true,opacity:.3,
+      fog:false,toneMapped:false,side:T.DoubleSide,depthWrite:false,
+      blending:T.AdditiveBlending});
+    rm.map.repeat.set(w/16,h/16);
+    const r=new T.Mesh(new T.PlaneGeometry(w,h),rm);
+    r.position.set(x-Math.cos(ry)*.35,y,z+Math.sin(ry)*.35); r.rotation.y=ry;
+    scene.add(r); rains.push(rm);
+  };
+  pane(GZ1-GZ0,W1-W0,RX-.6,(W0+W1)/2,(GZ0+GZ1)/2,Math.PI/2);
+  pane(GX1-GX0,W1-W0,(GX0+GX1)/2,(W0+W1)/2,BZ+.6,0);
+}
+
+/* ═══ sky + sun ═════════════════════════════════════════════════ */
+const SKY_TOP=new T.Color(), SKY_BOT=new T.Color();
+scene.add(new T.Mesh(new T.SphereGeometry(700,24,16),new T.ShaderMaterial({
+  side:T.BackSide,depthWrite:false,fog:false,
+  uniforms:{hi:{value:SKY_TOP},lo:{value:SKY_BOT}},
+  vertexShader:'varying float h;void main(){h=normalize(position).y;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
+  fragmentShader:'uniform vec3 hi,lo;varying float h;void main(){gl_FragColor=vec4(mix(lo,hi,smoothstep(-.12,.55,h)),1.);}'
+})));
+
+const amb=new T.HemisphereLight(0xa8c4ff,0x241c18,.5); scene.add(amb);
+const sun=new T.DirectionalLight(0xffffff,1); scene.add(sun);
+sun.castShadow=true;
+sun.shadow.mapSize.set(1536,1536);
+sun.shadow.camera.left=-52; sun.shadow.camera.right=52;
+sun.shadow.camera.top=48;  sun.shadow.camera.bottom=-34;
+sun.shadow.camera.near=50; sun.shadow.camera.far=400;
+sun.shadow.bias=-.0012; sun.shadow.normalBias=.03;
+/* Nothing in the room moves, so the shadow map only needs redrawing when the sun
+   actually shifts. Left on auto it redraws 1536² every frame for the same image. */
+sun.shadow.autoUpdate=false;
+let shadowAt=-999;
+const wantShadow=h=>{ if(Math.abs(h-shadowAt)<.035) return; shadowAt=h; sun.shadow.needsUpdate=true };
+sun.target.position.set(-8,5,-20); scene.add(sun.target);
+const bounce=new T.DirectionalLight(0xffd8b0,0); bounce.position.set(0,3,20); scene.add(bounce);
+const skyFill=[[16,19,-12],[13,19,-27]].map(([x,y,z])=>{
+  const L=new T.PointLight(0xcfe2ff,0,120,2); L.position.set(x,y,z); scene.add(L); return L;
+});
+
+/* ── shafts: additive curtains that ride the sun's azimuth ──
+   A fake light shaft is a plane that CONTAINS the light direction, seen
+   edge-on-ish from the side. Turned 90° it becomes a plane the light hits
+   square, which is a wall of haze standing across the room — which is exactly
+   what the first version was, stacked five deep. The quads stay unrotated so
+   their plane holds the X axis, and they fan out along Z instead of Y. */
+const shaft=new T.Group(); shaft.position.set(RX-1,(W0+W1)/2,-16); scene.add(shaft);
+const shaftQ=[];
+for(let i=-2;i<=2;i++)
+  shaftQ.push(emit(shaft,60,W1-W0-3,-29,0,i*5.5,0xffd6a0,0,true));
+
+/* ═══ the city outside ══════════════════════════════════════════
+   Placeholder skyline scattered in the quadrant the corner glass looks into.
+   One façade texture instead of a mesh per lit window: 34 buildings cost 100
+   draw calls this way and about 700 the other way. Drop-in point for the
+   POLYGON Sci-Fi Cyber City prefabs. */
+const cityLit=[], cityNeon=[];
+{
+  const facade=(col)=>{
+    const c=document.createElement('canvas'); c.width=64; c.height=128;
+    const g=c.getContext('2d'); g.fillStyle='#000'; g.fillRect(0,0,64,128);
+    let s=col*13+3;const r=()=>((s=s*16807%2147483647)/2147483647);
+    const cols=['#5ad0ff','#ff5aa0','#ffc85a','#8affc0','#c98aff'];
+    for(let y=4;y<124;y+=8) for(let x=4;x<60;x+=8){
+      if(r()<.42) continue;
+      g.fillStyle=cols[(col+(r()<.25?1:0))%cols.length];
+      g.globalAlpha=.35+r()*.65; g.fillRect(x,y,5,4);
+    }
+    const t=new T.CanvasTexture(c); t.wrapS=t.wrapT=T.RepeatWrapping;
+    t.colorSpace=T.SRGBColorSpace; return t;
+  };
+  const F=[0,1,2,3,4].map(facade);
+  const mB=mat(0x33415e);
+  let s=97; const r=()=>((s=s*16807%2147483647)/2147483647);
+  for(let i=0;i<34;i++){
+    const a=-Math.PI/2-.35+r()*(Math.PI/2+.8);      // wraps the outside corner
+    const rad=85+r()*215;
+    const x=RX+Math.cos(a)*rad, z=BZ+Math.sin(a)*rad;
+    const w=10+r()*22, d=10+r()*22;
+    // near towers stay under the window head or they curtain off the sky
+    const h=rad<170 ? 18+r()*40 : 45+r()*95;
+    const b=box(scene,w,h,d,x,0,z,mB); b.castShadow=false; cityLit.push(b);
+    const tex=F[i%5];
+    const mk=(pw,px,pz,ry)=>{
+      const m=new T.MeshBasicMaterial({map:tex.clone(),toneMapped:false,fog:false,
+        transparent:true,opacity:0,side:T.DoubleSide,depthWrite:false});
+      m.map.repeat.set(pw/9,h/13);
+      const q=new T.Mesh(new T.PlaneGeometry(pw,h),m);
+      q.position.set(px,h/2,pz); q.rotation.y=ry; scene.add(q); cityNeon.push(m);
+    };
+    mk(d*.92,x-w/2-.2,z,-Math.PI/2);                 // face pointing back at the room
+    mk(w*.92,x,z+d/2+.2,0);
+  }
+}
+
+/* ═══ ceiling LED trim ══════════════════════════════════════════ */
+const ledStrips=[], ledLights=[];
+{
+  const y=CY-.9;
+  const s1=emit(scene,RX-LX-3,1.4,(LX+RX)/2,y,BZ+2.6,0x5ad0ff,0);
+  s1.rotation.x=Math.PI/2; ledStrips.push(s1);
+  const s2=emit(scene,1.4,FZ-BZ-3,LX+2.6,y,(BZ+FZ)/2,0x5ad0ff,0);
+  s2.rotation.x=Math.PI/2; ledStrips.push(s2);
+  [[-16,-18],[6,10]].forEach(([x,z])=>{
+    const L=new T.PointLight(0x5ad0ff,0,60,2); L.position.set(x,CY-3,z);
+    scene.add(L); ledLights.push(L);
+  });
+}
+
+/* ═══ desk ══════════════════════════════════════════════════════ */
+const DX0=-26, DX1=6, DZ0=-29, DZ1=-16;
+{
+  prop('desk',{x:(DX0+DX1)/2,z:(DZ0+DZ1)/2+.6,w:DX1-DX0,h:DY,d:DZ1-DZ0-1.5});
+  // the LED strip stuck under the desk lip — the bias glow in the reference photo
+  const u=emit(scene,DX1-DX0-4,.85,(DX0+DX1)/2,DY-1.9,DZ1-.15,0xff5aa0,0);
+  ledStrips.push(u);
+}
+
+/* ── canvas textures so every screen reads as "on" ── */
+function tex(draw,w,h){
+  const c=document.createElement('canvas'); c.width=w; c.height=h;
+  draw(c.getContext('2d'),w,h);
+  const t=new T.CanvasTexture(c); t.colorSpace=T.SRGBColorSpace; return t;
+}
+const uiTex=(w,h,col,label,sub)=>tex((g,W,H)=>{
+  g.fillStyle='#070c18'; g.fillRect(0,0,W,H);
+  g.strokeStyle=col; g.globalAlpha=.13; g.lineWidth=1;
+  for(let i=1;i<16;i++){g.beginPath();g.moveTo(0,i*H/16);g.lineTo(W,i*H/16);g.stroke()}
+  g.globalAlpha=1; g.fillStyle=col; g.fillRect(0,0,W,Math.max(3,H*.012));
+  g.font='700 '+Math.round(H*.11)+'px ui-monospace,Menlo,monospace'; g.fillStyle='#e8f2ff';
+  g.fillText(label,W*.06,H*.24);
+  g.font='400 '+Math.round(H*.075)+'px ui-monospace,Menlo,monospace'; g.fillStyle=col;
+  g.fillText(sub,W*.06,H*.4);
+},w,h);
+const screenMat=t=>new T.MeshBasicMaterial({map:t,toneMapped:false,fog:false});
+
+const SCREENS=[];
+function addScreen(o){
+  const h=new T.Mesh(new T.PlaneGeometry(o.w*1.13,o.h*1.19),new T.MeshBasicMaterial({
+    color:new T.Color(o.col),toneMapped:false,fog:false,transparent:true,opacity:0,
+    side:T.DoubleSide,depthWrite:false,blending:T.AdditiveBlending}));
+  h.position.copy(o.sc.position); h.rotation.copy(o.sc.rotation);
+  h.translateZ(o.flat?.05:-.07);
+  o.sc.parent.add(h); o.halo=h; o.hv=0;
+  SCREENS.push(o); return o;
+}
+
+const gMine=games.filter(g=>g.section==='MY GAMES');
+const gSkin=games.filter(g=>g.section==='RESKIN');
+const gWeb=games.filter(g=>has(g,'WebGL'));
+const gPlay=games.filter(g=>has(g,'Android'));
+const gAR=games.filter(g=>g.section==='AR Games');
+const gMP=games.filter(g=>g.section==='Multiplayer Games');
+const gTube=games.filter(g=>has(g,'Youtube'));
+
+/* ── the monitor arm: one centre panel flanked by two angled ones ──
+   Built from a factory because three near-identical rigs written out three
+   times is where the copies quietly drift apart. */
+function monitor(o){
+  const g=new T.Group(); g.position.set(o.x,DY,o.z); g.rotation.y=o.ry||0; scene.add(g);
+  const sw=o.w, sh=o.h;
+  box(g,sw*.36,.5,3.2,0,0,2.1,mMetal);                       // foot
+  box(g,1.2,3.2,1.2,0,.5,1.9,mMetal);                        // neck
+  const bz=box(g,sw+1.2,sh+1.2,.7,0,3.2,0,mDark); bz.rotation.x=-.04;
+  const sc=new T.Mesh(new T.PlaneGeometry(sw,sh),
+    screenMat(uiTex(Math.round(sw*40),Math.round(sh*40),o.col,o.label,o.sub)));
+  sc.position.set(0,3.9+sh/2,.42); sc.rotation.x=-.04; g.add(sc);
+  const L=new T.PointLight(0x8ec8ff,0,40,2); L.position.set(0,3.9+sh/2,4.5); g.add(L);
+  return addScreen(Object.assign({g,sc,w:sw,h:sh,light:L},o));
+}
+monitor({id:'mon',x:-11,z:-25.5,w:13,h:7.5,col:'#5ad0ff',label:'WEBGL BUILDS',
+  sub:gWeb.length+' bản chơi ngay',name:'Màn hình chính',tag:gWeb.length+' bản WebGL',
+  kind:'grid',cols:3,lk:'WebGL',items:gWeb,peak:170});
+monitor({id:'monL',x:-20.5,z:-25.8,ry:.42,w:8,h:5,col:'#ffc85a',label:'MY GAMES',
+  sub:gMine.length+' tựa tự làm',name:'Màn hình trái',tag:gMine.length+' game tự làm',
+  kind:'grid',cols:2,lk:'WebGL',items:gMine,peak:110});
+monitor({id:'monR',x:.3,z:-25.8,ry:-.42,w:8,h:5,col:'#8affc0',label:'RESKIN',
+  sub:gSkin.length+' bản reskin',name:'Màn hình phải',tag:gSkin.length+' bản reskin',
+  kind:'grid',cols:2,lk:'WebGL',items:gSkin,peak:110});
+{ // speaker bar tucked under the centre panel
+  box(scene,10,1.3,1.6,-11,DY,-22,mDark);
+}
+/* ── wall panel: every one of the 33 ── */
+{
+  const cols=11, rows=3, PW=24, PH=11, PX=-18, PY=26.5;
+  const SEC={'AR Games':'#ff7ab8','Multiplayer Games':'#5ad0ff','MY GAMES':'#ffc85a','RESKIN':'#8affc0'};
+  const t=tex((g,W,H)=>{
+    g.fillStyle='#0a0e18'; g.fillRect(0,0,W,H);
+    const cw=W/cols, ch=H/rows;
+    games.forEach((gm,i)=>{
+      const x=(i%cols)*cw, y=Math.floor(i/cols)*ch, c=SEC[gm.section]||'#8899bb';
+      g.fillStyle='#0c1120'; g.fillRect(x+3,y+3,cw-6,ch-6);
+      g.fillStyle=c; g.globalAlpha=.52; g.fillRect(x+4,y+4,cw-8,(ch-6)*.58);
+      g.globalAlpha=.16; g.fillStyle='#000';
+      g.fillRect(x+4,y+4+(ch-6)*.29,cw-8,(ch-6)*.29);
+      g.globalAlpha=1; g.fillStyle=c; g.fillRect(x+3,y+3,cw-6,3);
+      g.fillStyle='#dfe9ff'; g.font='600 13px system-ui,sans-serif';
+      const nm=gm.title.length>15?gm.title.slice(0,14)+'…':gm.title;
+      g.fillText(nm,x+8,y+ch-14);
+      g.fillStyle=c; g.font='600 10px ui-monospace,Menlo,monospace';
+      g.fillText(String(i+1).padStart(2,'0'),x+8,y+ch-28);
+    });
+  },1152,528);
+  const sc=new T.Mesh(new T.PlaneGeometry(PW,PH),screenMat(t));
+  sc.position.set(PX,PY,BZ+.75); scene.add(sc);
+  box(scene,PW+1.6,.8,1,PX,PY-PH/2-.8,BZ+.5,mFrame);
+  box(scene,PW+1.6,.8,1,PX,PY+PH/2,BZ+.5,mFrame);
+  // a rim of light around the panel, not a sheet over it: additive laid over the
+  // artwork would wash all 33 tiles to the same cyan
+  [PY-PH/2-.55,PY+PH/2+.55].forEach(y=>
+    ledStrips.push(emit(scene,PW+2,.9,PX,y,BZ+1.2,0x5ad0ff,0)));
+  const L=new T.PointLight(0x6fb8ff,0,52,2); L.position.set(PX,PY,BZ+8); scene.add(L);
+  addScreen({id:'wall',name:'Tường game',tag:games.length+' tựa đã làm',col:'#5ad0ff',
+    g:null,sc,w:PW,h:PH,kind:'grid',cols:4,lk:'WebGL',items:games,light:L,peak:60});
+}
+/* ── neon sign, above the tower ── */
+let neonSign;
+const neonLight=new T.PointLight(0xff5aa0,0,46,2);
+{
+  const t=tex((g,W,H)=>{
+    g.clearRect(0,0,W,H);
+    g.font='800 84px system-ui,-apple-system,sans-serif'; g.textAlign='center';
+    g.shadowColor='#ff5aa0'; g.shadowBlur=26;
+    g.fillStyle='#ffd7ea'; g.fillText('GAME ON',W/2,H*.62);
+    g.fillText('GAME ON',W/2,H*.62);
+  },512,160);
+  neonSign=new T.Mesh(new T.PlaneGeometry(10,3.1),new T.MeshBasicMaterial({
+    map:t,transparent:true,toneMapped:false,fog:false,depthWrite:false,
+    blending:T.AdditiveBlending,opacity:0}));
+  neonSign.position.set(1,24,BZ+.8); scene.add(neonSign);
+  neonLight.position.set(1,23,BZ+6); scene.add(neonLight);
+}
+/* ── phone ── */
+{
+  const g=new T.Group(); g.position.set(2.5,DY,-19); g.rotation.y=-.3; scene.add(g);
+  box(g,3.2,.4,2.2,0,0,.6,mMetal);
+  const b=box(g,3.4,6.2,.5,0,.3,0,mDark); b.rotation.x=-.44;
+  const sc=new T.Mesh(new T.PlaneGeometry(2.9,5.6),
+    screenMat(uiTex(300,580,'#8affc0','PLAY',gPlay.length+' apps')));
+  sc.position.set(0,3.4,.42); sc.rotation.x=-.44; g.add(sc);
+  addScreen({id:'phone',name:'Điện thoại',tag:gPlay.length+' bản Google Play',col:'#8affc0',
+    g,sc,w:2.9,h:5.6,kind:'list',lk:'Android',items:gPlay});
+}
+/* ── tablet: AR ── */
+{
+  const g=new T.Group(); g.position.set(3.6,DY,-22.6); g.rotation.y=-.7; scene.add(g);
+  box(g,5.4,.4,2.8,0,0,.8,mMetal);
+  const b=box(g,6,4.4,.5,0,.3,0,mDark); b.rotation.x=-.4;
+  const sc=new T.Mesh(new T.PlaneGeometry(5.5,3.8),
+    screenMat(uiTex(480,330,'#ff7ab8','AR',gAR.length+' dự án')));
+  sc.position.set(0,2.4,.42); sc.rotation.x=-.4; g.add(sc);
+  addScreen({id:'ar',name:'Máy AR',tag:gAR.length+' dự án AR',col:'#ff7ab8',
+    g,sc,w:5.5,h:3.8,kind:'list',lk:'Youtube',items:gAR});
+}
+/* ── server rack: netcode ── */
+const rackLeds=[];
+{
+  const g=new T.Group(); g.position.set(-30,0,-24); scene.add(g);
+  box(g,6.4,19,8,0,0,0,mDark);
+  box(g,6.8,.6,8.4,0,19,0,mMetal);
+  for(let k=0;k<9;k++){
+    box(g,5.6,1.5,.4,0,3.2+k*1.75,4.1,mMetal);
+    const q=emit(g,3.4,.34,-.6,3.95+k*1.75,4.35,k%3?0x5ad0ff:0xff5aa0,.85);
+    rackLeds.push(q);
+  }
+  const sc=new T.Mesh(new T.PlaneGeometry(5.2,2.4),
+    screenMat(uiTex(520,240,'#5ad0ff','NETCODE',gMP.length+' dự án')));
+  sc.position.set(0,20.6,4.15); g.add(sc);
+  box(g,5.8,3,.5,0,19.4,3.9,mFrame);
+  const L=new T.PointLight(0x5ad0ff,0,34,2); L.position.set(0,12,7); g.add(L);
+  // cables spilling onto the floor
+  [[-2.6,5.5],[0,6.4],[2.4,5.9]].forEach(([x,z],i)=>{
+    const c=box(g,.45,.45,7+i*2,x,.25,z,mDark); c.castShadow=false;
+  });
+  addScreen({id:'net',name:'Rack server',tag:gMP.length+' dự án netcode',col:'#5ad0ff',
+    g,sc,w:5.2,h:2.4,kind:'list',lk:'WebGL',items:gMP,light:L,peak:120});
+}
+/* ── MacBook: the career page ──
+   The lid hangs off a hinge group so the screen and its panel stay welded
+   together at whatever angle the lid is opened to. */
+{
+  const g=new T.Group(); g.position.set(-20.5,DY,-19); g.rotation.y=.26; scene.add(g);
+  const mAlu=mat(0x9aa2ac);
+  box(g,8.4,.45,5.8,0,0,0,mAlu);                              // base
+  box(g,6.6,.06,2.6,0,.45,.6,mat(0x2b3038));                  // keyboard well
+  box(g,3,.05,1.9,0,.45,-1.9,mat(0x767d86));                  // trackpad
+  const lid=new T.Group(); lid.position.set(0,.45,-2.9); lid.rotation.x=-.36; g.add(lid);
+  box(lid,8.4,5.6,.35,0,0,0,mAlu);
+  const sc=new T.Mesh(new T.PlaneGeometry(7.6,4.9),
+    screenMat(uiTex(400,260,'#ffc85a','CAREER','4 studio · 6 năm')));
+  sc.position.set(0,3,.25); lid.add(sc);
+  const L=new T.PointLight(0xffd79a,0,26,2); L.position.set(0,3,3); lid.add(L);
+  addScreen({id:'job',name:'MacBook',tag:'4 studio · 6 năm',col:'#ffc85a',
+    g,sc,w:7.6,h:4.9,kind:'jobs',items:jobs,light:L,peak:80});
+}
+/* ── business card: contact ── */
+{
+  const g=new T.Group(); g.position.set(-24.5,DY,-22.4); g.rotation.y=.44; scene.add(g);
+  box(g,4.8,.3,2.9,0,0,0,mat(0x1b2231));
+  const sc=new T.Mesh(new T.PlaneGeometry(4.4,2.5),screenMat(tex((x,W,H)=>{
+    x.fillStyle='#0d1422'; x.fillRect(0,0,W,H);
+    x.fillStyle='#ff5aa0'; x.fillRect(0,0,W,6);
+    x.font='700 34px system-ui,sans-serif'; x.fillStyle='#eaf2ff';
+    x.fillText('Duy Ngoc',26,68);
+    x.font='400 21px ui-monospace,Menlo,monospace'; x.fillStyle='#9fb2d0';
+    x.fillText('Unity Developer',26,104);
+    x.fillText('ongocduy.dev@gmail.com',26,140);
+  },440,250)));
+  sc.rotation.x=-Math.PI/2; sc.position.set(0,.33,0); g.add(sc);
+  addScreen({id:'card',name:'Danh thiếp',tag:'email · github · CV',col:'#ff5aa0',
+    g,sc,w:4.4,h:2.5,kind:'contact',flat:true,items:[
+      {title:'Email',desc:'ongocduy.dev@gmail.com',url:'mailto:ongocduy.dev@gmail.com'},
+      {title:'Github',desc:'github.com/duyongoc',url:'https://github.com/duyongoc'},
+      {title:'CV',desc:'Bản PDF mới nhất',url:'https://drive.google.com/file/d/1Dg0RwxwD1Mo2dcrAQM__pCDnZUCc6c6g/view?usp=sharing'}]});
+}
+/* ── holo pedestal, silhouetted against the glass ── */
+const holoRing=[], holoPanel={};
+{
+  const g=new T.Group(); g.position.set(17,0,-23); g.rotation.y=-.5; scene.add(g);
+  prop('console',{x:17,z:-23,ry:-.5,h:9,uniform:true});
+  const disc=emit(g,5,5,0,9.3,0,0x5ad0ff,.5); disc.rotation.x=-Math.PI/2;
+  holoRing.push(disc);
+  for(let i=0;i<3;i++){
+    const r=emit(g,6-i*1.4,.18,0,10.6+i*2.4,0,0x5ad0ff,.35);
+    r.rotation.x=-.06; holoRing.push(r);
+  }
+  const sc=new T.Mesh(new T.PlaneGeometry(8.2,5),new T.MeshBasicMaterial({
+    map:uiTex(560,340,'#5ad0ff','SHOWREEL',gTube.length+' video'),
+    toneMapped:false,fog:false,transparent:true,opacity:.86,
+    blending:T.AdditiveBlending,depthWrite:false,side:T.DoubleSide}));
+  sc.position.set(0,18,0); sc.rotation.y=.22; g.add(sc);
+  holoPanel.m=sc;
+  const beam=new T.Mesh(new T.ConeGeometry(2.5,8.4,18,1,true),new T.MeshBasicMaterial({
+    color:0x5ad0ff,transparent:true,opacity:.017,side:T.DoubleSide,depthWrite:false,
+    fog:false,toneMapped:false,blending:T.AdditiveBlending}));
+  beam.position.set(0,13.4,0); g.add(beam); holoRing.push(beam);
+  const L=new T.PointLight(0x5ad0ff,0,44,2); L.position.set(0,14,0); g.add(L);
+  addScreen({id:'holo',name:'Bục chiếu',tag:gTube.length+' video showreel',col:'#5ad0ff',
+    g,sc,w:8.2,h:5,kind:'list',lk:'Youtube',items:gTube,light:L,peak:130});
+}
+
+/* ═══ dressing ══════════════════════════════════════════════════ */
+let lampBulb, floorBulb;
+const lampLight=new T.PointLight(0xffb26a,0,40,2);
+const floorLight=new T.PointLight(0xffc890,0,60,2);
+const rgbLight=new T.PointLight(0xc86aff,0,34,2);
+const rgbFans=[];
+{
+  prop('mousepad',{x:-9.5,y:DY,z:-19,w:17,d:7.6});
+  prop('keyboard',{x:-11,y:DY+.15,z:-19,w:11,uniform:true});
+  prop('mouse',{x:-3,y:DY+.15,z:-19,w:2.4,uniform:true});
+  const kb=emit(scene,13,6,-11,DY+.14,-19,0x5ad0ff,0);
+  kb.rotation.x=-Math.PI/2; ledStrips.push(kb);
+
+  const mug=new T.Mesh(new T.CylinderGeometry(1.15,1,2.6,14),mat(0xc44a6e));
+  mug.position.set(-6,DY+1.3,-22.3); mug.castShadow=true; scene.add(mug);
+  const hp=new T.Group(); hp.position.set(-16.5,DY,-22.4); scene.add(hp);   // headphones
+  box(hp,2.6,.4,2.6,0,0,0,mMetal);
+  const st=new T.Mesh(new T.CylinderGeometry(.3,.3,5,8),mMetal);
+  st.position.set(0,2.5,0); st.castShadow=true; hp.add(st);
+  const band=new T.Mesh(new T.TorusGeometry(1.7,.42,6,14,Math.PI),mDark);
+  band.position.set(0,5,0); band.castShadow=true; hp.add(band);
+  [-1.7,1.7].forEach(x=>box(hp,1.1,2,1.8,x,3.9,0,mDark));
+
+  // desk lamp — model for the body, our own bulb and light inside it
+  prop('lamp',{x:-25,y:DY,z:-27,h:7,uniform:true,ry:-.5});
+  const L=new T.Group(); L.position.set(-25,DY,-27); scene.add(L);
+  lampBulb=new T.Mesh(new T.SphereGeometry(.7,10,8),
+    new T.MeshBasicMaterial({color:0xffd9a8,toneMapped:false,fog:false}));
+  lampBulb.position.set(1.8,5.6,.6); L.add(lampBulb);
+  lampLight.position.set(1.9,5.3,.7); L.add(lampLight);
+
+  prop('planter',{x:4,y:DY,z:-25.8,h:6,uniform:true});
+
+  // the tower now stands beside the rack, glass side turned to the camera
+  const t=new T.Group(); t.position.set(-30,0,-13); t.rotation.y=.34; scene.add(t);
+  box(t,6,15,9,0,0,0,mDark);
+  const side=emit(t,8,13.6,0,7.6,4.55,0xc86aff,.05,false); rgbFans.push(side);
+  for(let k=0;k<3;k++)
+    rgbFans.push(emit(t,3,3,-1.2,3.4+k*4.2,4.6,k===1?0x5ad0ff:0xc86aff,.55));
+  rgbLight.position.set(0,8,7); t.add(rgbLight);
+
+  prop('chair',{x:-19,z:-6,ry:-.42,h:12.6,uniform:true});
+
+  // rug
+  box(scene,32,.16,22,-4,0,-4,mRug);
+  box(scene,28,.2,18,-4,.16,-4,mat(0x2f3441));
+
+  prop('sofa',{x:15,z:2,ry:-1.28,w:15,uniform:true,tex:'scifi'});
+
+  // side table + floor lamp
+  prop('sidetable',{x:20,z:11,h:5.6,uniform:true});
+  const fl=new T.Group(); fl.position.set(19,0,16); scene.add(fl);
+  box(fl,2.6,.4,2.6,0,0,0,mDark);
+  const pole=new T.Mesh(new T.CylinderGeometry(.3,.3,17,8),mDark);
+  pole.position.set(0,8.5,0); pole.castShadow=true; fl.add(pole);
+  const shade=new T.Mesh(new T.CylinderGeometry(2.6,3.4,4,14,1,true),
+    new T.MeshLambertMaterial({color:0x6a6258,side:T.DoubleSide}));
+  shade.position.set(0,18.6,0); fl.add(shade);
+  floorBulb=new T.Mesh(new T.SphereGeometry(1,10,8),
+    new T.MeshBasicMaterial({color:0xffe0b4,toneMapped:false,fog:false}));
+  floorBulb.position.set(0,18,0); fl.add(floorBulb);
+  floorLight.position.set(0,17.4,0); fl.add(floorLight);
+}
+
+/* ═══ decor ═════════════════════════════════════════════════════
+   None of this is clickable. It is here because a room with only the six
+   things you are meant to click reads as a showroom, not as somewhere
+   somebody works. */
+const pendantBulb=[], pendantLight=new T.PointLight(0xffcf9a,0,70,2);
+{
+  // service pipes under the ceiling
+  [[-25,32.6,.55],[-19.5,33.2,.4],[-14,32.4,.32]].forEach(([z,y,r])=>{
+    const pi=new T.Mesh(new T.CylinderGeometry(r,r,RX-LX-2,8),mMetal);
+    pi.rotation.z=Math.PI/2; pi.position.set((LX+RX)/2,y,z);
+    pi.castShadow=true; scene.add(pi);
+  });
+  // shelf on the left wall, with the boxes every dev has and never opens
+  prop('shelf',{x:LX+2.2,y:17,z:-10,ry:Math.PI/2,w:13,uniform:true});
+  prop('shelf',{x:LX+2.2,y:23,z:-10,ry:Math.PI/2,w:13,uniform:true});
+  [[-14.5,17.7,2.6],[-11,17.7,3.2],[-7.5,17.7,2.2],[-13,23.7,3],[-9,23.7,2.4]]
+    .forEach(([z,y,w],i)=>box(scene,2.6,w,w,LX+2.4,y,z,i%2?mat(0x4a5364):mat(0x6b4f38)));
+  // poster + wall vent
+  const poster=new T.Mesh(new T.PlaneGeometry(9,13),screenMat(tex((g,W,H)=>{
+    g.fillStyle='#12172a'; g.fillRect(0,0,W,H);
+    g.fillStyle='#ff5aa0'; g.fillRect(0,0,W,10);
+    for(let i=0;i<9;i++){ g.globalAlpha=.10+i*.05; g.fillStyle='#5ad0ff';
+      g.fillRect(20,H*.30+i*22,W-40,12) }
+    g.globalAlpha=1; g.fillStyle='#eaf2ff'; g.font='800 44px system-ui,sans-serif';
+    g.fillText('UNITY',24,H*.22); g.fillStyle='#5ad0ff'; g.fillText('DEV',24,H*.22+50);
+  },300,440)));
+  poster.position.set(LX+.85,21,4); poster.rotation.y=Math.PI/2; scene.add(poster);
+  box(scene,1.2,5,9,LX+1,28,-20,mMetal);
+  for(let i=0;i<5;i++) box(scene,.5,.5,8,LX+1.7,28.6+i*.9,-20,mDark);
+  // floor plant, crates, bin
+  prop('planter',{x:-30,z:7,h:14,uniform:true});
+  box(scene,4.4,4,4.4,-31,0,-15,mat(0x4a5364));
+  box(scene,3.8,3.4,3.8,-30.6,4,-14.6,mat(0x6b4f38));
+  const bin=new T.Mesh(new T.CylinderGeometry(1.6,1.3,4,10),mMetal);
+  bin.position.set(-6,2,-12); bin.castShadow=true; scene.add(bin);
+  // flush ceiling panels
+  [[-14,-18],[2,-4]].forEach(([x,z])=>{
+    box(scene,12,.5,8,x,CY-.6,z,mMetal);
+    const q=emit(scene,11,7,x,CY-.72,z,0xcfe2ff,0); q.rotation.x=Math.PI/2;
+    ledStrips.push(q);
+  });
+  pendantLight.position.set(-8,CY-4,-12); scene.add(pendantLight);
+}
+
+/* ═══ time of day ═══════════════════════════════════════════════ */
+const STOPS=[
+  {h:0,   top:0x02050f, bot:0x080f26, sun:0x2a3a6a, si:0,   ai:.26, lamp:1,  city:1,   shaft:0},
+  {h:5,   top:0x0c1c48, bot:0x322f60, sun:0x5c6ca4, si:.06, ai:.32, lamp:1,  city:.9,  shaft:.1},
+  {h:6.5, top:0x27467e, bot:0xff9d5e, sun:0xff8a46, si:.6,  ai:.36, lamp:.5, city:.35, shaft:1},
+  {h:9,   top:0x4682cc, bot:0xb6d4ee, sun:0xfff0d8, si:2.6, ai:1.55,lamp:0,  city:0,   shaft:.35},
+  {h:12,  top:0x5596dc, bot:0xd6ebff, sun:0xfffdf6, si:3.0, ai:1.95,lamp:0,  city:0,   shaft:.18},
+  {h:15,  top:0x4a8ad0, bot:0xcfe4fa, sun:0xfff2de, si:2.7, ai:1.65,lamp:0,  city:0,   shaft:.35},
+  {h:17.5,top:0x35659f, bot:0xffab68, sun:0xff9c50, si:1.9, ai:1.0, lamp:.25,city:.15, shaft:1},
+  {h:19,  top:0x1b366c, bot:0xff744a, sun:0xff6636, si:.34, ai:.30, lamp:.75,city:.6,  shaft:.5},
+  {h:20.5,top:0x091140, bot:0x25255a, sun:0x36426e, si:.05, ai:.30, lamp:1,  city:.95, shaft:.05},
+  {h:24,  top:0x02050f, bot:0x080f26, sun:0x2a3a6a, si:0,   ai:.26, lamp:1,  city:1,   shaft:0}
+];
+const cA=new T.Color(), cB=new T.Color(), cS=new T.Color();
+function applyTime(h){
+  h=((h%24)+24)%24;
+  let i=0; while(i<STOPS.length-2 && STOPS[i+1].h<=h) i++;
+  const a=STOPS[i], b=STOPS[i+1];
+  const t=clamp((h-a.h)/Math.max(.001,b.h-a.h),0,1);
+  SKY_TOP.copy(cA.setHex(a.top)).lerp(cB.setHex(b.top),t);
+  SKY_BOT.copy(cA.setHex(a.bot)).lerp(cB.setHex(b.bot),t);
+  sun.color.copy(cA.setHex(a.sun)).lerp(cB.setHex(b.sun),t);
+  sun.intensity=lerp(a.si,b.si,t);
+  amb.intensity=lerp(a.ai,b.ai,t);
+  amb.color.copy(SKY_BOT).lerp(cB.setHex(0xffffff),.3);
+  amb.groundColor.setHex(0x241c18).lerp(cB.setHex(0x7d7263),clamp(sun.intensity/2.4,0,1));
+  const lamp=lerp(a.lamp,b.lamp,t), city=lerp(a.city,b.city,t), sh=lerp(a.shaft,b.shaft,t);
+
+  /* The sun arcs OUTSIDE the glass wall, so its light can only reach the desk
+     through the opening. Azimuth sweeps back-to-front across the day, which
+     drags the window's shadow rectangle across the floor and up the far wall. */
+  const day=clamp((h-5.5)/13,0,1);
+  const el=(Math.sin(day*Math.PI)*60-4)*Math.PI/180;
+  const az=(-1.05+2.0*day);
+  const R=190, ce=Math.cos(el);
+  sun.position.set(RX+Math.cos(az)*R*ce, Math.max(6,Math.sin(el)*R), BZ+Math.sin(az)*R*ce+14);
+  sun.castShadow=sun.intensity>.08;
+  wantShadow(h);
+  bounce.intensity=sun.intensity*.14;
+  skyFill.forEach(L=>{L.intensity=amb.intensity*900; L.color.copy(SKY_BOT).lerp(cB.setHex(0xffffff),.45)});
+
+  shaft.rotation.y=-az*.42;
+  cS.copy(sun.color);
+  shaftQ.forEach((q,k)=>{
+    q.material.color.copy(cS);
+    q.material.opacity=sh*.032*(1-Math.abs(k-2)*.26);
+    q.visible=sh>.02;
+  });
+
+  lampLight.intensity=lamp*300; floorLight.intensity=lamp*380;
+  rgbLight.intensity=90+lamp*150;
+  neonLight.intensity=lamp*300; neonSign.material.opacity=.25+lamp*.75;
+  ledLights.forEach(L=>L.intensity=lamp*220);
+  pendantLight.intensity=lamp*520;
+  pendantBulb.forEach(b=>b.material.color.setHex(lamp>.05?0xffcf9a:0x3f3a31));
+  ledStrips.forEach(q=>{q.material.opacity=lamp*.7;q.visible=lamp>.02});
+  rackLeds.forEach((q,k)=>q.material.opacity=.35+lamp*.6);
+  holoRing.forEach(q=>q.material.opacity=(.2+lamp*.5)*(q.geometry.parameters.height>1?.5:1));
+  holoPanel.m.material.opacity=.5+lamp*.45;
+  rgbFans.forEach((q,k)=>q.material.opacity=(k?.4:.05)+lamp*(k?.3:.07));
+  if(lampBulb) lampBulb.material.color.setHex(lamp>.05?0xffd9a8:0x3f3a31);
+  if(floorBulb) floorBulb.material.color.setHex(lamp>.05?0xffe0b4:0x3f3a31);
+  cityNeon.forEach((m,k)=>{m.opacity=city*(.6+((k*7)%5)*.08);m.visible=city>.02});
+  rains.forEach(m=>m.opacity=.05+city*.12);
+  SCREENS.forEach(s=>{ if(s.light) s.light.intensity=s.peak*(.3+lamp*.7) });
+
+  document.getElementById('nowT').textContent=
+    String(Math.floor(h)).padStart(2,'0')+':'+String(Math.floor((h%1)*60)).padStart(2,'0');
+  const ph=h<5.5?'Đêm':h<8?'Bình minh':h<11?'Sáng':h<14?'Trưa':h<17?'Chiều':h<19.5?'Hoàng hôn':'Đêm';
+  document.getElementById('phase').innerHTML='Ngoài cửa kính<b>'+ph+'</b>';
+}
+
+const vnHour=()=>new Date().toLocaleTimeString('en-GB',
+  {timeZone:'Asia/Ho_Chi_Minh',hour:'2-digit',minute:'2-digit'});
+
+/* One whole day every five real minutes, and the visitor lands in a random
+   part of it — morning, afternoon or night. A page that always opens on the
+   same frame has nothing to show anyone who comes back a second time. */
+const CYCLE=300000;
+const STARTS=[8.2,15.6,20.9];
+let timeH=STARTS[(Math.random()*STARTS.length)|0], auto=true;
+const scrub=document.getElementById('scrub'), realBtn=document.getElementById('real');
+scrub.oninput=()=>{ auto=false; timeH=+scrub.value/60; realBtn.classList.remove('on') };
+realBtn.onclick=()=>{ auto=true; realBtn.classList.add('on') };
+/* deep link: #t=21.5 pins an hour, #cam=yaw,pit,dist frames it */
+const HP=new URLSearchParams(location.hash.slice(1));
+if(HP.has('t')){
+  timeH=+HP.get('t'); auto=false;
+  realBtn.classList.remove('on'); scrub.value=Math.round(timeH*60);
+}
+
+/* ═══ camera ════════════════════════════════════════════════════
+   The pivot sits inside the room and the limits are chosen so the orbit can
+   never push the camera through a wall or the ceiling — cheaper and steadier
+   than collision, and it keeps the framing on the two walls that matter. */
+const HOME=V(-4,14,-20);
+let yaw=-.30, pit=.30, dist=58;                    // intro pulls in on load
+let tYaw=.32, tPit=.12, tDist=54;
+let drag=false, lx=0, ly=0, moved=0;
+if(HP.has('cam')){
+  const [a,b,c]=HP.get('cam').split(',').map(Number);
+  tYaw=yaw=a; tPit=pit=b; tDist=dist=c;
+}
+
+cv.addEventListener('pointerdown',e=>{drag=true;moved=0;lx=e.clientX;ly=e.clientY;
+  cv.classList.add('drag');try{cv.setPointerCapture(e.pointerId)}catch(_){}});
+cv.addEventListener('pointerup',e=>{drag=false;cv.classList.remove('drag');
+  try{cv.releasePointerCapture(e.pointerId)}catch(_){}});
+addEventListener('pointermove',e=>{
+  ptr.set((e.clientX/innerWidth)*2-1,-(e.clientY/innerHeight)*2+1);
+  mx=e.clientX; my=e.clientY;
+  if(drag){
+    const dx=e.clientX-lx, dy=e.clientY-ly; lx=e.clientX; ly=e.clientY;
+    moved+=Math.abs(dx)+Math.abs(dy);
+    /* With something open the drag orbits that object instead of the room, and
+       the swing is clamped so the camera can never get behind the panel. */
+    if(focus_){ fYaw=clamp(fYaw-dx*.004,-.62,.62); fPit=clamp(fPit-dy*.003,-.34,.44) }
+    else{ tYaw=clamp(tYaw-dx*.0035,-.5,.45); tPit=clamp(tPit-dy*.0026,.02,.36) }
+  }
+});
+addEventListener('wheel',e=>{
+  if(e.target.closest('#glass')||e.target.closest('#clock')) return;   // let the panel scroll
+  e.preventDefault();
+  if(focus_) fD=clamp(fD+e.deltaY*.022,fDBase*.72,fDBase*1.75);
+  else tDist=clamp(tDist+e.deltaY*.05,36,58);
+},{passive:false});
+addEventListener('resize',()=>{
+  camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth,innerHeight,false);
+});
+
+/* ═══ hover + focus ═════════════════════════════════════════════ */
+const ray=new T.Raycaster(), ptr=new T.Vector2(-9,-9);
+let mx=0,my=0, hot=null, focus_=null, fB=0;
+const tip=document.getElementById('tip'), glass=document.getElementById('glass');
+const back=document.getElementById('back');
+const hero=document.getElementById('hero'), hint=document.getElementById('hint');
+const picks=SCREENS.map(s=>{ s.sc.userData.s=s; return s.sc });
+/* The open panel is a DOM element, so it cannot depth-test against the WebGL
+   scene — anything standing in front of it gets painted over. Clipping the
+   panel to the occluders' silhouettes is the wrong end of the problem: instead,
+   fade out whatever is between the camera and the panel, which is what a game
+   does when a wall gets between you and the character. Five rays to the panel's
+   corners and centre, refreshed every fifth frame. */
+scene.traverse(o=>{ if(o.isMesh&&o.castShadow&&picks.indexOf(o)<0) occCand.push(o) });
+const occ=new Map(), oray=new T.Raycaster(), oV=new T.Vector3();
+const OSAMP=[[0,0],[-.94,-.94],[.94,-.94],[.94,.94],[-.94,.94]];
+let occTick=0, occWant=new Set();
+function occUpdate(){
+  if(--occTick<=0){
+    occTick=5; occWant=new Set();
+    if(focus_&&fB>.45){
+      const s=focus_, hw=s.w/2, hh=s.h/2;
+      s.sc.updateWorldMatrix(true,false);
+      for(const [u,v] of OSAMP){
+        oV.set(u*hw,v*hh,0).applyMatrix4(s.sc.matrixWorld).sub(camera.position);
+        const len=oV.length();
+        oray.set(camera.position,oV.divideScalar(len));
+        oray.near=.15; oray.far=len-.35;
+        for(const h of oray.intersectObjects(occCand,false)) occWant.add(h.object);
+      }
+    }
+  }
+  occWant.forEach(m=>{
+    if(occ.has(m)) return;
+    occ.set(m,{mat:m.material,t:0});
+    m.material=m.material.clone();
+    m.material.transparent=true; m.material.depthWrite=false;
+  });
+  occ.forEach((v,m)=>{
+    v.t+=((occWant.has(m)?1:0)-v.t)*.17;
+    if(v.t<.02&&!occWant.has(m)){
+      m.material.dispose(); m.material=v.mat; occ.delete(m); return;
+    }
+    m.material.opacity=1-v.t*.92;
+  });
+}
+const fPos=new T.Vector3(), fLook=new T.Vector3();
+/* Orbit frame around whatever is open: an orthonormal basis built off the
+   panel's own normal, so it works for a monitor standing up and for a card
+   lying flat on the desk without a special case. */
+const fN=new T.Vector3(0,0,1), fC=new T.Vector3();
+/* The camera's roll is undefined when it looks straight down a panel's normal —
+   which is exactly the case for the card lying flat on the desk. Carrying the
+   panel's own up vector into camera.up pins the roll, so a flat object arrives
+   square to the frame instead of at whatever angle lookAt happened to pick. */
+const fUp=new T.Vector3(0,1,0), curUp=new T.Vector3(0,1,0);
+const oR=new T.Vector3(), oU=new T.Vector3(), oD=new T.Vector3();
+let fYaw=0, fPit=0, fD=1, fDBase=1, opened=false;
+const PANEL_W=680;                              // panel is laid out at one fixed
+const CSSL=document.getElementById('css3d');    // pixel width for every object, so
+const C3D=document.getElementById('c3d');       // type never changes size with the prop
+const eps=v=>Math.abs(v)<1e-10?0:v;
+const mScale=new T.Matrix4(), mOut=new T.Matrix4();
+const camCSS=m=>{const e=m.elements;return 'matrix3d('+
+  [e[0],-e[1],e[2],e[3],e[4],-e[5],e[6],e[7],e[8],-e[9],e[10],e[11],e[12],-e[13],e[14],e[15]].map(eps)+')'};
+const objCSS=m=>{const e=m.elements;return 'translate(-50%,-50%)matrix3d('+
+  [e[0],e[1],e[2],e[3],-e[4],-e[5],-e[6],-e[7],e[8],e[9],e[10],e[11],e[12],e[13],e[14],e[15]].map(eps)+')'};
+
+function setHot(s){
+  if(s===hot) return;
+  hot=s; cv.classList.toggle('hot',!!s);
+  if(s){ tip.innerHTML=`<b>${s.name}</b><span>${s.tag}</span>`; tip.classList.add('on') }
+  else tip.classList.remove('on');
+}
+const img=g=>`<img src="${thumb(g.info)}" loading="lazy"
+  onerror="this.onerror=null;this.src='${thumb(g.intro)}'">`;
+function bodyFor(s){
+  if(s.kind==='grid') return `<div class="gr" style="grid-template-columns:repeat(${s.cols},1fr)">`+
+    s.items.map(g=>{const l=linkOf(g,s.lk);
+      return `<a class="tile" href="${l.url}" target="_blank" rel="noopener">${img(g)}
+        <b>${g.title}</b><i>${l.kind==='WebGL'?'▶ chơi ngay':l.kind}</i></a>`}).join('')+'</div>';
+  if(s.kind==='list') return `<div class="gr">`+
+    s.items.map(g=>{const l=linkOf(g,s.lk);
+      return `<a class="lrow" href="${l.url}" target="_blank" rel="noopener">${img(g)}
+        <span><b>${g.title}</b><i>${l.kind}</i></span></a>`}).join('')+'</div>';
+  if(s.kind==='jobs') return s.items.map(j=>`<div class="jr"><b>${j.t||''}</b>
+    <u>${j.yr||''} · ${j.co||''}</u>${j.p?`<p>${j.p}</p>`:''}
+    ${j.ul?'<ul><li>'+j.ul.join('</li><li>')+'</li></ul>':''}</div>`).join('');
+  return s.items.map(c=>`<a class="cr" href="${c.url}" target="_blank" rel="noopener">
+    <b>${c.title}</b><i>${c.desc}</i></a>`).join('');
+}
+function focusOn(s){
+  focus_=s; setHot(null); opened=true;
+  idx.classList.remove('on'); idxBtn.classList.remove('on');
+  s.sc.updateWorldMatrix(true,false);
+  const q=s.sc.getWorldQuaternion(new T.Quaternion());
+  fN.set(0,0,1).applyQuaternion(q); fUp.set(0,1,0).applyQuaternion(q);
+  s.sc.getWorldPosition(fC);
+  const vfov=camera.fov*Math.PI/180;
+  const dH=(s.h/2)/Math.tan(vfov/2);
+  const dW=(s.w/2)/Math.tan(Math.atan(Math.tan(vfov/2)*camera.aspect));
+  fDBase=Math.max(dH,dW)*1.2; fD=fDBase; fYaw=0; fPit=0;
+  const pw=PANEL_W, ph=Math.round(PANEL_W*s.h/s.w);
+  glass.style.width=pw+'px'; glass.style.height=ph+'px';
+  mScale.makeScale(s.w/pw,s.h/ph,1);
+  glass.style.boxShadow='inset 0 3px 0 '+s.col+',0 26px 90px rgba(0,0,0,.7)';
+  glass.querySelector('#gh s').style.background=s.col;
+  const b=glass.querySelector('#gh b'); b.textContent=s.name; b.style.color=s.col;
+  glass.querySelector('#gh i').textContent=s.tag;
+  document.getElementById('gb').innerHTML=bodyFor(s);
+  document.getElementById('gb').scrollTop=0;
+  back.classList.add('on');
+  hero.classList.add('dim'); hint.classList.add('dim');
+}
+function unfocus(){
+  focus_=null; glass.classList.remove('on'); back.classList.remove('on');
+  hero.classList.remove('dim'); hint.classList.remove('dim');
+}
+back.onclick=unfocus;
+document.getElementById('gx').onclick=unfocus;
+
+/* Not everyone explores. A recruiter with four minutes wants a list, and
+   without one the good stuff is only reachable by hunting for it. */
+const idx=document.getElementById('idx'), idxBtn=document.getElementById('idxBtn');
+idx.innerHTML=SCREENS.map((s,i)=>
+  `<button data-i="${i}"><s style="background:${s.col}"></s>
+   <span><u>${s.name}</u><i>${s.tag}</i></span></button>`).join('');
+idx.onclick=e=>{ const b=e.target.closest('button'); if(b) focusOn(SCREENS[+b.dataset.i]) };
+idxBtn.onclick=()=>{ idx.classList.toggle('on'); idxBtn.classList.toggle('on') };
+addEventListener('keydown',e=>{
+  if(e.key==='Escape'){ unfocus(); idx.classList.remove('on'); idxBtn.classList.remove('on'); return }
+  const k={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]}[e.key];
+  if(!k) return;
+  e.preventDefault();
+  if(focus_){ fYaw=clamp(fYaw-k[0]*.09,-.62,.62); fPit=clamp(fPit-k[1]*.07,-.34,.44) }
+  else{ tYaw=clamp(tYaw-k[0]*.07,-.5,.45); tPit=clamp(tPit-k[1]*.05,.02,.36) }
+});
+cv.addEventListener('click',()=>{ if(moved<6){ hot?focusOn(hot):(focus_&&unfocus()) } });
+
+/* ═══ loop ══════════════════════════════════════════════════════ */
+let alive=true, first=true, last=performance.now();
+document.addEventListener('visibilitychange',()=>alive=!document.hidden);
+const P=new T.Vector3(), L=new T.Vector3();
+
+function tick(now){
+  requestAnimationFrame(tick);
+  if(!alive) return;
+  const dt=Math.min(50,now-last); last=now;
+
+  if(auto){ timeH=(timeH+dt/CYCLE*24)%24; scrub.value=Math.round(timeH*60) }
+  applyTime(timeH);
+  document.getElementById('vnT').textContent=vnHour();
+
+  rains.forEach((m,k)=>{ m.map.offset.y-=dt*(k?.0011:.0009); });
+  holoPanel.m.position.y=18+Math.sin(now*.0013)*.28;
+  holoRing.forEach((q,i)=>{ if(i) q.rotation.z=now*.0004*(i%2?1:-1) });
+
+  fB+=((focus_?1:0)-fB)*.075;
+  const b=fB<.001?0:fB>.999?1:fB;
+  yaw+=(tYaw-yaw)*.06; pit+=(tPit-pit)*.06; dist+=(tDist-dist)*.05;
+  P.set(Math.sin(yaw)*Math.cos(pit),Math.sin(pit),Math.cos(yaw)*Math.cos(pit))
+   .multiplyScalar(dist).add(HOME);
+  L.copy(HOME);
+  if(focus_||b>0){
+    oR.set(0,1,0).cross(fN);
+    if(oR.lengthSq()<1e-4) oR.set(1,0,0);          // panel lying flat: normal is up
+    oR.normalize(); oU.copy(fN).cross(oR).normalize();
+    const cy=Math.cos(fYaw),sy=Math.sin(fYaw),cp=Math.cos(fPit),sp=Math.sin(fPit);
+    oD.copy(fN).multiplyScalar(cy*cp).addScaledVector(oR,sy*cp).addScaledVector(oU,sp);
+    fPos.copy(fC).addScaledVector(oD,fD);
+    fPos.x=clamp(fPos.x,LX+3,RX-3);                // never orbit through a wall
+    fPos.z=clamp(fPos.z,BZ+3,FZ-3); fPos.y=clamp(fPos.y,3,CY-3);
+    fLook.copy(fC);
+  }
+  if(b){ P.lerp(fPos,b); L.lerp(fLook,b) }
+  curUp.set(0,1,0).lerp(fUp,b);
+  if(curUp.lengthSq()<1e-6) curUp.set(0,1,0);
+  camera.up.copy(curUp.normalize());
+  camera.position.copy(P); camera.lookAt(L);
+
+  if(!drag&&!focus_){
+    ray.setFromCamera(ptr,camera);
+    const h=ray.intersectObjects(picks,false)[0];
+    setHot(h?h.object.userData.s:null);
+  }
+  SCREENS.forEach((s,i)=>{
+    const t=(s===hot&&!focus_)?1:0;
+    s.hv+=(t-s.hv)*.16;
+    // until the first thing is opened, every hotspot breathes — otherwise
+    // nothing on screen says the props are clickable at all
+    const idle=(!opened&&!focus_&&!hot)?.10+.085*Math.sin(now*.0026+i*.9):0;
+    const o=Math.max(s.hv*.45,idle);
+    s.halo.material.opacity=o; s.halo.visible=o>.008;
+  });
+  if(hot){ tip.style.left=mx+'px'; tip.style.top=my+'px' }
+  occUpdate();
+
+  /* The panel is a real CSS-3D surface glued onto the quad, not a rectangle
+     projected into screen space. Same matrix the GPU uses, handed to the
+     browser as matrix3d — so it skews with perspective as the camera orbits,
+     and the text inside is still text: selectable, clickable, re-rasterised
+     crisp at every angle. */
+  if(focus_&&b>.35){
+    focus_.sc.updateWorldMatrix(true,false);
+    mOut.multiplyMatrices(focus_.sc.matrixWorld,mScale);
+    glass.style.transform=objCSS(mOut);
+    glass.classList.add('on');
+  }else glass.classList.remove('on');
+
+  renderer.render(scene,camera);
+  if(focus_||fB>.01){
+    const f=.5*innerHeight/Math.tan(camera.fov*Math.PI/360);
+    CSSL.style.perspective=f+'px';
+    C3D.style.transform='translateZ('+f+'px)'+camCSS(camera.matrixWorldInverse)+
+      'translate('+(innerWidth/2)+'px,'+(innerHeight/2)+'px)';
+  }
+  if(first&&modelsIn){first=false;document.getElementById('load').classList.add('off')}
+}
+applyTime(timeH);
+requestAnimationFrame(tick);
+</script>

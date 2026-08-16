@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>O Ngoc Duy — Unity Game Developer</title>
+<style>
+:root{
+  --bg:#212121; --panel:#383838; --panel-2:#3f3f3f; --head:#2c2c2c; --line:#1c1c1c;
+  --txt:#cfcfcf; --txt-2:#9a9a9a; --txt-3:#6f6f6f;
+  --sel:#2c5d87; --sel-2:#3d6ea5; --acc:#4b9fea; --ok:#7ac142; --warn:#e8c34a;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--txt);font:12.5px/1.5 -apple-system,"Segoe UI",Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased;height:100vh;overflow:hidden;user-select:none}
+a{color:inherit;text-decoration:none}
+img{display:block}
+::-webkit-scrollbar{width:11px;height:11px}
+::-webkit-scrollbar-track{background:#2b2b2b}
+::-webkit-scrollbar-thumb{background:#565656;border:2px solid #2b2b2b;border-radius:6px}
+::-webkit-scrollbar-thumb:hover{background:#6d6d6d}
+
+/* ── chrome ───────────────────────────── */
+.app{display:flex;flex-direction:column;height:100vh}
+.menubar{background:var(--head);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:2px;padding:0 8px;height:30px;flex:none}
+.menubar .m{padding:5px 9px;color:var(--txt-2);border-radius:3px;font-size:12px}
+.menubar .m:hover{background:#454545;color:var(--txt)}
+.menubar .logo{width:17px;height:17px;margin-right:8px;opacity:.9}
+.toolbar{background:var(--panel);border-bottom:1px solid var(--line);height:38px;display:flex;align-items:center;padding:0 10px;gap:8px;flex:none}
+.tgroup{display:flex;background:#2f2f2f;border:1px solid var(--line);border-radius:4px;overflow:hidden}
+.tbtn{width:38px;height:24px;display:grid;place-items:center;color:var(--txt-2);border-right:1px solid var(--line);cursor:pointer;font-size:12px}
+.tbtn:last-child{border:0}
+.tbtn:hover{background:#4a4a4a;color:#fff}
+.tbtn.on{background:var(--sel-2);color:#fff}
+.tspace{flex:1}
+.pill{border:1px solid var(--line);background:#2f2f2f;border-radius:4px;padding:4px 11px;color:var(--txt-2);font-size:11.5px}
+.pill:hover{background:#4a4a4a;color:#fff}
+.pill.acc{background:var(--sel);border-color:#24486a;color:#e9f3fb}
+.pill.acc:hover{background:var(--sel-2)}
+
+/* ── panels ───────────────────────────── */
+.body{flex:1;display:grid;grid-template-columns:266px 1fr 336px;gap:4px;padding:4px;min-height:0}
+.col{display:flex;flex-direction:column;gap:4px;min-height:0}
+.pane{background:var(--panel);border:1px solid var(--line);border-radius:4px;display:flex;flex-direction:column;min-height:0;overflow:hidden}
+.tabs{display:flex;background:var(--head);border-bottom:1px solid var(--line);flex:none}
+.tab{padding:7px 14px;font-size:11.5px;color:var(--txt-3);border-right:1px solid var(--line);display:flex;align-items:center;gap:6px}
+.tab.on{background:var(--panel);color:var(--txt)}
+.tab .dot{width:9px;height:9px;border-radius:2px;background:var(--txt-3)}
+.tab.on .dot{background:var(--acc)}
+.scroll{overflow:auto;flex:1;min-height:0}
+
+/* ── hierarchy ────────────────────────── */
+.hsearch{padding:6px;border-bottom:1px solid var(--line);flex:none}
+.hsearch input{width:100%;background:#2b2b2b;border:1px solid var(--line);border-radius:11px;color:var(--txt);padding:4px 11px;font:inherit;font-size:11.5px;outline:none}
+.hsearch input:focus{border-color:var(--acc)}
+.row{display:flex;align-items:center;gap:6px;padding:3.5px 8px;cursor:pointer;white-space:nowrap;color:var(--txt)}
+.row:hover{background:#434343}
+.row.sel{background:var(--sel)}
+.row .arw{width:11px;color:var(--txt-3);font-size:9px;text-align:center;flex:none}
+.row .ico{width:14px;height:14px;flex:none;border-radius:3px;display:grid;place-items:center;font-size:9px;color:#1e1e1e;font-weight:700}
+.row .nm{overflow:hidden;text-overflow:ellipsis}
+.row.off .nm{color:var(--txt-3)}
+.row .badge{margin-left:auto;font-family:var(--mono);font-size:9.5px;color:var(--txt-3);letter-spacing:.04em}
+.row.sel .badge{color:#bcd9f0}
+.d1{padding-left:8px}.d2{padding-left:26px}.d3{padding-left:44px}
+.grp{color:var(--txt-2)}
+
+/* ── game view ────────────────────────── */
+.view{position:relative;flex:1;background:#101010;display:grid;place-items:center;overflow:hidden;min-height:0}
+.view .stage{position:absolute;inset:0}
+.view .stage img{width:100%;height:100%;object-fit:cover;opacity:.94}
+.view::after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 50% 40%,transparent 25%,rgba(0,0,0,.72) 100%);pointer-events:none}
+.hud{position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;padding:16px;pointer-events:none}
+.hud .top{display:flex;gap:8px;align-items:flex-start}
+.chip{background:rgba(16,16,16,.72);border:1px solid rgba(255,255,255,.14);backdrop-filter:blur(6px);border-radius:4px;padding:4px 9px;font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;color:#dfe6ec}
+.chip b{color:var(--ok);font-weight:600}
+.hud .bottom{margin-top:auto;pointer-events:auto}
+.hud h1{font-size:clamp(26px,3.6vw,44px);letter-spacing:-.03em;font-weight:650;color:#fff;line-height:1.05;text-shadow:0 4px 30px rgba(0,0,0,.6)}
+.hud .desc{color:#c3cbd3;max-width:56ch;margin-top:9px;font-size:13.5px;text-shadow:0 2px 12px rgba(0,0,0,.7)}
+.playrow{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+.pbtn{background:rgba(28,28,28,.8);border:1px solid rgba(255,255,255,.18);backdrop-filter:blur(6px);border-radius:5px;padding:9px 16px;font-size:12.5px;font-weight:600;color:#e8eef4;transition:.16s;display:flex;align-items:center;gap:7px}
+.pbtn:hover{background:#fff;color:#111;border-color:#fff;transform:translateY(-1px)}
+.pbtn.pri{background:var(--acc);border-color:var(--acc);color:#06182a}
+.pbtn.pri:hover{background:#7bc0ff;border-color:#7bc0ff;color:#06182a}
+
+/* about / experience stage */
+.doc{position:absolute;inset:0;z-index:3;overflow:auto;padding:38px 44px;background:linear-gradient(180deg,#242424,#1c1c1c)}
+.doc.hide{display:none}
+.doc .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--acc);text-transform:uppercase}
+.doc h2{font-size:clamp(28px,3.4vw,42px);letter-spacing:-.03em;font-weight:650;color:#fff;margin-top:12px;line-height:1.08}
+.doc p{color:#a9b0b7;max-width:62ch;margin-top:14px;font-size:14px;line-height:1.7}
+.abt{display:grid;grid-template-columns:150px 1fr;gap:30px;align-items:start}
+.abt .por{width:150px;height:150px;border-radius:6px;object-fit:cover;border:1px solid #4a4a4a;filter:grayscale(.25)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:1px;background:#3a3a3a;border:1px solid #3a3a3a;border-radius:5px;overflow:hidden;margin-top:26px}
+.stats div{background:#252525;padding:14px 16px}
+.stats span{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.12em;color:var(--txt-3);text-transform:uppercase}
+.stats b{display:block;font-size:19px;font-weight:600;color:#fff;margin-top:5px;letter-spacing:-.02em}
+.tl{margin-top:8px;border-left:1px solid #3d3d3d;padding-left:22px}
+.tl .job{position:relative;padding:16px 0}
+.tl .job+.job{border-top:1px solid #303030}
+.tl .job::before{content:"";position:absolute;left:-26.5px;top:24px;width:9px;height:9px;border-radius:50%;background:var(--acc);box-shadow:0 0 0 3px #1f1f1f}
+.tl .yr{font-family:var(--mono);font-size:10.5px;letter-spacing:.09em;color:var(--txt-3)}
+.tl h3{font-size:16.5px;font-weight:600;color:#fff;margin-top:5px}
+.tl .co{color:var(--acc);font-size:12.5px;margin-top:2px}
+.tl p{margin-top:7px;font-size:13px}
+.tl ul{margin:8px 0 0 17px;color:#a9b0b7;font-size:13px}
+.tl li{margin-bottom:3px}
+.tl li b{color:#dcdcdc;font-weight:600}
+
+/* ── inspector ────────────────────────── */
+.insp{padding:0 0 14px}
+.ihead{display:flex;gap:10px;align-items:center;padding:11px 12px;border-bottom:1px solid var(--line);background:var(--panel-2)}
+.ihead .cb{width:13px;height:13px;border:1px solid #6e6e6e;border-radius:2px;background:#2b2b2b;display:grid;place-items:center;color:var(--acc);font-size:10px;flex:none}
+.ihead .nmi{font-size:13.5px;font-weight:600;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ihead .tagi{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--txt-3);flex:none}
+.comp{border-bottom:1px solid var(--line)}
+.chead{display:flex;align-items:center;gap:7px;padding:7px 10px;background:var(--panel-2);cursor:pointer}
+.chead:hover{background:#474747}
+.chead .arw{font-size:8px;color:var(--txt-2)}
+.chead .ci{width:15px;height:15px;border-radius:3px;display:grid;place-items:center;font-size:9px;font-weight:700;color:#161616}
+.chead b{font-size:12px;font-weight:600}
+.cbody{padding:9px 12px 12px}
+.f{display:grid;grid-template-columns:96px 1fr;gap:8px;align-items:center;padding:3.5px 0;font-size:11.8px}
+.f span{color:var(--txt-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.f .v{background:#2b2b2b;border:1px solid #1e1e1e;border-radius:3px;padding:3px 8px;color:#e2e2e2;font-family:var(--mono);font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.f .v.plain{background:none;border:0;padding:3px 0;font-family:inherit;font-size:11.8px;white-space:normal}
+.v3{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
+.v3 i{background:#2b2b2b;border:1px solid #1e1e1e;border-radius:3px;padding:3px 6px;font-family:var(--mono);font-size:10.5px;color:#9fb6c9;font-style:normal;display:flex;gap:5px}
+.v3 i b{color:var(--txt-3);font-weight:400}
+.prev{margin-top:9px;border:1px solid #1e1e1e;border-radius:4px;overflow:hidden;background:#151515}
+.prev img{width:100%;aspect-ratio:16/10;object-fit:cover}
+.lnk{display:flex;flex-direction:column;gap:5px;margin-top:4px}
+.lnk a{display:flex;align-items:center;gap:8px;background:#2b2b2b;border:1px solid #1e1e1e;border-radius:3px;padding:6px 9px;font-size:11.5px;color:#cfd6dc;transition:.14s}
+.lnk a:hover{background:var(--sel);border-color:#24486a;color:#fff}
+.lnk a .k{font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;color:var(--txt-3);margin-left:auto}
+.lnk a:hover .k{color:#bcd9f0}
+.addc{margin:12px 12px 0;text-align:center;background:#2f2f2f;border:1px solid var(--line);border-radius:4px;padding:7px;font-size:11.5px;color:var(--txt-2)}
+.addc:hover{background:#454545;color:var(--txt)}
+
+/* ── console ──────────────────────────── */
+.con{height:172px;flex:none}
+.con .scroll{font-family:var(--mono);font-size:11.5px}
+.log{display:flex;gap:9px;padding:5px 11px;border-bottom:1px solid #313131;color:var(--txt-2);align-items:flex-start}
+.log:hover{background:#434343}
+.log .lv{flex:none;width:13px;text-align:center}
+.log.i .lv{color:var(--acc)}.log.w .lv{color:var(--warn)}.log.s .lv{color:var(--ok)}
+.log .t{flex:none;color:var(--txt-3)}
+.log a{color:var(--acc);border-bottom:1px solid rgba(75,159,234,.35)}
+.log a:hover{color:#8fcaff}
+
+/* ── project browser (bottom of hierarchy col) ── */
+.pbar{display:flex;flex-wrap:wrap;gap:4px;padding:8px}
+.pbar button{background:#2f2f2f;border:1px solid var(--line);color:var(--txt-2);border-radius:3px;padding:4px 9px;font:inherit;font-size:11px;cursor:pointer}
+.pbar button:hover{background:#4a4a4a;color:#fff}
+.pbar button.on{background:var(--sel);border-color:#24486a;color:#fff}
+
+.statusbar{height:24px;background:var(--head);border-top:1px solid var(--line);display:flex;align-items:center;gap:14px;padding:0 12px;font-family:var(--mono);font-size:10.5px;color:var(--txt-3);flex:none;letter-spacing:.04em}
+.statusbar a{color:var(--txt-2)}
+.statusbar a:hover{color:var(--acc)}
+.statusbar .r{margin-left:auto;display:flex;gap:14px}
+
+@media(max-width:1120px){.body{grid-template-columns:230px 1fr 290px}}
+@media(max-width:900px){
+  body{overflow:auto;height:auto;user-select:auto}
+  .app{height:auto}
+  .body{grid-template-columns:1fr;height:auto}
+  .col{min-height:0}
+  .pane.hier .scroll{max-height:290px}
+  .view{min-height:60vh}
+  .con{height:150px}
+  .doc{position:relative;min-height:60vh}
+  .abt{grid-template-columns:1fr;gap:18px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="menubar">
+    <svg class="logo" viewBox="0 0 24 24" fill="none" stroke="#cfcfcf" stroke-width="1.6"><path d="M12 2 21 7v10l-9 5-9-5V7z"/><path d="M12 12 21 7M12 12v10M12 12 3 7"/></svg>
+    <span class="m">File</span><span class="m">Edit</span><span class="m">Assets</span><span class="m">GameObject</span><span class="m">Component</span><span class="m">Window</span><span class="m">Help</span>
+  </div>
+
+  <div class="toolbar">
+    <div class="tgroup">
+      <div class="tbtn on" title="Play">▶</div><div class="tbtn" title="Pause">❙❙</div><div class="tbtn" title="Step">▶❙</div>
+    </div>
+    <span class="pill" style="pointer-events:none">Portfolio.unity — O Ngoc Duy</span>
+    <div class="tspace"></div>
+    <a class="pill" href="https://github.com/duyongoc" target="_blank">Github</a>
+    <a class="pill" href="https://play.google.com/store/apps/developer?id=duy.ongoc" target="_blank">Google Play</a>
+    <a class="pill" href="https://drive.google.com/file/d/1Dg0RwxwD1Mo2dcrAQM__pCDnZUCc6c6g/view?usp=sharing" target="_blank">CV ↗</a>
+    <a class="pill acc" href="mailto:ongocduy.dev@gmail.com">Hire me</a>
+  </div>
+
+  <div class="body">
+    <!-- hierarchy -->
+    <div class="col">
+      <div class="pane hier" style="flex:1">
+        <div class="tabs"><div class="tab on"><i class="dot"></i>Hierarchy</div><div class="tab">Scene</div></div>
+        <div class="hsearch"><input id="q" placeholder="Search 33 projects…"></div>
+        <div class="scroll" id="tree"></div>
+      </div>
+      <div class="pane" style="flex:none">
+        <div class="tabs"><div class="tab on"><i class="dot"></i>Filters</div></div>
+        <div class="pbar" id="pbar"></div>
+      </div>
+    </div>
+
+    <!-- center -->
+    <div class="col">
+      <div class="pane" style="flex:1">
+        <div class="tabs">
+          <div class="tab on" id="tabName"><i class="dot"></i>Game</div>
+          <div class="tab">Scene</div><div class="tab">Asset Store</div>
+        </div>
+        <div class="view">
+          <div class="stage"><img id="shot" alt=""></div>
+          <div class="hud" id="hud">
+            <div class="top"><span class="chip" id="chipCat">—</span><span class="chip">Engine <b>Unity</b></span><span class="chip" id="chipFps">60 FPS</span></div>
+            <div class="bottom">
+              <h1 id="gTitle">—</h1>
+              <p class="desc" id="gDesc"></p>
+              <div class="playrow" id="gLinks"></div>
+            </div>
+          </div>
+          <div class="doc hide" id="doc"></div>
+        </div>
+      </div>
+      <div class="pane con">
+        <div class="tabs"><div class="tab on"><i class="dot"></i>Console</div><div class="tab">Profiler</div></div>
+        <div class="scroll" id="con"></div>
+      </div>
+    </div>
+
+    <!-- inspector -->
+    <div class="pane">
+      <div class="tabs"><div class="tab on"><i class="dot"></i>Inspector</div><div class="tab">Lighting</div></div>
+      <div class="scroll insp" id="insp"></div>
+    </div>
+  </div>
+
+  <div class="statusbar">
+    <span>O NGOC DUY — UNITY GAME DEVELOPER</span>
+    <span>HO CHI MINH CITY</span>
+    <span class="r">
+      <a href="mailto:ongocduy.dev@gmail.com">ONGOCDUY.DEV@GMAIL.COM</a>
+      <a href="tel:0345877070">0345 877 070</a>
+      <span id="clk"></span>
+    </span>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script>
+const CAT=[
+  {k:'multiplayer',n:'Multiplayer',c:'#4b9fea'},
+  {k:'ar',n:'AR',c:'#e07ab5'},
+  {k:'personal',n:'Personal',c:'#7ac142'},
+  {k:'reskin',n:'Prototype',c:'#e8c34a'}
+];
+const cinfo=k=>CAT.find(c=>c.k===k)||{n:k,c:'#888'};
+const tree=document.getElementById('q'),treeBox=document.getElementById('tree');
+let filter='all',query='',cur=null;
+
+/* ── build tree ── */
+function buildTree(){
+  treeBox.innerHTML='';
+  const add=(html)=>treeBox.insertAdjacentHTML('beforeend',html);
+  add(`<div class="row grp d1"><span class="arw">▾</span><span class="ico" style="background:#6f6f6f">◈</span><span class="nm">Portfolio.unity</span></div>`);
+  add(node('about','About Me','d2','#cfcfcf','☺',''));
+  add(node('exp','Experience','d2','#cfcfcf','☰','6+ YRS'));
+  add(`<div class="row grp d2"><span class="arw">▾</span><span class="ico" style="background:#6f6f6f">▣</span><span class="nm">Projects</span><span class="badge">${GAMES.length}</span></div>`);
+  CAT.forEach(c=>{
+    const list=GAMES.filter(g=>g.cat===c.k)
+      .filter(g=>(filter==='all'||filter===c.k)&&g.title.toLowerCase().includes(query));
+    if(!list.length) return;
+    add(`<div class="row grp d2" style="padding-left:26px"><span class="arw">▾</span><span class="ico" style="background:${c.c}">▤</span><span class="nm">${c.n}</span><span class="badge">${list.length}</span></div>`);
+    list.forEach(g=>{
+      const i=GAMES.indexOf(g);
+      add(node('g'+i,g.title+(g.wip?'  (WIP)':''),'d3',c.c,'◆',g.tags.includes('WebGL')?'PLAY':(g.tags[0]||'').toUpperCase()));
+    });
+  });
+  treeBox.querySelectorAll('[data-id]').forEach(el=>el.onclick=()=>select(el.dataset.id));
+  mark();
+}
+function node(id,name,d,color,ico,badge){
+  return `<div class="row ${d}" data-id="${id}"><span class="arw"></span><span class="ico" style="background:${color}">${ico}</span><span class="nm">${name}</span><span class="badge">${badge}</span></div>`;
+}
+function mark(){treeBox.querySelectorAll('[data-id]').forEach(el=>el.classList.toggle('sel',el.dataset.id===cur))}
+
+/* ── filters ── */
+const pbar=document.getElementById('pbar');
+[{k:'all',n:'All',c:'#9a9a9a'},...CAT].forEach((c,i)=>{
+  const n=c.k==='all'?GAMES.length:GAMES.filter(g=>g.cat===c.k).length;
+  const b=document.createElement('button');
+  b.textContent=c.n+' ('+n+')'; if(!i) b.className='on';
+  b.onclick=()=>{filter=c.k;pbar.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');buildTree()};
+  pbar.appendChild(b);
+});
+tree.oninput=e=>{query=e.target.value.toLowerCase().trim();buildTree()};
+
+/* ── selection ── */
+const shot=document.getElementById('shot'),hud=document.getElementById('hud'),doc=document.getElementById('doc');
+function select(id){
+  cur=id;mark();
+  if(id==='about') return showAbout();
+  if(id==='exp')  return showExp();
+  const g=GAMES[+id.slice(1)];
+  doc.classList.add('hide');hud.style.display='flex';
+  document.getElementById('tabName').innerHTML='<i class="dot"></i>Game — '+g.title;
+  shot.src=g.info;shot.onerror=()=>shot.src=g.intro;
+  const c=cinfo(g.cat);
+  document.getElementById('chipCat').innerHTML=`<b style="color:${c.c}">●</b> ${c.n}`;
+  document.getElementById('gTitle').textContent=g.title+(g.wip?' ':'');
+  document.getElementById('gDesc').textContent=g.desc||g.sub;
+  const play=g.links.find(l=>l.kind==='WebGL')||g.links.find(l=>l.kind==='Android')||g.links[0];
+  document.getElementById('gLinks').innerHTML=
+    `<a class="pbtn pri" href="${play.url}" target="_blank">▶ ${play.kind==='WebGL'?'Play in browser':play.kind==='Android'?'Google Play':'Watch demo'}</a>`+
+    g.links.filter(l=>l!==play).map(l=>`<a class="pbtn" href="${l.url}" target="_blank">${l.label} ↗</a>`).join('');
+  inspector(g);
+  log('i','Selected <a href="'+play.url+'" target="_blank">'+g.title+'</a> — '+g.links.length+' build target(s) available.');
+}
+
+/* ── inspector ── */
+const insp=document.getElementById('insp');
+function comp(icon,color,name,body){
+  return `<div class="comp"><div class="chead"><span class="arw">▾</span><span class="ci" style="background:${color}">${icon}</span><b>${name}</b></div><div class="cbody">${body}</div></div>`;
+}
+function inspector(g){
+  const c=cinfo(g.cat);
+  insp.innerHTML=
+  `<div class="ihead"><span class="cb">✓</span><span class="nmi">${g.title}</span><span class="tagi">${g.wip?'WIP':'SHIPPED'}</span></div>`+
+  comp('↔','#8e8e8e','Transform',
+    `<div class="f"><span>Position</span><div class="v3"><i><b>X</b>0</i><i><b>Y</b>0</i><i><b>Z</b>0</i></div></div>
+     <div class="f"><span>Rotation</span><div class="v3"><i><b>X</b>0</i><i><b>Y</b>0</i><i><b>Z</b>0</i></div></div>
+     <div class="f"><span>Scale</span><div class="v3"><i><b>X</b>1</i><i><b>Y</b>1</i><i><b>Z</b>1</i></div></div>`)+
+  comp('C#',c.c,'ProjectInfo (Script)',
+    `<div class="f"><span>Title</span><div class="v">${g.title}</div></div>
+     <div class="f"><span>Category</span><div class="v">${c.n}</div></div>
+     <div class="f"><span>Engine</span><div class="v">Unity</div></div>
+     <div class="f"><span>Section</span><div class="v">${g.section}</div></div>
+     <div class="f"><span>Status</span><div class="v">${g.wip?'In progress':'Released'}</div></div>
+     <div class="f" style="grid-template-columns:1fr;gap:3px"><span>Description</span><div class="v plain">${g.desc||g.sub}</div></div>`)+
+  comp('▶','#4b9fea','Build Targets ('+g.links.length+')',
+    `<div class="lnk">${g.links.map(l=>`<a href="${l.url}" target="_blank">${l.label}<span class="k">${l.kind.toUpperCase()}</span></a>`).join('')}</div>`)+
+  comp('🖼','#a07ae0','Preview',`<div class="prev"><img loading="lazy" src="${g.intro}" onerror="this.src='${g.info}'" alt=""></div>`)+
+  `<div class="addc">Add Component</div>`;
+}
+
+/* ── about / experience ── */
+function showAbout(){
+  hud.style.display='none';doc.classList.remove('hide');
+  document.getElementById('tabName').innerHTML='<i class="dot"></i>Scene — About Me';
+  doc.innerHTML=`
+   <div class="abt">
+     <img class="por" src="../images/user.jpg" alt="O Ngoc Duy">
+     <div>
+       <div class="eyebrow">GameObject / About Me</div>
+       <h2>Hi, I'm Duy —<br>I build games that ship.</h2>
+       <p>Unity &amp; Unreal developer with <b style="color:#fff">6+ years</b> of production experience: gameplay systems, multiplayer netcode, AR and C++ tooling. I've worked on titles at <b style="color:#fff">Gameloft</b>, <b style="color:#fff">Sipher</b> and <b style="color:#fff">Bacoor</b>, and I keep ${GAMES.length} personal projects online — every one of them playable in your browser, right now.</p>
+       <p>Pick anything from the Hierarchy on the left, then hit <b style="color:#fff">Play in browser</b>.</p>
+     </div>
+   </div>
+   <div class="stats">
+     <div><span>Experience</span><b>6+ years</b></div>
+     <div><span>Engines</span><b>Unity · Unreal</b></div>
+     <div><span>Languages</span><b>C# · C++</b></div>
+     <div><span>Playable builds</span><b>${GAMES.length}</b></div>
+   </div>`;
+  insp.innerHTML=
+   `<div class="ihead"><span class="cb">✓</span><span class="nmi">About Me</span><span class="tagi">PLAYER</span></div>`+
+   comp('☺','#cfcfcf','Profile',
+    `<div class="f"><span>Name</span><div class="v">O Ngoc Duy</div></div>
+     <div class="f"><span>Role</span><div class="v">Unity Game Developer</div></div>
+     <div class="f"><span>Location</span><div class="v">Ho Chi Minh City</div></div>
+     <div class="f"><span>Experience</span><div class="v">6+ years</div></div>`)+
+   comp('★','#7ac142','Skills',
+    `<div class="f"><span>Engines</span><div class="v">Unity · Unreal</div></div>
+     <div class="f"><span>Languages</span><div class="v">C# · C++</div></div>
+     <div class="f"><span>Focus</span><div class="v">Gameplay · Netcode</div></div>
+     <div class="f"><span>Also</span><div class="v">AR · UI · Tools</div></div>`)+
+   comp('✉','#4b9fea','Contact',
+    `<div class="lnk">
+       <a href="mailto:ongocduy.dev@gmail.com">ongocduy.dev@gmail.com<span class="k">EMAIL</span></a>
+       <a href="tel:0345877070">0345 877 070<span class="k">PHONE</span></a>
+       <a href="https://github.com/duyongoc" target="_blank">github.com/duyongoc<span class="k">CODE</span></a>
+       <a href="https://play.google.com/store/apps/developer?id=duy.ongoc" target="_blank">Google Play<span class="k">STORE</span></a>
+       <a href="https://www.youtube.com/playlist?list=PLClQCm2rPi2VSzjd5MXOX40sx4GdrVJHk" target="_blank">Game demos<span class="k">VIDEO</span></a>
+       <a href="https://drive.google.com/file/d/1Dg0RwxwD1Mo2dcrAQM__pCDnZUCc6c6g/view?usp=sharing" target="_blank">Download CV<span class="k">PDF</span></a>
+     </div>`)+
+   comp('🖼','#a07ae0','Preview',`<div class="prev"><img src="../images/user.jpg" alt=""></div>`)+
+   `<div class="addc">Add Component</div>`;
+}
+
+const JOBS=[
+ {yr:'10/2024 — Present',t:'Unity Game Developer',co:'Optimizer · Team Leader',p:'Responsible for project stability, task assignment, team support and reporting.'},
+ {yr:'9/2022 — 10/2024',t:'Unity Game Developer',co:'Bacoor — bountykinds.com',p:'Built ~70% of the project on the front-end side: main menu UI, map, items, data, gameplay and asset bundles.'},
+ {yr:'2/2022 — 8/2022',t:'Unreal Game Developer (C++)',co:'Sipher — playsipher.com',p:'Built the enemy core system, movement, weapon modules, animator, data and AI.'},
+ {yr:'7/2019 — 2/2022',t:'Unity Game Developer',co:'Gameloft',p:'Worked on several projects — these are the publicly available titles:',ul:[
+   '<b>Applaydu &amp; Friends</b> — 12-player party royale: main menu UI, chat feature, gameplay bug fixing.',
+   '<b>Kinder Easter</b> — main menu UI, QR code scanning, AR toys, gameplay bug fixing.',
+   '<b>Dragon Mania Legends</b> — DLC updates, Ads integration, gameplay bug fixing.']},
+ {yr:'2016 — 2019',t:'Cao Thang Technical College',co:'Education'}
+];
+function showExp(){
+  hud.style.display='none';doc.classList.remove('hide');
+  document.getElementById('tabName').innerHTML='<i class="dot"></i>Scene — Experience';
+  doc.innerHTML=`<div class="eyebrow">GameObject / Experience</div><h2>6+ years in production.</h2>
+    <div class="tl">${JOBS.map(j=>`<div class="job"><div class="yr">${j.yr}</div><h3>${j.t}</h3><div class="co">${j.co}</div>${j.p?`<p>${j.p}</p>`:''}${j.ul?`<ul>${j.ul.map(x=>`<li>${x}</li>`).join('')}</ul>`:''}</div>`).join('')}</div>`;
+  insp.innerHTML=
+   `<div class="ihead"><span class="cb">✓</span><span class="nmi">Experience</span><span class="tagi">TIMELINE</span></div>`+
+   JOBS.map(j=>comp('☰','#8e8e8e',j.t,
+     `<div class="f"><span>Company</span><div class="v">${j.co}</div></div>
+      <div class="f"><span>Period</span><div class="v">${j.yr}</div></div>`)).join('')+
+   `<div class="addc">Add Component</div>`;
+}
+
+/* ── console ── */
+const con=document.getElementById('con');
+function log(lv,msg){
+  const t=new Date().toLocaleTimeString('en-GB');
+  const ic=lv==='w'?'▲':lv==='s'?'✓':'●';
+  con.insertAdjacentHTML('afterbegin',`<div class="log ${lv}"><span class="lv">${ic}</span><span class="t">[${t}]</span><span>${msg}</span></div>`);
+  while(con.children.length>60) con.lastElementChild.remove();
+}
+
+/* ── boot ── */
+buildTree();
+log('s','Build succeeded — '+GAMES.length+' playable projects loaded.');
+log('i','Welcome. Click anything in the Hierarchy to inspect it.');
+log('w','Looking for a Unity developer? <a href="mailto:ongocduy.dev@gmail.com">ongocduy.dev@gmail.com</a>');
+select('about');
+setInterval(()=>{document.getElementById('chipFps').textContent=(58+Math.floor(Math.random()*5))+' FPS'},900);
+setInterval(()=>{document.getElementById('clk').textContent=new Date().toLocaleTimeString('en-GB')},1000);
+</script>
+</body>
+</html>
