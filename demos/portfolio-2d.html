@@ -1,7 +1,10 @@
 <!doctype html>
 <html lang="en">
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>O Ngoc Duy — Unity Game Developer</title>
 <meta name="description" content="Unity &amp; Unreal developer, 6+ years. 33 shipped titles: gameplay systems, multiplayer netcode, AR and C++ tools.">
 <meta property="og:type" content="website">
@@ -15,13 +18,16 @@
 <meta property="og:image:alt" content="A cyberpunk studio at night: three monitors, a wall of game covers, a neon skyline through the glass.">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#04070d">
+<link rel="manifest" href="../manifest.webmanifest">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2304060c'/%3E%3Ccircle cx='16' cy='16' r='7' fill='none' stroke='%235ad0ff' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.5' fill='%23ff5aa0'/%3E%3C/svg%3E">
 <style>
 :root{
   --bg:#04070d; --bg2:#070c14; --line:rgba(120,205,255,.15); --line2:rgba(120,205,255,.30);
   --paper:#e9f3fb; --dim:#8ea4b8; --dim2:#71879b;
   --cy:#5ad0ff; --acc:#ff5aa0; --lm:#8affc0; --vi:#c98aff; --am:#ffc85a;
-  --max:1220px; --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --fx-rgb:90,208,255; --max:1220px; --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --safe-top:env(safe-area-inset-top,0px);--safe-right:env(safe-area-inset-right,0px);
+  --safe-bottom:env(safe-area-inset-bottom,0px);--safe-left:env(safe-area-inset-left,0px);
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
@@ -41,8 +47,18 @@ body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
 body::after{content:"";position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.24;
   background:repeating-linear-gradient(180deg,rgba(0,0,0,0) 0 2px,rgba(0,0,0,.22) 2px 3px)}
 .glowmap{position:fixed;inset:0;z-index:0;pointer-events:none;
-  background:radial-gradient(ellipse 62% 48% at 70% 18%,rgba(90,208,255,.14),transparent 62%),
-             radial-gradient(ellipse 52% 44% at 8% 76%,rgba(255,90,160,.10),transparent 66%)}
+  background:radial-gradient(ellipse 62% 48% at 70% 18%,rgba(90,208,255,.11),transparent 62%),
+             radial-gradient(ellipse 52% 44% at 8% 76%,rgba(140,180,205,.045),transparent 66%)}
+#scrollFx{position:fixed;inset:0;z-index:1;width:100%;height:100%;pointer-events:none;
+  opacity:.82;mix-blend-mode:screen}
+.scroll-rail{position:fixed;z-index:6;right:17px;top:50%;width:1px;height:132px;
+  transform:translateY(-50%);background:rgba(var(--fx-rgb),.14);pointer-events:none}
+.scroll-rail::before,.scroll-rail::after{content:"";position:absolute;left:-2px;width:5px;height:1px;background:rgb(var(--fx-rgb))}
+.scroll-rail::before{top:0}.scroll-rail::after{bottom:0}
+.scroll-rail i{position:absolute;left:-3px;top:0;width:7px;height:7px;border:1px solid rgb(var(--fx-rgb));
+  background:var(--bg);box-shadow:0 0 12px rgba(var(--fx-rgb),.9);transform:translateY(-50%) rotate(45deg)}
+.scroll-rail span{position:absolute;right:9px;top:50%;writing-mode:vertical-rl;transform:translateY(-50%) rotate(180deg);
+  font:600 8px/1 var(--mono);letter-spacing:.18em;text-transform:uppercase;color:var(--dim2);white-space:nowrap}
 
 .wrap{max-width:var(--max);margin:0 auto;padding:0 26px;position:relative;z-index:2}
 .mono{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase}
@@ -52,7 +68,9 @@ body::after{content:"";position:fixed;inset:0;z-index:1;pointer-events:none;opac
 /* ── nav ── */
 nav{position:fixed;inset:0 0 auto;z-index:80;transition:.3s;border-bottom:1px solid transparent}
 nav.on{background:rgba(4,7,13,.86);backdrop-filter:blur(16px);border-color:var(--line)}
-nav .in{max-width:var(--max);margin:0 auto;padding:15px 26px;display:flex;align-items:center;gap:24px}
+nav .in{max-width:var(--max);margin:0 auto;
+  padding:calc(15px + var(--safe-top)) calc(26px + var(--safe-right)) 15px calc(26px + var(--safe-left));
+  display:flex;align-items:center;gap:24px}
 .brand{display:flex;align-items:center;gap:10px;font:700 12.5px/1 var(--mono);
   letter-spacing:.17em;text-transform:uppercase}
 .brand i{width:9px;height:9px;border-radius:50%;background:var(--cy);box-shadow:0 0 12px var(--cy)}
@@ -78,6 +96,27 @@ header{padding:124px 0 40px}
 .eyebrow i{width:6px;height:6px;border-radius:50%;background:var(--lm);
   box-shadow:0 0 0 0 rgba(138,255,192,.6);animation:pl 2.2s infinite}
 @keyframes pl{70%{box-shadow:0 0 0 9px rgba(138,255,192,0)}100%{box-shadow:0 0 0 0 rgba(138,255,192,0)}}
+.hero-id{display:flex;align-items:center;gap:22px;margin-top:22px;width:min(100%,570px);
+  padding:9px 17px 9px 9px;border:1px solid var(--line);background:rgba(6,13,22,.68);
+  backdrop-filter:blur(12px);position:relative;overflow:hidden}
+.hero-id::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(105deg,transparent 24%,rgba(90,208,255,.12) 48%,transparent 68%);
+  transform:translateX(-120%);animation:idSweep 5.4s ease-in-out infinite}
+@keyframes idSweep{0%,68%{transform:translateX(-120%)}88%,100%{transform:translateX(120%)}}
+.avatar-holo{width:234px;height:234px;flex:0 0 auto;position:relative;padding:3px;
+  border:1px solid rgba(90,208,255,.55);background:rgba(90,208,255,.07);
+  clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px)}
+.avatar-holo img{width:100%;height:100%;object-fit:cover;filter:saturate(.82) contrast(1.08)}
+.avatar-holo::before{content:"";position:absolute;z-index:2;inset:3px;pointer-events:none;
+  background:repeating-linear-gradient(180deg,transparent 0 3px,rgba(90,208,255,.09) 3px 4px)}
+.avatar-holo::after{content:"";position:absolute;z-index:3;left:3px;right:3px;height:1px;top:8%;
+  background:#b8efff;box-shadow:0 0 10px var(--cy);animation:avatarScan 3.8s ease-in-out infinite alternate}
+@keyframes avatarScan{to{top:90%}}
+.hero-id .id-copy{position:relative;z-index:1;min-width:0}
+.hero-id .id-copy span,.hero-id .id-copy small{display:block;font:600 8.5px/1.35 var(--mono);
+  letter-spacing:.16em;text-transform:uppercase;color:var(--dim2)}
+.hero-id .id-copy strong{display:block;font-size:16px;line-height:1.2;letter-spacing:.01em;margin:6px 0;color:var(--paper)}
+.hero-id .id-copy small{color:var(--lm)}
 h1{font-size:clamp(40px,6.1vw,76px);line-height:.98;letter-spacing:-.045em;font-weight:800;margin-top:22px}
 h1 .gr{background:linear-gradient(100deg,var(--cy),var(--lm) 72%);
   -webkit-background-clip:text;background-clip:text;color:transparent}
@@ -223,7 +262,8 @@ footer{border-top:1px solid var(--line);margin-top:60px;padding:21px 0 44px;colo
 .reveal.in{opacity:1;transform:none}
 @media (prefers-reduced-motion:reduce){
   .reveal{opacity:1;transform:none;transition:none}
-  .eyebrow i{animation:none}
+  .eyebrow i,.hero-id::after,.avatar-holo::after{animation:none}
+  #scrollFx{opacity:.3}
   html{scroll-behavior:auto}
 }
 @media(max-width:960px){
@@ -233,18 +273,23 @@ footer{border-top:1px solid var(--line);margin-top:60px;padding:21px 0 44px;colo
   .feat{grid-template-columns:1fr}
   .hstats{grid-template-columns:1fr 1fr;gap:14px 0}
   nav .links{display:none}
-  header{padding:92px 0 18px}
+  header{padding:calc(92px + var(--safe-top)) 0 18px}
   section{padding:58px 0}
 }
 @media(max-width:640px){
-  .wrap{padding:0 16px}
-  nav .in{padding:12px 14px;gap:8px}
+  .wrap{padding:0 calc(16px + var(--safe-right)) 0 calc(16px + var(--safe-left))}
+  nav .in{padding:calc(12px + var(--safe-top)) calc(14px + var(--safe-right)) 12px calc(14px + var(--safe-left));gap:8px}
   .brand{margin-right:auto;font-size:10px;letter-spacing:.11em}
   nav .btn{min-height:42px;display:inline-flex;align-items:center;justify-content:center;
     padding:9px 10px;font-size:8.5px}
-  header{padding-top:76px}
+  header{padding-top:calc(76px + var(--safe-top))}
   .hero{gap:14px}
   .orb{width:min(100%,430px);max-height:43vh;margin-top:8px}
+  .hero-id{margin-top:17px;padding:10px;gap:13px;flex-direction:column;align-items:stretch}
+  .avatar-holo{width:234px;height:234px;max-width:100%;margin:0 auto}
+  .hero-id .id-copy{text-align:center;padding:4px 8px 7px}
+  .hero-id .id-copy strong{font-size:15px}
+  .scroll-rail{display:none}
   .clusters{gap:9px}
   .cl{padding:15px}
   .fbtn,.fc .lk a{min-height:44px}
@@ -256,6 +301,8 @@ footer{border-top:1px solid var(--line);margin-top:60px;padding:21px 0 44px;colo
 </style>
 
 <div class="glowmap"></div>
+<canvas id="scrollFx" aria-hidden="true"></canvas>
+<div class="scroll-rail" aria-hidden="true"><i id="scrollDot"></i><span id="scrollLabel">FX 01 // Spiral</span></div>
 
 <nav id="nav" aria-label="Primary navigation"><div class="in">
   <a class="brand" href="#"><i></i>DUY<span class="brandWide">_NGOC // ARCHIVE</span></a>
@@ -271,6 +318,11 @@ footer{border-top:1px solid var(--line);margin-top:60px;padding:21px 0 44px;colo
 <header><div class="wrap"><div class="hero">
   <div>
     <span class="eyebrow"><i></i>System status // open to work</span>
+    <div class="hero-id cut">
+      <div class="avatar-holo"><img src="models/avatar.jpg?v=2" width="234" height="234"
+        alt="O Ngoc Duy" decoding="async" fetchpriority="high"></div>
+      <div class="id-copy"><span>Operator profile // 01</span><strong>O Ngoc Duy</strong><small>Unity · Unreal · Gameplay systems</small></div>
+    </div>
     <h1>A command archive of<br><span class="gr" id="hn">33 playable</span><br>game builds.</h1>
     <p>I'm <b>Duy</b> — Unity &amp; Unreal developer, <b>6+ years</b> in production: gameplay
       systems, multiplayer netcode, AR and C++ tools at <b>Gameloft</b>, <b>Sipher</b> and
@@ -317,7 +369,7 @@ footer{border-top:1px solid var(--line);margin-top:60px;padding:21px 0 44px;colo
 
 <section id="contact"><div class="wrap">
   <div class="cbox reveal">
-    <img class="face" src="models/avatar.jpg" width="96" height="96"
+    <img class="face" src="models/avatar.jpg?v=2" width="96" height="96"
       alt="O Ngoc Duy" loading="lazy" decoding="async">
     <h2>Open a new channel.</h2>
     <p>Open to Unity / Unreal roles — gameplay, multiplayer netcode and tools.</p>
@@ -363,6 +415,174 @@ document.getElementById('yr').textContent=new Date().getFullYear();
 document.getElementById('hn').textContent=GAMES.length+' playable';
 document.getElementById('hn2').textContent=GAMES.length;
 document.getElementById('cnt').textContent=GAMES.length+' builds';
+
+/* ═══ scroll scenes: spiral + one transition per section ════════
+   Inspired by shader-on-scroll work, but kept in Canvas 2D. The
+   background has one quiet spiral throughline; each page section owns
+   a distinct scene and never reuses a previous effect further down. */
+(function(){
+  const cv=document.getElementById('scrollFx'),ctx=cv.getContext('2d');
+  const dot=document.getElementById('scrollDot'),label=document.getElementById('scrollLabel');
+  const reduced=matchMedia('(prefers-reduced-motion:reduce)').matches;
+  const RGB='90,208,255',PALE='220,247,255';
+  const scenes=[
+    {el:document.querySelector('header'),name:'Space fold'},
+    {el:document.getElementById('work'),name:'Grid breach'},
+    {el:document.getElementById('index'),name:'Data stream'},
+    {el:document.getElementById('exp'),name:'Time lanes'},
+    {el:document.getElementById('contact'),name:'Comms portal'}
+  ];
+  const stars=Array.from({length:64},(_,i)=>({
+    x:((i*73)%113)/113,y:((i*47+19)%127)/127,z:.18+((i*31)%79)/100
+  }));
+  let W=0,H=0,dpr=1,targetY=scrollY,paintY=scrollY,velocity=0,lastY=scrollY;
+  let activeScene=-1,raf=0,visible=!document.hidden;
+
+  function clamp(v,a=0,b=1){return Math.max(a,Math.min(b,v))}
+  function size(){
+    dpr=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;
+    cv.width=Math.max(1,Math.round(W*dpr));cv.height=Math.max(1,Math.round(H*dpr));
+    ctx.setTransform(dpr,0,0,dpr,0,0);draw();
+  }
+  function state(){
+    const marker=paintY+H*.48;let index=0;
+    for(let i=0;i<scenes.length;i++)if(scenes[i].el.offsetTop<=marker)index=i;
+    const start=scenes[index].el.offsetTop;
+    const end=index<scenes.length-1?scenes[index+1].el.offsetTop:document.documentElement.scrollHeight;
+    return {index,local:clamp((marker-start)/Math.max(H,end-start))};
+  }
+  function setLabel(index){
+    if(index===activeScene)return;activeScene=index;
+    label.textContent='Scene '+String(index+1).padStart(2,'0')+' // '+scenes[index].name;
+  }
+  function hex(x,y,r){
+    ctx.beginPath();for(let i=0;i<6;i++){
+      const a=i*1.0472+.5236,px=x+Math.cos(a)*r,py=y+Math.sin(a)*r;
+      i?ctx.lineTo(px,py):ctx.moveTo(px,py);
+    }ctx.closePath();
+  }
+  function spiral(progress,index){
+    const unit=Math.min(W,H),cx=(index%2?.18:.82)*W,cy=H*.48;
+    ctx.save();ctx.translate(cx,cy);ctx.rotate(progress*3.2+index*.42);
+    ctx.lineWidth=.55;ctx.strokeStyle='rgba('+RGB+',.055)';
+    for(let arm=0;arm<2;arm++){
+      ctx.beginPath();for(let i=0;i<=92;i++){
+        const q=i/92,r=8+q*unit*.58,a=arm*Math.PI+q*20.4+progress*2.4;
+        const x=Math.cos(a)*r,y=Math.sin(a)*r*.72;
+        i?ctx.lineTo(x,y):ctx.moveTo(x,y);
+      }ctx.stroke();
+    }
+    ctx.restore();
+  }
+  function entryFlash(index,local){
+    if(index===0||local>.16)return;
+    const p=clamp(local/.16),fade=Math.sin(p*Math.PI);
+    ctx.save();ctx.strokeStyle='rgba('+PALE+','+(fade*.20).toFixed(3)+')';ctx.lineWidth=.7;
+    if(index===1){
+      const x=p*W;ctx.shadowBlur=10;ctx.shadowColor='rgb('+RGB+')';
+      ctx.beginPath();ctx.moveTo(x-60,0);ctx.lineTo(x+60,H);ctx.stroke();
+    }else if(index===2){
+      for(let i=0;i<7;i++){
+        const y=(i+.5)*H/7,w=W*clamp(p*1.4-i*.035);
+        ctx.globalAlpha=fade*(.07+i*.012);ctx.beginPath();ctx.moveTo((W-w)/2,y);ctx.lineTo((W+w)/2,y);ctx.stroke();
+      }
+    }else if(index===3){
+      ctx.globalAlpha=fade;ctx.beginPath();ctx.moveTo(W*.5-p*W*.48,H*.5);ctx.lineTo(W*.5+p*W*.48,H*.5);ctx.stroke();
+    }else{
+      ctx.globalAlpha=fade;ctx.beginPath();ctx.arc(W*.72,H*.52,p*Math.hypot(W,H)*.52,0,6.283);ctx.stroke();
+    }
+    ctx.restore();
+  }
+  function scene0(local){
+    // SPACE FOLD — stars pull into a radial tunnel around the hero radar.
+    const cx=W*.80,cy=H*.44,max=Math.hypot(W,H)*.58;
+    ctx.save();ctx.strokeStyle='rgba('+RGB+',.20)';ctx.lineWidth=.7;
+    for(let i=0;i<36;i++){
+      const s=stars[i],a=s.x*6.283+i*.17,r=(.08+s.y*.74)*max*(.55+local*.75);
+      const len=(8+s.z*38)*(1+Math.abs(velocity)*2.5);
+      ctx.globalAlpha=.035+s.z*.16;ctx.beginPath();
+      ctx.moveTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r);
+      ctx.lineTo(cx+Math.cos(a)*(r+len),cy+Math.sin(a)*(r+len));ctx.stroke();
+    }
+    ctx.globalAlpha=.12;for(let i=0;i<2;i++){
+      ctx.beginPath();ctx.ellipse(cx,cy,48+i*50+local*36,(48+i*50+local*36)*.62,local*.8,0,6.283);ctx.stroke();
+    }ctx.restore();
+  }
+  function scene1(local){
+    // GRID BREACH — a hex shield is revealed by one outward-moving wave.
+    const unit=Math.min(W,H),cx=W*.20,cy=H*.50,r=29,dx=r*1.72,dy=r*1.5;
+    const wave=local*Math.hypot(W,H)*1.08,band=unit*.24;
+    ctx.save();ctx.strokeStyle='rgba('+RGB+',.22)';ctx.lineWidth=.6;
+    for(let y=-r,row=0;y<H+r;y+=dy,row++)for(let x=-r+(row%2?dx/2:0);x<W+r;x+=dx){
+      const delta=Math.abs(Math.hypot(x-cx,y-cy)-wave);
+      if(delta<band){ctx.globalAlpha=(1-delta/band)*.18;hex(x,y,r);ctx.stroke()}
+    }ctx.restore();
+  }
+  function scene2(local){
+    // DATA STREAM — columns descend while a sharp scanner crosses the archive.
+    ctx.save();ctx.strokeStyle='rgba('+RGB+',.20)';ctx.fillStyle='rgba('+PALE+',.18)';ctx.lineWidth=.7;
+    for(let i=0;i<22;i++){
+      const x=((i*37)%101)/101*W,y=((i*79+local*(H+180)*2.4)%(H+180))-90;
+      const len=12+(i%6)*9+Math.abs(velocity)*60;
+      ctx.globalAlpha=.035+(i%4)*.027;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x,y+len);ctx.stroke();
+      if(i%3===0)ctx.fillRect(x-1,y+len+7,2+(i%2),2+(i%2));
+    }
+    const sy=local*H,g=ctx.createLinearGradient(0,sy-42,0,sy+42);
+    g.addColorStop(0,'rgba('+RGB+',0)');g.addColorStop(.5,'rgba('+RGB+',.07)');g.addColorStop(1,'rgba('+RGB+',0)');
+    ctx.globalAlpha=1;ctx.fillStyle=g;ctx.fillRect(0,sy-42,W,84);ctx.restore();
+  }
+  function scene3(local){
+    // TIME LANES — five independent tracks slide past permanent milestones.
+    ctx.save();ctx.strokeStyle='rgba('+RGB+',.18)';ctx.fillStyle='rgba('+PALE+',.22)';ctx.lineWidth=.7;
+    for(let i=0;i<7;i++){
+      const y=H*(.16+i*.105),shift=(local-.5)*W*(.18+(i%3)*.08);
+      ctx.globalAlpha=.045+i*.015;ctx.beginPath();ctx.moveTo(-80+shift,y);
+      ctx.bezierCurveTo(W*.28+shift,y-34,W*.68+shift,y+34,W+80+shift,y-8);ctx.stroke();
+      const mx=W*(.12+((i*17)%73)/100)+shift*.35;
+      ctx.globalAlpha=.14;ctx.fillRect(mx,y-4,1.5,8);
+    }ctx.restore();
+  }
+  function scene4(local){
+    // COMMS PORTAL — one aperture opens continuously; no ring is recycled.
+    const cx=W*.72,cy=H*.52,unit=Math.min(W,H);
+    ctx.save();ctx.translate(cx,cy);ctx.rotate(local*1.35);ctx.strokeStyle='rgba('+RGB+',.22)';ctx.fillStyle='rgba('+PALE+',.30)';ctx.lineWidth=.7;
+    for(let i=0;i<4;i++){
+      const r=38+(i+local*1.25)*unit*.095;
+      ctx.globalAlpha=.20-i*.035;ctx.beginPath();ctx.arc(0,0,r,-1.15+i*.28,1.65+i*.31);ctx.stroke();
+    }
+    ctx.globalAlpha=.14;for(let i=0;i<10;i++){
+      const a=i*.5236,r1=unit*(.09+local*.10),r2=r1+16+local*36;
+      ctx.beginPath();ctx.moveTo(Math.cos(a)*r1,Math.sin(a)*r1);ctx.lineTo(Math.cos(a)*r2,Math.sin(a)*r2);ctx.stroke();
+    }
+    ctx.globalAlpha=.45;ctx.beginPath();ctx.arc(0,0,2.5+local*3,0,6.283);ctx.fill();ctx.restore();
+  }
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    const max=Math.max(1,document.documentElement.scrollHeight-H),progress=clamp(paintY/max);
+    const s=state();setLabel(s.index);
+    if(!reduced){
+      spiral(progress,s.index);
+      [scene0,scene1,scene2,scene3,scene4][s.index](s.local);
+      entryFlash(s.index,s.local);
+    }else{
+      spiral(0,0);
+    }
+    dot.style.top=(progress*100)+'%';
+  }
+  function onScroll(){
+    const dy=scrollY-lastY;lastY=scrollY;targetY=scrollY;
+    velocity=clamp(dy/80,-1,1);if(reduced){paintY=targetY;draw()}else wake();
+  }
+  function wake(){if(!reduced&&visible&&!raf)raf=requestAnimationFrame(frame)}
+  function frame(){
+    raf=0;if(!visible||reduced)return;
+    paintY+=(targetY-paintY)*.095;velocity*=.88;draw();
+    if(Math.abs(targetY-paintY)>.2||Math.abs(velocity)>.008)wake();
+  }
+  addEventListener('resize',size,{passive:true});addEventListener('scroll',onScroll,{passive:true});
+  document.addEventListener('visibilitychange',()=>{visible=!document.hidden;if(visible)wake()});
+  size();requestAnimationFrame(size);
+})();
 
 /* ═══ the node sphere ═══════════════════════════════════════════
    33 points spread by the golden-angle spiral so they space evenly

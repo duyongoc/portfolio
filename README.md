@@ -29,6 +29,19 @@ python3 -m http.server 8000 --bind 0.0.0.0
 
 Stop the server with `Ctrl+C` when testing is finished.
 
+## Mobile display
+
+The 3D room requests browser fullscreen on the first canvas gesture where the
+Fullscreen API is available. On iPhone, use **Share → Add to Home Screen**;
+launching that icon uses the manifest's fullscreen display mode and safe-area
+layout. A normal Safari tab keeps Safari's own browser chrome by design.
+
+WebGL renders at up to 2 device pixels per CSS pixel with antialiasing and
+anisotropic filtering for screen/image textures. The tightly packed low-poly
+palette atlases use nearest sampling to prevent colour bleeding between UV
+islands. This keeps Retina phones sharp without paying the full fill-rate cost
+of a 3x panel.
+
 ## Baked assets
 
 Four things under `demos/models/` are generated rather than hand-made. Re-run
