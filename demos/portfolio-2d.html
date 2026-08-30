@@ -85,6 +85,32 @@ nav .links a:hover{color:var(--cy)}
 .btn.fill:hover{background:#9ae4ff;color:#04121c}
 .btn.room{border-color:rgba(255,90,160,.5);color:#ffd0e2}
 .btn.room:hover{background:var(--acc);color:#1a0410;border-color:var(--acc)}
+/* Below 960px the top nav drops its three section links for room, which left a
+   6000px page with no way to reach Experience or Contact except scrolling the
+   whole of it. A bar at the bottom rather than a second row up top: it is
+   thumb-reachable, it costs the fixed header no extra height, and three
+   destinations do not need a menu that has to be opened first. */
+.secbar{display:none}
+@media(max-width:960px){
+  /* top:auto is load-bearing: this is a <nav>, so it also matches the
+     nav{position:fixed;inset:0 0 auto} rule above, and top:0 together with
+     bottom:0 stretched it over the whole viewport as an opaque blurred sheet. */
+  .secbar{position:fixed;top:auto;left:0;right:0;bottom:0;z-index:80;display:block;
+    background:rgba(4,7,13,.92);backdrop-filter:blur(16px);
+    border-top:1px solid var(--line);border-bottom:0}
+  .secbar .in{display:flex;
+    padding:0 calc(6px + var(--safe-right)) var(--safe-bottom) calc(6px + var(--safe-left))}
+  .secbar a{flex:1;min-height:50px;display:inline-flex;align-items:center;justify-content:center;
+    font:600 9.5px/1 var(--mono);letter-spacing:.15em;text-transform:uppercase;color:var(--dim)}
+  .secbar a:active{color:var(--cy)}
+  /* the bar is fixed over the end of the page, so the last section needs room
+     to finish above it */
+  body{padding-bottom:calc(50px + var(--safe-bottom))}
+}
+@media(max-width:960px) and (max-height:460px){
+  .secbar a{min-height:42px}
+  body{padding-bottom:calc(42px + var(--safe-bottom))}
+}
 
 /* ── hero ── */
 header{padding:124px 0 40px}
@@ -154,6 +180,11 @@ header p b{color:var(--paper);font-weight:600}
 
 /* ── sections ── */
 section{padding:88px 0;position:relative;z-index:2}
+/* The nav is fixed and 66px tall, so an anchor jump used to land the section's
+   top edge at y=0 — underneath it — and clip the heading in half. Every route
+   into a section is a hash link: the three nav items, the hero's "Open build
+   archive", and each cluster card. */
+section[id]{scroll-margin-top:86px}
 .sh{display:flex;align-items:flex-end;gap:18px;border-bottom:1px solid var(--line);
   padding-bottom:15px;margin-bottom:34px;flex-wrap:wrap}
 .sh .k{font:700 10.5px/1 var(--mono);letter-spacing:.2em;color:var(--cy)}
@@ -266,6 +297,23 @@ footer{border-top:1px solid var(--line);margin-top:60px;padding:21px 0 44px;colo
   #scrollFx{opacity:.3}
   html{scroll-behavior:auto}
 }
+/* A 1440x900 laptop is the most common way this page is opened, and at that
+   height the hero ran to 942px: the headline, the paragraph and the node
+   sphere were all a visitor saw, while "Open build archive" and "Hire me" —
+   the only two things the page is asking for — sat below the fold with the
+   stat row. Measured before: .cta top 908 against a 900px viewport. The two
+   columns stay side by side here; only the vertical rhythm tightens. */
+@media(min-width:961px) and (max-height:940px){
+  header{padding-top:92px}
+  .hero{min-height:calc(100svh - 132px)}
+  .hero-id{margin-top:16px;padding:8px 15px 8px 8px;gap:18px}
+  .avatar-holo{width:168px;height:168px}
+  h1{font-size:clamp(40px,4.6vw,58px);margin-top:16px}
+  header p{font-size:16px;margin-top:16px}
+  .cta{margin-top:22px}
+  .hstats{margin-top:24px;padding-top:15px}
+  .hstats b{font-size:19px}
+}
 @media(max-width:960px){
   .hero{grid-template-columns:1fr;gap:24px;min-height:0}
   .orb{max-height:50vh;margin-top:16px}
@@ -309,10 +357,13 @@ footer{border-top:1px solid var(--line);margin-top:60px;padding:21px 0 44px;colo
   <!-- CV used to sit in .links AND as the filled button, so the contact screen
        showed the same PDF three times. One link per destination. -->
   <div class="links">
-    <a href="#index">Build archive</a><a href="#exp">Service log</a><a href="#contact">Comms</a>
+    <a href="#index">Projects</a><a href="#exp">Experience</a><a href="#contact">Contact</a>
   </div>
   <a class="btn room" href="room-3d.html">◧ Room mode</a>
   <a class="btn fill" href="https://drive.google.com/file/d/1Dg0RwxwD1Mo2dcrAQM__pCDnZUCc6c6g/view?usp=sharing" target="_blank" rel="noopener">My CV ↗</a>
+</div></nav>
+<nav class="secbar" aria-label="Sections"><div class="in">
+  <a href="#index">Projects</a><a href="#exp">Experience</a><a href="#contact">Contact</a>
 </div></nav>
 
 <header><div class="wrap"><div class="hero">
@@ -357,13 +408,13 @@ footer{border-top:1px solid var(--line);margin-top:60px;padding:21px 0 44px;colo
 </div></section>
 
 <section id="index"><div class="wrap">
-  <div class="sh reveal"><span class="k">03</span><h2>Build archive</h2><span class="r" id="cnt" aria-live="polite">33 builds</span></div>
+  <div class="sh reveal"><span class="k">03</span><h2>Projects</h2><span class="r" id="cnt" aria-live="polite">33 builds</span></div>
   <div class="filters reveal" id="filters"></div>
   <div class="grid reveal" id="grid"></div>
 </div></section>
 
 <section id="exp"><div class="wrap">
-  <div class="sh reveal"><span class="k">04</span><h2>Service log</h2><span class="r">2016 — present</span></div>
+  <div class="sh reveal"><span class="k">04</span><h2>Experience</h2><span class="r">2016 — present</span></div>
   <div class="log" id="log"></div>
 </div></section>
 
@@ -430,7 +481,7 @@ document.getElementById('cnt').textContent=GAMES.length+' builds';
     {el:document.getElementById('work'),name:'Grid breach'},
     {el:document.getElementById('index'),name:'Data stream'},
     {el:document.getElementById('exp'),name:'Time lanes'},
-    {el:document.getElementById('contact'),name:'Comms portal'}
+    {el:document.getElementById('contact'),name:'Contact'}
   ];
   const stars=Array.from({length:64},(_,i)=>({
     x:((i*73)%113)/113,y:((i*47+19)%127)/127,z:.18+((i*31)%79)/100

@@ -8,6 +8,11 @@ animation, cameras and lights are ignored on purpose.
 
 The pack shares one texture atlas across every prop, so the atlas is referenced
 as an external image URI rather than embedded — one download serves all models.
+Everything merges into a single primitive under that one material, so a prop
+that mixes the atlas with a second texture has to be cut down to the atlas part
+— see the fourth argument.
+
+    python3 tools/fbx2glb.py SRC.fbx OUT.glb atlas.png [geo indices]
 """
 import struct, zlib, json, sys, os, math
 
@@ -172,10 +177,30 @@ def write_glb(out, P, N, U, idx, image_uri):
 
 if __name__ == '__main__':
     src, out, img = sys.argv[1], sys.argv[2], sys.argv[3]
+    """A fourth argument picks Geometry nodes by index, e.g. "0" or "0,2".
+
+    Everything here lands in one primitive under one material, which is only
+    correct while a prop draws from a single atlas. Several Synty props do not:
+    SM_Prop_Holo_Planter_01 is a pot on the pack atlas plus a tree on its own
+    foliage sheet, and merged, the tree's full 0..1 UVs pull the entire atlas
+    across every leaf. Listing the atlas geometry is how such a prop gets used
+    at all. Run with no fourth argument first — it prints each node's index,
+    vertex count and UV range, and a node reaching 0..1 is one to leave out.
+    """
+    want = None
+    if len(sys.argv) > 4:
+        want = {int(k) for k in sys.argv[4].split(',')}
     root, ver = parse(src)
     geos = geometries(root)
     if not geos:
         print('NO GEOMETRY', src); sys.exit(1)
+    if want is not None:
+        bad = want - set(range(len(geos)))
+        if bad:
+            print('no such geometry %s (file has %d)' % (sorted(bad), len(geos)),
+                  file=sys.stderr)
+            sys.exit(1)
+        geos = [g for i, g in enumerate(geos) if i in want]
     # a prop may be split across several Geometry nodes; merge them
     P, N, U, I = [], [], [], []
     for g in geos:
@@ -186,3 +211,12 @@ if __name__ == '__main__':
     dim = [round(mx[k]-mn[k], 2) for k in range(3)]
     print('%-38s v=%-6d tri=%-6d size=%s  bbox=%s' %
           (os.path.basename(out), nv, nt, dim, [round(v,1) for v in mn]))
+    if want is None and len(geos) > 1:
+        # per-node UV ranges, so a merge that should not have happened shows up
+        for i, g in enumerate(geos):
+            p, n, u, ix = build(g)
+            us = [c[0] for c in u]; vs = [c[1] for c in u]
+            print('   geo %d: v=%-6d u[%.3f,%.3f] v[%.3f,%.3f]%s' %
+                  (i, len(p), min(us), max(us), min(vs), max(vs),
+                   '   <- spans the whole sheet, probably its own texture'
+                   if max(us) > .999 or max(vs) > .999 else ''))

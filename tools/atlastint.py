@@ -14,8 +14,11 @@ yellow ones toward steel. Signage the room never shows keeps its colour.
 
 Then both atlases go from their source resolution to exactly 1024. The swatches
 are flat, so NEAREST cannot blend across a swatch boundary; 2 MB of texture
-becomes about 600 kB. Atlases already at 1024 are left untouched, which makes
-the command safe to run repeatedly.
+becomes about 600 kB. An atlas already at 1024 skips only the resize, not the
+tint: adding a prop to USES has to be able to reach the swatches that prop is
+the first to sample. Re-running is still safe — restyle() lands on hue
+200-222 deg, outside the window is_yellow() tests, so a tinted swatch is never
+tinted twice and a run with nothing new to do rewrites nothing.
 
     python3 tools/atlastint.py
 """
@@ -27,10 +30,10 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MODELS = os.path.join(ROOT, 'demos/models')
 
 # which atlas each model draws from, matching the room's prop() calls
-USES = {'cybercity': ['desk', 'chair2', 'keyboard', 'mouse', 'mousepad', 'lamp',
+USES = {'cybercity': ['desk', 'chair2', 'keyboard', 'mouse', 'mousepad',
                       'planter', 'shelf', 'sidetable', 'console', 'crate',
-                      'bin', 'server'],
-        'scifi': ['sofa', 'locker']}
+                      'bin', 'vending'],
+        'scifi': ['sofa', 'locker', 'plant', 'plant2', 'bloom']}
 TARGET_SIZE = 1024
 
 # hue window counted as "the offending yellow", in degrees
@@ -120,9 +123,6 @@ def main():
                   (atlas, im.width, im.height), file=sys.stderr)
             return 1
         size = im.width
-        if size == TARGET_SIZE:
-            print('%s: already %dx%d, left untouched' % (atlas, size, size))
-            continue
         if size < TARGET_SIZE:
             print('%s: refusing to upscale %dx%d atlas' % (atlas, size, size),
                   file=sys.stderr)
@@ -151,9 +151,13 @@ def main():
         if remap:
             data = list(im.getdata())
             im.putdata([remap.get(p, p) for p in data])
+        elif size == TARGET_SIZE:
+            print('   already %d and nothing left to remap, untouched' % size)
+            continue
 
-        output = im.resize((TARGET_SIZE, TARGET_SIZE), Image.NEAREST)
-        output.save(src, 'PNG', optimize=True)
+        if size != TARGET_SIZE:
+            im = im.resize((TARGET_SIZE, TARGET_SIZE), Image.NEAREST)
+        im.save(src, 'PNG', optimize=True)
         print('   %d -> %d, %.0f kB' % (size, TARGET_SIZE, os.path.getsize(src) / 1024))
 
 
