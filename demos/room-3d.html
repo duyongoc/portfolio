@@ -119,11 +119,43 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--cy);outline-offset:
   background:var(--paper);box-shadow:0 0 12px rgba(255,255,255,.7);cursor:grab}
 #scrub::-moz-range-thumb{width:13px;height:13px;border-radius:50%;border:0;background:var(--paper)}
 #scrub:focus-visible{outline:2px solid var(--cy);outline-offset:6px}
-#real{background:none;border:1px solid rgba(255,255,255,.22);color:var(--paper);
+#real,#snd{background:none;border:1px solid rgba(255,255,255,.22);color:var(--paper);
   padding:7px 11px;cursor:pointer;font:600 9px/1 var(--mono);letter-spacing:.12em;
   text-transform:uppercase;transition:.18s;white-space:nowrap}
-#real:hover{background:var(--cy);color:#04121c;border-color:var(--cy)}
+#real:hover,#snd:hover{background:var(--cy);color:#04121c;border-color:var(--cy)}
+/* .on disables Resume; the sound toggle is never disabled, so it stays out of
+   that rule and gets its own muted look instead. */
 #real.on{opacity:.4;pointer-events:none}
+#snd.off{opacity:.42;border-color:rgba(255,255,255,.13)}
+/* The popup is anchored to the button, not laid out beside it. The clock bar
+   is centred with translateX(-50%), so anything that changes its width on
+   hover slides the whole bar sideways under the cursor. */
+#sndWrap{position:relative;display:flex}
+/* #vol is the hit area and carries no chrome; .vi carries the chrome. The gap
+   between button and panel therefore lives INSIDE the hoverable box, so the
+   pointer never crosses dead space on its way up and the panel never closes
+   underneath it. */
+#vol{position:absolute;bottom:100%;right:0;padding-bottom:9px;
+  opacity:0;visibility:hidden;transform:translateY(5px);pointer-events:none;
+  transition:opacity .16s,transform .16s,visibility .16s}
+#sndWrap:hover #vol,#sndWrap:focus-within #vol{
+  opacity:1;visibility:visible;transform:none;pointer-events:auto}
+#vol .vi{display:flex;align-items:center;gap:10px;padding:10px 13px;
+  background:rgba(6,9,20,.9);border:1px solid rgba(255,255,255,.16);
+  backdrop-filter:blur(14px)}
+#volR{-webkit-appearance:none;appearance:none;width:92px;height:3px;
+  background:linear-gradient(90deg,#3a6ab0,var(--cy));
+  outline:0;cursor:pointer;border-radius:9px}
+#volR::-webkit-slider-thumb{-webkit-appearance:none;width:11px;height:11px;border-radius:50%;
+  background:var(--paper);box-shadow:0 0 10px rgba(255,255,255,.6);cursor:grab}
+#volR::-moz-range-thumb{width:11px;height:11px;border-radius:50%;border:0;background:var(--paper)}
+#volR:focus-visible{outline:2px solid var(--cy);outline-offset:6px}
+#volN{font:700 9px/1 var(--mono);letter-spacing:.06em;color:#dae4f7bc;
+  min-width:28px;text-align:right}
+/* Not on touch. There is no hover to open it, the clock bar is already wrapping
+   at that width, and a phone has hardware volume keys six inches from the
+   thumb that are better than anything this could be. Mute stays. */
+@media (pointer:coarse){#vol{display:none}}
 #vn{position:absolute;right:calc(clamp(16px,3.4vw,44px) + var(--safe-right));
   top:calc(24px + var(--safe-top));text-align:right;
   font:600 9px/1.7 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:#dae4f78c;
@@ -218,6 +250,10 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--cy);outline-offset:
   width:var(--hud-w);
   --hc:#5ad0ff;--hcd:#5ad0ff59;
   opacity:0;visibility:hidden;pointer-events:none;
+  /* which way the shutdown drifts as it collapses — the same side the boot
+     slid in from, so leaving reads as retracting into the target rather
+     than as a second, unrelated gesture */
+  --ox:14px;--oy:0px;
   transform:translateX(14px);
   transition:opacity .16s ease-out,transform .16s ease-out,visibility .16s;
   border:1px solid var(--hcd);
@@ -240,24 +276,57 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--cy);outline-offset:
    describes, so the slide should read as coming out of it rather than in from
    a fixed edge of the frame: .lf when the panel landed left of its target,
    .up when it landed above. */
-#hud.lf{transform:translateX(-14px)}
+#hud.lf{transform:translateX(-14px);--ox:-14px;--oy:0px}
 #hud.lf.on{transform:translateX(0);animation:hud-boot-lf .3s ease-out}
 @keyframes hud-boot-lf{
   0%{opacity:0;transform:translateX(-14px) skewX(2.5deg)}
   24%{opacity:1}32%{opacity:.3}44%{opacity:1}
   100%{opacity:1;transform:translateX(0) skewX(0)}}
-#hud.dn{transform:translateY(14px)}
+#hud.dn{transform:translateY(14px);--ox:0px;--oy:14px}
 #hud.dn.on{transform:translateY(0);animation:hud-boot-dn .3s ease-out}
 @keyframes hud-boot-dn{
   0%{opacity:0;transform:translateY(14px) skewX(-2.5deg)}
   24%{opacity:1}32%{opacity:.3}44%{opacity:1}
   100%{opacity:1;transform:translateY(0) skewX(0)}}
-#hud.up{transform:translateY(-14px)}
+#hud.up{transform:translateY(-14px);--ox:0px;--oy:-14px}
 #hud.up.on{transform:translateY(0);animation:hud-boot-up2 .3s ease-out}
 @keyframes hud-boot-up2{
   0%{opacity:0;transform:translateY(-14px) skewX(2.5deg)}
   24%{opacity:1}32%{opacity:.3}44%{opacity:1}
   100%{opacity:1;transform:translateY(0) skewX(0)}}
+/* ── the readout going away ───────────────────────────────────────────
+   Opening was a scan and closing was a fade, which is the one place the
+   readout stopped being a screen and went back to being a div: everything
+   else about it says "a signal arrived", and then it left like a tooltip.
+   So the close is a signal being cut — but quietly. This runs on every
+   pointer-leave, which is far more often than any one boot, and the first cut
+   of it was a full CRT power-down: a blow-out to white and a collapse to a
+   2px line. Once is a nice effect; forty times in a minute is the readout
+   shouting on its way out of every room. So the beats are the same and the
+   amplitude is not: a flicker that dips rather than blinks, a lift in
+   brightness rather than a flash, and a shallow vertical squash instead of a
+   collapse — the panel powering down, not imploding. Twice as long as the
+   first cut (.52s), which is the other half of making it read as gentle: the
+   same distance travelled slowly is a settle, travelled fast it is a snap.
+   .off is not the absence of .on: it holds the panel visible while the
+   animation runs, and hudReset takes it off at the end. pointer-events stay
+   off it (the base rule), so a dying panel never eats a click. */
+#hud.off{visibility:visible;
+  animation:hud-shut .52s cubic-bezier(.3,.12,.35,1) forwards}
+@keyframes hud-shut{
+  0%{opacity:1;transform:none;filter:none}
+  /* the same stutter the boot opens with, played out at half the depth */
+  18%{opacity:.62;transform:translate(calc(var(--ox) * -.18),calc(var(--oy) * -.18)) skewX(.8deg)}
+  32%{opacity:.94;transform:none;filter:brightness(1.26) saturate(.72)}
+  /* and it powers down rather than snapping off: a shallow squash and a drift
+     back toward the target, with the colour draining out of it as it goes */
+  100%{opacity:0;transform:translate(calc(var(--ox) * .9),calc(var(--oy) * .9)) scaleY(.74);
+       filter:brightness(1.65) saturate(.22)}}
+/* The index drops down over exactly this space, and it does not close the
+   readout — it hides it with the rule above. A shutdown playing over an open
+   index would be a panel nobody asked about flashing behind the menu, so the
+   animation is cancelled there and the plain hidden state wins. */
+#idx.on~#hud.off{animation:none;opacity:0;visibility:hidden}
 /* the readout carries the name, so the tooltip would only repeat it */
 #hud.on~#tip{opacity:0}
 /* at this size the readout reaches the control hint, and by the time one is
@@ -287,7 +356,7 @@ html.touch #hud,html.touch #hud.lf,html.touch #hud.dn,html.touch #hud.up{
   right:calc(10px + var(--safe-right));
   top:auto;bottom:calc(12px + var(--safe-bottom));
   width:auto;--hud-w:auto;margin-block:0;
-  transform:translateY(18px)}
+  transform:translateY(18px);--ox:0px;--oy:18px}
 /* Sitting above the time bar cost 104px of a phone's height and bought
    nothing: while a preview is open the day cycle is not what is being read.
    #clock already fades for its own reasons, so this is the same gesture the
@@ -370,6 +439,24 @@ html.touch #hudX:active{background:var(--hc);color:#04121c}
   58%{filter:brightness(1.22) saturate(.6) contrast(1.12)}
   100%{clip-path:inset(0 0 0 0);filter:none}}
 @keyframes hud-bar{0%{top:0;opacity:0}12%{opacity:1}88%{opacity:1}100%{top:100%;opacity:0}}
+/* The rewind. hud-wipe grew the picture downward from the top edge, so its
+   exact reverse shrinks it back up off the bottom, blowing out and losing its
+   colour on the way — the scan running backwards, not a second effect.
+   hud-bar parked the bar at the bottom edge invisible, which is where
+   hud-bar-out picks it up: the bar travels back up the frame it came down. */
+#hud.off .shot.rv img,#hud.off .shot.rv video{
+  animation:hud-unwipe .4s cubic-bezier(.4,.05,.5,1) forwards}
+@keyframes hud-unwipe{
+  0%{clip-path:inset(0 0 0 0);filter:none}
+  100%{clip-path:inset(0 0 100% 0);filter:brightness(1.45) saturate(.32) contrast(1.18)}}
+#hud.off .shot.rv::before{animation:hud-bar-out .4s cubic-bezier(.4,.05,.5,1) forwards}
+@keyframes hud-bar-out{0%{top:100%;opacity:0}16%{opacity:.85}84%{opacity:.85}100%{top:0;opacity:0}}
+/* and the comb comes back as the signal degrades — the mirror of hud-lines,
+   which cleared it off once the picture had finished arriving. It stops short
+   of full: the comb is 26% black over every third row, and the picture is on
+   its way out, so the last thing it needs is the texture at full strength. */
+#hud.off .shot::after{animation:hud-lines-out .4s linear forwards}
+@keyframes hud-lines-out{0%{opacity:0}40%{opacity:.62}100%{opacity:.62}}
 /* 55% of .95s is .52s — the lines start clearing exactly as the bar leaves the
    bottom edge, so the picture finishes arriving and then goes clean. */
 @keyframes hud-lines{0%,55%{opacity:1}100%{opacity:0}}
@@ -389,40 +476,76 @@ html.touch #hudX:active{background:var(--hc);color:#04121c}
 #hud .hb p{margin-top:10px;font-size:14px;line-height:1.5;color:#b9c7dc;
   display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 
-/* ── a card that is a list ───────────────────────────────────────
-   Three rows visible and the rest behind a scroll. The height is derived from
-   the row so the cut always lands between two rows rather than through one:
-   a half-row peeking out is the only thing that says "there is more" without
-   a scrollbar, and a whole row hidden says nothing at all. 3.55 rows shows
-   three and the top sliver of the fourth. */
-#hud .hlist{--hrow:58px;display:none;max-height:calc(var(--hrow) * 3.55);
-  overflow-y:auto;overscroll-behavior:contain;margin:0 15px 13px;
-  border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.03)}
-#hud.listing .hlist{display:block}
+/* ── a card that is a list of clips ──────────────────────────────
+   The bin holds six builds and shows them running, one clip a row at the
+   card's own width. The rows used to be a 66x42 still, a title, and the words
+   PLAY IN BROWSER — the same three words on all six, under a card whose own
+   subtitle already said "6 playable in browser". Six repeats of a sentence
+   that carried nothing is what made the row 58px, and a 58px row is why only
+   three and a half of six builds were ever on screen.
+
+   A still could not carry these anyway. The card says they were made "to try
+   a mechanic rather than to ship a game", and a mechanic is motion: one frame
+   of Jump 2d is a beige rectangle with a shape on it.
+
+   Three rows at a time, the rest behind a scroll. The cap is written off
+   --hud-w rather than in pixels because that is the only thing that lets
+   hudSizeFor trade width for height here: a clip is 16:9 of the card, so
+   three of them are 1.7 cards tall, and narrowing the card is what makes a
+   short slot fit. 32px is the 15 of margin each side plus the row's border.
+
+   The scrollbar takes 4 more off the row's width and therefore a few off its
+   height, so what actually lands under the cap is three rows and the top
+   sliver of a fourth — which is the same "there is more" this list has always
+   made, now for free rather than by picking 3.55. */
+#hud .hlist{--vw:calc(var(--hud-w) - 32px);--vrow:calc(var(--vw) * 9 / 16 + 2px);
+  --vrows:3;display:none;gap:8px;
+  max-height:calc(var(--vrow) * var(--vrows) + (var(--vrows) - 1) * 8px);
+  overflow-y:auto;overscroll-behavior:contain;margin:0 15px 13px}
+#hud.listing .hlist{display:grid}
 /* the shot and the list are alternatives, not a stack */
 #hud.listing .shot{display:none}
 #hud .hlist::-webkit-scrollbar{width:4px}
 #hud .hlist::-webkit-scrollbar-thumb{background:var(--hcd)}
-#hud .hlist a{display:flex;align-items:center;gap:10px;height:var(--hrow);padding:0 11px 0 0;
-  text-decoration:none;color:inherit;border-bottom:1px solid rgba(255,255,255,.07);
-  transition:background .14s}
-#hud .hlist a:last-child{border-bottom:0}
-#hud .hlist a:hover{background:rgba(255,255,255,.07)}
-#hud .hlist img{width:66px;height:42px;object-fit:cover;flex:none;background:#0d1428;
-  margin:0 0 0 8px}
-#hud .hlist span{min-width:0;flex:1}
-#hud .hlist b{display:block;font:650 13px/1.25 inherit;overflow:hidden;
-  text-overflow:ellipsis;white-space:nowrap}
-/* a0 rather than the 75 the other small mono labels use: at 8.5px that alpha
-   measures 3.85:1 against the card, which is under AA, and this row is the
-   only place the list says what the thing is */
-#hud .hlist i{display:block;font-style:normal;margin-top:2px;font:600 8.5px/1.4 var(--mono);
-  letter-spacing:.11em;text-transform:uppercase;color:#dae4f7a8}
-#hud .hlist u{flex:none;text-decoration:none;font:700 9px/1 var(--mono);letter-spacing:.12em;
-  color:var(--hc)}
-/* On touch the readout is never the route to this list — the bin opens its
-   panel instead — but the rows would still be in the tab order. */
-html.touch #hud .hlist{--hrow:64px}
+#hud .hlist a{display:block;position:relative;overflow:hidden;text-decoration:none;
+  color:inherit;border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.04);
+  transition:border-color .14s}
+/* poster, not a first frame: a build with no clip in demos/clips/ keeps its
+   still in the same box rather than leaving a hole, and the one with a clip
+   shows the still until the decoder has something to put there. */
+#hud .hlist video{display:block;width:100%;height:auto;aspect-ratio:16/9;
+  object-fit:cover;background:#0d1428}
+/* The title sits in the clip rather than under it. A caption of its own costs
+   26px a row, and at three rows that is 78px more of the band this card is
+   already having to narrow itself to fit. */
+#hud .hlist b{position:absolute;left:0;right:0;bottom:0;padding:24px 11px 8px;
+  font:650 14px/1.2 inherit;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  background:linear-gradient(transparent,rgba(4,8,18,.92) 62%);transition:color .14s}
+#hud .hlist a:hover{border-color:var(--hc)}
+#hud .hlist a:hover b{color:var(--hc)}
+/* Taking PLAY IN BROWSER and the six glyphs off the rows was right about the
+   words and wrong about the affordance: they were the only thing saying a row
+   was a link, and this card has no action buttons under it to say it instead.
+   So it comes back as one, on the row under the pointer, in the corner of the
+   gradient the title already sits on — no row is taller for it, and the thing
+   said six times is now said once, where it is being asked. */
+#hud .hlist u{position:absolute;right:9px;bottom:8px;text-decoration:none;
+  font:700 8.5px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;
+  color:var(--hc);border:1px solid var(--hc);background:rgba(6,9,20,.72);
+  padding:5px 7px;opacity:0;transition:opacity .14s}
+#hud .hlist a:hover u,#hud .hlist a:focus-visible u{opacity:1}
+/* Space kept for it whether or not it is showing, so a long title ellipsises
+   in the same place both ways rather than reflowing under the pointer. */
+#hud .hlist b{padding-right:74px}
+/* Trading width for height runs out. Chrome is 158, the placement will not go
+   below HUD_MINW, and the band is the viewport less 200 — so three clips need
+   896px of window and two need 719. Below each the row count is what gives
+   way: hudPlace's last resort is HUD_MINW at whatever height that comes to,
+   and a card that keeps its three rows by running off the bottom of the frame
+   is worse than one that shows fewer of them. These sit beside the two rules
+   above that shrink --hud-w on a short window, and for the same reason. */
+@media (max-height:895px){#hud .hlist{--vrows:2}}
+@media (max-height:718px){#hud .hlist{--vrows:1}}
 
 #hud .ha{display:flex;gap:9px;padding:0 15px 15px}
 /* Play and Watch used to share the row evenly, which gave a build you can run
@@ -454,6 +577,8 @@ html.touch #hud .hlist{--hrow:64px}
   #hud .shot::after{display:none}
   #hud .shot.rv img,#hud .shot.rv video,#hud .shot.rv::before{animation:none}
   #hud .shot.rv::before{display:none}
+  #hud.off,#hud.off .shot.rv img,#hud.off .shot.rv video,
+  #hud.off .shot.rv::before,#hud.off .shot::after{animation:none}
 }
 
 #css3d{position:fixed;inset:0;z-index:2;overflow:hidden;pointer-events:none}
@@ -763,7 +888,7 @@ html.touch #hud .hlist{--hrow:64px}
   :root{--rail-h:44px}
   #idxBtn,#gridBtn{min-height:44px;display:flex;align-items:center;justify-content:center}
   #idx button{min-height:44px}
-  #real{min-height:44px;padding:0 13px}
+  #real,#snd{min-height:44px;padding:0 13px}
   #hero .hcta a,#hero .hcta button{min-height:44px}
   /* A 3px rail with a 13px thumb is a mouse target. The rail stays 3px — it is
      a hairline on purpose — and grows a transparent 44px band to be hit by. */
@@ -845,6 +970,12 @@ html.touch #hud .hlist{--hrow:64px}
     <input id="scrub" type="range" min="0" max="1440" step="1" value="780" aria-label="Time of day">
     <div class="lbl" id="phase">Scrubbing<b>one day</b></div>
     <button id="real" class="on">▶ Resume</button>
+    <div id="sndWrap"><button id="snd" type="button">♪ Sound</button>
+      <div id="vol"><div class="vi">
+        <input id="volR" type="range" min="0" max="100" step="1" value="55" aria-label="Room volume">
+        <b id="volN">55%</b>
+      </div></div>
+    </div>
   </div>
 
   <div id="tip"></div>
@@ -885,8 +1016,13 @@ html.touch #hud .hlist{--hrow:64px}
   </div>
 </div>
 
-<script src="portfolio-data.js"></script>
-<script src="portfolio-shared.js"></script>
+<script src="portfolio-data.js?v=02d81107"></script>
+<script src="portfolio-shared.js?v=84e55704"></script>
+<!-- Generated by tools/wallsheet.py from wall-layout.txt, in the same
+     run that bakes models/wall*.jpg. A plain script rather than a fetch:
+     the module below builds its walls synchronously, and an await there
+     would put a round trip on the boot path for 400 bytes. -->
+<script src="wall-layout.js?v=11b9bf2f"></script>
 <script>
 addEventListener('error',e=>{
   const l=document.getElementById('load');
@@ -900,14 +1036,19 @@ addEventListener('error',e=>{
 import * as T from './lib/three.module.min.js';
 import {GLTFLoader} from './lib/GLTFLoader.js';
 import {toCreasedNormals} from './lib/BufferGeometryUtils.js';
+/* The room's own pieces. See demos/room/sound.js for why that one is a
+   file and what a further split has to be able to say for itself. */
+import {clamp,lerp} from './room/math.js';
+import {createSound} from './room/sound.js';
 
 const V=(x,y,z)=>new T.Vector3(x,y,z);
-const clamp=(v,a,b)=>v<a?a:v>b?b:v;
-const lerp=(a,b,t)=>a+(b-a)*t;
 const MOBILE_GPU=matchMedia('(pointer:coarse)').matches||Math.min(innerWidth,innerHeight)<600;
 const games=(typeof GAMES!=='undefined'?GAMES:[]);
 const jobs=(typeof JOBS!=='undefined'?JOBS:[]);
-const thumb=p=>p?p.replace('../images/','../images/thumb/').replace(/\.(jpe?g|png)$/i,'.jpg'):'';
+/* thumb, esc, img, externalNote, linkRow, CAT, inSection and the link helpers
+   all come from the two plain scripts loaded above this module. They are what
+   both front doors share, so they live in portfolio-shared.js; a copy here
+   would be a copy the flat page also has. */
 const has=(g,k)=>g.links.some(l=>l.kind===k);
 const linkOf=(g,k)=>g.links.find(l=>l.kind===k)||g.links[0];
 const REDUCED_MOTION=matchMedia('(prefers-reduced-motion:reduce)').matches;
@@ -1127,7 +1268,7 @@ const mWall =mat(0x483b52), mWall2=mat(0x3a3044),
       mFloor=mat(0x322938), mCeil =mat(0x201a2c),
       mMetal=mat(0x363143), mDark =mat(0x1b1723),
       mDesk =mat(0x3a3142), mFab  =mat(0x40364b), mRug=mat(0x282232);
-const groundFX={base:null,glows:[],vehicles:[]};
+const groundFX={base:null,glows:[],vehicles:[],snowRoofs:null};
 {
   /* The floor used to be 300 units square, which was invisible only because a
      ring of tower boxes stood on it. With the skyline replaced by backdrops
@@ -1233,19 +1374,129 @@ const mFrame=mat(0x2c333f);
 /* ── the glass itself: a faint tinted sheet plus rain that never stops ──
    The rain is the only thing on the page that moves with nobody touching it.
    A still 3D scene reads as a picture; a scene with weather reads as a place. */
-const rainTex=(()=>{
-  const c=document.createElement('canvas'); c.width=256; c.height=512;
-  const g=c.getContext('2d'); g.clearRect(0,0,256,512);
-  let s=7;const r=()=>((s=s*16807%2147483647)/2147483647);
-  for(let i=0;i<190;i++){
-    const x=r()*256, y=r()*512, h=8+r()*40;
-    g.strokeStyle='rgba(190,225,255,'+(.10+r()*.28)+')';
-    g.lineWidth=r()<.75?1:1.8;
-    g.beginPath(); g.moveTo(x,y); g.lineTo(x+2,y+h); g.stroke();
+/* One sheet of rain is a flat sheet. Every streak is the same length, the
+   whole thing slides at one rate, and what the eye reads is a scrolling
+   texture. Two sheets at different scales moving at different rates is depth:
+   the near streaks overtake the far ones, and that disagreement is the only
+   cue saying the rain occupies a volume instead of a plane. */
+/* ── temperature ──
+   Snow is not "more than a storm". It is a different axis, and the reason it
+   cannot simply be a fifth entry in WEATHER is that WSEQ is an ORDERED walk:
+   clear→cloudy→rain→storm, deliberately, so a storm never arrives without an
+   overcast in front of it. Ask where snow goes on that line and there is no
+   answer, because nothing comes "between" rain and snow — the same cloud drops
+   one or the other depending on how cold it is underneath.
+
+   So temperature is rolled ONCE per visit and the existing states render as
+   snow instead of rain when it is cold. WSEQ, the crossfade, the momentum,
+   `wet`, the audio bed and the lightning leash all keep reading exactly the W
+   they always read. A cold `rain` is snow and a cold `storm` is a blizzard.
+
+   The month used to decide this almost outright — .62 in January against .03
+   in July — and that is meteorology, not design. What it actually bought was
+   three quarters of the year in which the snow, the accumulation, the caps on
+   every roofline and the second audio bed could not occur at all: a visit in
+   September reached them once in seventeen. Half the room, built and then
+   made unreachable by a table.
+
+   So the table is now a TILT on a coin flip rather than the flip itself. It
+   still runs warmest in July and coldest in January, which is the whole of
+   what seasonality was ever saying here, but across a ±.03 band around even
+   odds instead of a 20:1 swing. The band is that narrow because the ask was
+   an even three-way split and a wider tilt spends it: at ±.06 a September
+   visit is already 37% rain against 30% snow. Simulated over the walk below,
+   ±.03 holds every month inside 32% dry / 33-35% rain / 32-34% snow. Northern-hemisphere months, because the city
+   outside is not Ho Chi Minh City and never was — the clock in the corner is
+   the only thing in this room claiming a real place.
+
+   Constant for the visit, not animated. Rain turning to snow while you watch
+   is a lovely thing and it is also a crossfade between two particle systems
+   with nothing in common; this is the version that is honest about what it
+   does. */
+const COLD_BY_MONTH=[.53,.53,.51,.50,.48,.47,.47,.47,.48,.50,.51,.53];
+const COLD=(()=>{
+  /* Read straight off the hash rather than off HP, which is built a long way
+     below this — the sheets are constructed here, at load, so the decision has
+     to be made before them. */
+  const h=new URLSearchParams(location.hash.slice(1)),
+        w=String(h.get('w')||'').toLowerCase(), c=h.get('cold');
+  if(w==='snow'||w==='blizzard') return 1;
+  if(c==='1') return 1;
+  if(c==='0'||h.has('w')) return 0;   // any other pinned state is explicitly not snow
+  return Math.random()<COLD_BY_MONTH[new Date().getMonth()]?1:0;
+})();
+
+/* The far mass of the snow, on the same scrolled-tile trick the rain uses.
+   Square, unlike the rain tile, because a snowflake is a dot and a dot
+   stretched by a non-square repeat stops being one. */
+const mkSnowTex=(seed,n,rMin,rVar,aMin,aVar)=>{
+  const c=document.createElement('canvas'); c.width=c.height=256;
+  const g=c.getContext('2d');
+  let q=seed; const r=()=>((q=q*16807%2147483647)/2147483647);
+  for(let i=0;i<n;i++){
+    const x=r()*256, y=r()*256, rad=rMin+r()*rVar;
+    const G=g.createRadialGradient(x,y,0,x,y,rad);
+    G.addColorStop(0,'rgba(255,255,255,'+(aMin+r()*aVar)+')');
+    G.addColorStop(.45,'rgba(244,250,255,'+(aMin+r()*aVar)*.42+')');
+    G.addColorStop(1,'rgba(228,240,255,0)');
+    g.fillStyle=G; g.beginPath(); g.arc(x,y,rad,0,7); g.fill();
   }
   const t=new T.CanvasTexture(c);
   t.wrapS=t.wrapT=T.RepeatWrapping; t.colorSpace=T.SRGBColorSpace; return t;
+};
+
+/* One near flake. Soft all the way out: a flake with an edge reads as a pixel,
+   and at this distance from the glass everything is out of focus anyway. */
+const flakeSprite=(()=>{
+  const c=document.createElement('canvas'); c.width=c.height=16;
+  const g=c.getContext('2d');
+  const G=g.createRadialGradient(8,8,0,8,8,8);
+  /* Dimmer than it looks like it should be. These are the out-of-focus flakes
+     a foot from the glass: a lens spreads them over more area, it does not make
+     them brighter, and at .95 a six-pixel blob burns a hole in the skyline. */
+  G.addColorStop(0,'rgba(255,255,255,.70)');
+  G.addColorStop(.34,'rgba(240,248,255,.34)');
+  G.addColorStop(1,'rgba(222,236,255,0)');
+  g.fillStyle=G; g.beginPath(); g.arc(8,8,8,0,7); g.fill();
+  return c;
 })();
+
+const mkRainTex=(seed,n,hMin,hVar,aMin,aVar,thin,lean)=>{
+  const c=document.createElement('canvas'); c.width=256; c.height=512;
+  const g=c.getContext('2d'); g.clearRect(0,0,256,512);
+  let s=seed;const r=()=>((s=s*16807%2147483647)/2147483647);
+  for(let i=0;i<n;i++){
+    const x=r()*256, y=r()*512, h=hMin+r()*hVar;
+    g.strokeStyle='rgba(190,225,255,'+(aMin+r()*aVar)+')';
+    g.lineWidth=r()<thin?1:1.8;
+    g.beginPath(); g.moveTo(x,y); g.lineTo(x+lean,y+h); g.stroke();
+  }
+  const t=new T.CanvasTexture(c);
+  t.wrapS=t.wrapT=T.RepeatWrapping; t.colorSpace=T.SRGBColorSpace; return t;
+};
+const rainTex=mkRainTex(7,190,8,40,.10,.28,.75,2);
+/* The far sheet: more streaks, shorter, fainter, and tiled 1.6x tighter so
+   each lands smaller on screen. Faint enough that it never competes with the
+   near sheet for attention. It does not have to be seen, only disagreed with. */
+const rainFarTex=mkRainTex(1013,300,5,17,.05,.12,1,1);
+/* Two snow tiles for the mass, one near sim for the flakes you can actually
+   follow — see snowPane. The far tile is denser and dimmer, the same
+   relationship the two rain sheets have. */
+/* The three radii are a LADDER and the gaps in it are the point. They started
+   overlapping — a small near flake was smaller than a large tile dot, and the
+   near tile fell faster than most of the flakes supposedly in front of it — so
+   the whole thing read as one undifferentiated field of specks, which is
+   exactly the failure mode a single scrolled sheet has. Three populations that
+   share a size are one population.
+
+   Check the ladder in SCREEN pixels, not world units. The near canvas is 384px
+   over the glass's 27 units, the near tile 256px over 6, the far tile 256px
+   over 3.6, and the window itself occupies about 13 screen pixels a world unit.
+   The first attempt at this separated cleanly in world units and put BOTH mass
+   layers under one screen pixel, where a size difference cannot exist. The
+   three bands are now .2-.4px, .8-1.7px and 2.6-5.5px. */
+const snowTex=COLD?mkSnowTex(23,170,2.6,2.9,.34,.44):null;
+const snowFarTex=COLD?mkSnowTex(577,330,.9,1.5,.14,.20):null;
 const glassRefTex=(()=>{
   const c=document.createElement('canvas');c.width=256;c.height=512;
   const g=c.getContext('2d');g.clearRect(0,0,256,512);
@@ -1259,11 +1510,219 @@ const glassRefTex=(()=>{
   g.fillStyle=edge;g.fillRect(0,0,256,512);
   const t=new T.CanvasTexture(c);t.colorSpace=T.SRGBColorSpace;return t;
 })();
-const rains=[],glassRefs=[];
+/* ── rain ON the glass ─────────────────────────────────────────
+   The falling sheets are rain in the air, on the far side of the window, and
+   nothing about them says which side of the glass the camera is on. What makes
+   a room read as INSIDE is the water that never gets there: beads that land on
+   the pane, sit, swell, and eventually break loose and run.
+
+   A 2D canvas per pane rather than geometry. Forty-six beads are forty-six
+   draw calls as quads and one drawImage loop as a texture — and the trails come
+   free, because the canvas is faded toward transparent on each repaint instead
+   of cleared, so a bead's path stays behind it and dries on its own without
+   anyone tracking a polyline. Repainted at ~22fps, not per frame: beads move
+   slowly and the texture upload is the expensive half. */
+const beadSprite=(()=>{
+  const c=document.createElement('canvas'); c.width=c.height=32;
+  const g=c.getContext('2d');
+  /* Three parts, and the order of importance is the reverse of the order you
+     would guess. The body barely exists: a bead is mostly as dark as whatever
+     is behind it, and painting a bright ball is how the first attempt ended up
+     looking like a field of soap bubbles stuck to the window.
+
+     The crescent is on the BOTTOM ONLY. Light entering a hanging drop leaves
+     through the thick underside, so that is the only edge that lights up; a
+     ring all the way round is, again, a bubble.
+
+     And the pinpoint, high and off-centre, is what actually reads as water. */
+  /* The body is kept this faint on purpose. These sheets are ADDITIVE — the
+     only thing they can do is add light — and a filled disc of added light is
+     a glowing ball, which is exactly what the first two attempts looked like.
+     A real bead is mostly a lens, and a lens is as much darker as it is
+     brighter; additive cannot do the darker half at all. So the body is nearly
+     nothing and the drop is carried by its highlight, which is also what the
+     eye actually picks out on a window from across a room. */
+  const B=g.createRadialGradient(16,16,1,16,16,15);
+  B.addColorStop(0,'rgba(176,214,248,.16)');
+  B.addColorStop(.70,'rgba(140,186,228,.06)');
+  B.addColorStop(1,'rgba(120,170,215,0)');
+  g.fillStyle=B; g.beginPath(); g.arc(16,16,16,0,7); g.fill();
+  g.strokeStyle='rgba(214,236,255,.30)'; g.lineWidth=2.2;
+  g.beginPath(); g.arc(16,15.4,11,.85,2.30); g.stroke();
+  const S=g.createRadialGradient(12,11,0,12,11,5.2);
+  S.addColorStop(0,'rgba(255,255,255,.92)');
+  S.addColorStop(.45,'rgba(226,242,255,.32)');
+  S.addColorStop(1,'rgba(226,242,255,0)');
+  g.fillStyle=S; g.beginPath(); g.arc(12,11,5.2,0,7); g.fill();
+  return c;
+})();
+const beadSheets=[];
+function beadPane(w,h,x,y,z,ry,order){
+  const H=384, W=Math.round(H*w/h);
+  const c=document.createElement('canvas'); c.width=W; c.height=H;
+  const tex=new T.CanvasTexture(c); tex.colorSpace=T.SRGBColorSpace;
+  const m=new T.MeshBasicMaterial({map:tex,transparent:true,opacity:0,
+    fog:false,toneMapped:false,side:T.DoubleSide,depthWrite:false,
+    blending:T.AdditiveBlending});
+  const q=new T.Mesh(new T.PlaneGeometry(w,h),m);
+  q.position.set(x,y,z); q.rotation.y=ry; q.renderOrder=order;
+  q.visible=false; scene.add(q);
+  /* One canvas per pane, sized to that pane's aspect, rather than one shared
+     texture tiled across both: the two runs of glass are 28 and 16 units wide,
+     so a shared sheet would either stretch its beads into ovals on the wide
+     pane or tile visibly on the narrow one. Beads are not a pattern. */
+  /* No release timer. A drop runs when it gets heavy enough to beat surface
+     tension and not before, so every bead carries its own release radius and
+     its own rate of growth, and the pane genuinely gets wetter while you watch
+     instead of cycling on a stopwatch. It also gets the population right for
+     free: small drops never run, because in life they never do — every trail
+     on a window comes from one of the fat ones. */
+  const drops=[], seat=d=>{
+    d.x=Math.random()*W; d.y=Math.random()*H;
+    d.rel=2.4+Math.random()*2.6;
+    d.r=.7+Math.random()*Math.min(1.8,d.rel-1.0);
+    /* Growth is what sets how often anything runs, and it is the one number
+       here with a budget: a hundred-odd beads all crossing their threshold on
+       a twenty-second cycle is five new runnels a second, which is not a
+       window in the rain, it is a car wash. */
+    d.g=(.08+Math.random()*.42)*1e-4;        // px/ms at full wet
+    d.v=0;
+  };
+  for(let i=0,n=MOBILE_GPU?46:130;i<n;i++){ const d={}; seat(d); drops.push(d) }
+  beadSheets.push({g:c.getContext('2d'),W,H,tex,m,q,drops,seat});
+}
+let beadAcc=0, beadStatic=false;
+function stepBeads(dt,lean){
+  const on=wet>.02;
+  beadSheets.forEach(s=>{ s.q.visible=on });
+  if(!on||(REDUCED_MOTION&&beadStatic)) return;
+  if((beadAcc+=dt)<45) return;
+  const step=Math.min(160,beadAcc); beadAcc=0; beadStatic=true;
+  beadSheets.forEach((s,pane)=>{
+    const {g,W,H,drops,seat}=s, lx=(pane?1:-1)*lean;
+    /* destination-out lifts alpha out of everything already on the canvas, so
+       a running bead's path stays behind it and dries over about a second and
+       a half. Reduced motion clears outright: no trails, no runners, a wet
+       window rather than a moving one. */
+    g.globalCompositeOperation='destination-out';
+    g.fillStyle='rgba(0,0,0,'+(REDUCED_MOTION?1:.042+step*.00052)+')';
+    g.fillRect(0,0,W,H);
+    g.globalCompositeOperation='source-over';
+    for(const d of drops){
+      if(!REDUCED_MOTION){
+        if(d.v>0){
+          /* A running bead sweeps up what it passes through, so it accelerates,
+             and the trail behind it is the water it did not keep — hence the
+             slow thinning, floored so it never evaporates mid-pane. A drop that
+             vanishes halfway down reads as a bug rather than as physics. */
+          d.v=Math.min(H*.0011,d.v+step*2.2e-6*H);
+          d.y+=d.v*step; d.x+=lx*step*.03;
+          d.r=Math.max(1.2,d.r*(1-step*2.6e-4));
+          if(d.y>H+16||d.x<-16||d.x>W+16) seat(d);
+        }else if((d.r+=step*d.g*wet)>d.rel) d.v=H*7e-6;
+      }
+      // taller than wide: gravity has hold of it before it lets go
+      g.drawImage(beadSprite,d.x-d.r,d.y-d.r*1.06,d.r*2,d.r*2.18);
+    }
+    s.tex.needsUpdate=true;
+  });
+}
+
+/* ── snow ──
+   A scrolled tile cannot be snow on its own, and the reason is the reason the
+   rain sheets work. A rain streak is motion-blurred: the eye cannot lock onto
+   an individual drop, so the moment the tile wraps is invisible. A snowflake
+   is a discrete dot falling at maybe an eighth of the speed, and the eye
+   tracks it — so the wrap is not only visible, it is the only thing you see.
+
+   The split is therefore by what the eye can follow. The far mass is two
+   scrolled tiles, because at that size a flake is a speck and specks are
+   interchangeable. The near flakes are a per-flake canvas sim, because those
+   are the ones with an identity, and they get the one thing a scrolled sheet
+   can never have: SWAY. A sheet can only sway as a whole, which reads as the
+   window moving rather than as air. Fifty-eight flakes a pane is enough
+   because they are the only ones being watched.
+
+   Structurally this is stepBeads with different physics, and deliberately so —
+   the beads proved the budget. It repaints at 33ms rather than 45: a bead
+   creeps, a flake travels, and the sway is a sine the stepping shows up in. */
+const snowSheets=[];
+function snowPane(w,h,x,y,z,ry,order){
+  const H=384, CW=Math.round(H*w/h);
+  const c=document.createElement('canvas'); c.width=CW; c.height=H;
+  const tex=new T.CanvasTexture(c); tex.colorSpace=T.SRGBColorSpace;
+  const m=new T.MeshBasicMaterial({map:tex,transparent:true,opacity:0,
+    fog:false,toneMapped:false,side:T.DoubleSide,depthWrite:false,
+    blending:T.AdditiveBlending});
+  const q=new T.Mesh(new T.PlaneGeometry(w,h),m);
+  q.position.set(x,y,z); q.rotation.y=ry; q.renderOrder=order;
+  q.visible=false; scene.add(q);
+  /* `d` is depth within the near band, and everything else is derived from it
+     so a flake cannot be big and slow or small and fast — that disagreement is
+     what turns falling dots back into noise. */
+  const flakes=[], seat=(fl,top)=>{
+    fl.d=.45+Math.random()*.55;
+    fl.r=.3+fl.d*5.7;
+    /* Roughly doubled. At the old rate the slowest near flake crossed the
+       27-unit pane in eighteen seconds while swaying 18px with a period of
+       four, so what the eye received was a blob wobbling in place — a speck
+       ON the glass, not a flake outside it. A crossing of 3.0-4.6s is still
+       unhurried for snow and is enough to read as falling. */
+    fl.vy=H*(9.0e-5+fl.d*1.5e-4);        // px/ms
+    fl.x=Math.random()*CW; fl.y=top?-8:Math.random()*H;
+    fl.sw=Math.random()*6.283;
+    /* Cut with it. Sway has to stay small next to the fall or the flake reads
+       as hovering; it is a tumble on the way down, not a drift. */
+    fl.sa=(3+Math.random()*8)*fl.d;      // sway amplitude in px
+    fl.sf=.0011+Math.random()*.0016;     // and its rate, per ms
+  };
+  /* Fewer than before, because each is now about seven times the area. Forty
+     big soft blobs is snow near a window; eighty is a screen full of dots. */
+  for(let i=0,n=MOBILE_GPU?18:40;i<n;i++){ const fl={}; seat(fl,false); flakes.push(fl) }
+  snowSheets.push({g:c.getContext('2d'),CW,H,tex,m,q,flakes,seat});
+}
+
+let snowAcc=0, snowStatic=false;
+function stepSnow(dt,now,lean){
+  if(!snowSheets.length) return;
+  const on=snowK>.01;
+  snowSheets.forEach(s=>{ s.q.visible=on });
+  if(!on||(REDUCED_MOTION&&snowStatic)) return;
+  if((snowAcc+=dt)<33) return;
+  const step=Math.min(120,snowAcc); snowAcc=0; snowStatic=true;
+  /* The sim has to ride W.speed like everything else does. Left on its own
+     clock the near flakes fell at exactly one rate through light snow and a
+     blizzard alike — measured by zeroing W.speed and finding the window still
+     moving as much as before, which is the same "it is a loop" tell the rain
+     sheets were fixed for. Shallow, because snow does not accelerate the way
+     rain does; it is carried, not dropped. */
+  const sv=.55+W.speed*.35;
+  snowSheets.forEach((s,pane)=>{
+    const {g,CW,H,flakes,seat}=s, lx=(pane?1:-1)*lean;
+    /* Cleared, not faded. The beads fade because a running bead leaves water
+       behind it; a flake leaves nothing, and a trail on one is a comet. */
+    g.clearRect(0,0,CW,H);
+    for(const fl of flakes){
+      if(!REDUCED_MOTION){
+        fl.y+=fl.vy*step*sv;
+        /* Sway and wind are separate terms on purpose: sway is the flake's own
+           tumble and belongs to the flake, wind is the room's and belongs to
+           the gust. Both scale with depth, so the far ones drift less. */
+        fl.x+=(Math.sin(now*fl.sf+fl.sw)*fl.sa*.006+lx*.055*fl.d)*step;
+        if(fl.y>H+8) seat(fl,true);
+        if(fl.x<-8) fl.x+=CW+16; else if(fl.x>CW+8) fl.x-=CW+16;
+      }
+      g.drawImage(flakeSprite,fl.x-fl.r,fl.y-fl.r,fl.r*2,fl.r*2);
+    }
+    s.tex.needsUpdate=true;
+  });
+}
+
+const rains=[],snows=[],glassRefs=[];
 {
   const glassMat=new T.MeshBasicMaterial({color:0x8fc8ff,transparent:true,opacity:.05,
     fog:false,toneMapped:false,side:T.DoubleSide,depthWrite:false});
-  const pane=(w,h,x,y,z,ry,inward)=>{
+  const pane=(idx,w,h,x,y,z,ry,inward)=>{
     const nx=Math.sin(ry)*inward,nz=Math.cos(ry)*inward;
     const q=new T.Mesh(new T.PlaneGeometry(w,h),glassMat);
     q.position.set(x,y,z);q.rotation.y=ry;q.renderOrder=10;scene.add(q);
@@ -1273,16 +1732,38 @@ const rains=[],glassRefs=[];
     const f=new T.Mesh(new T.PlaneGeometry(w,h),fm);
     f.position.set(x+nx*.035,y,z+nz*.035);f.rotation.y=ry;
     f.renderOrder=11;scene.add(f);glassRefs.push(fm);
-    const rm=new T.MeshBasicMaterial({map:rainTex.clone(),transparent:true,opacity:.3,
-      fog:false,toneMapped:false,side:T.DoubleSide,depthWrite:false,
-      blending:T.AdditiveBlending});
-    rm.map.repeat.set(w/16,h/16);
-    const r=new T.Mesh(new T.PlaneGeometry(w,h),rm);
-    r.position.set(x-nx*.035,y,z-nz*.035);r.rotation.y=ry;
-    r.renderOrder=12;scene.add(r);rains.push(rm);
+    const sheet=(tex,tile,out,order,spd,op,into)=>{
+      const m=new T.MeshBasicMaterial({map:tex.clone(),transparent:true,opacity:.3,
+        fog:false,toneMapped:false,side:T.DoubleSide,depthWrite:false,
+        blending:T.AdditiveBlending});
+      m.map.repeat.set(w/tile,h/tile);
+      const s=new T.Mesh(new T.PlaneGeometry(w,h),m);
+      s.position.set(x-nx*out,y,z-nz*out);s.rotation.y=ry;
+      s.renderOrder=order;scene.add(s);
+      /* The pane index used to BE the index into `rains`, and that is what
+         decided which way the wind leaned. There are two sheets per pane now
+         and the array index means nothing, so everything downstream reads the
+         pane off the material instead. */
+      m.userData={pane:idx,spd,op}; into.push(m);
+    };
+    /* One precipitation or the other, decided at load. Building both and
+       hiding one would cost four more materials and two more canvases for a
+       state that cannot occur — COLD does not change during a visit. */
+    if(COLD){
+      if(!MOBILE_GPU) sheet(snowFarTex,3.6,.10,12,.77,.55,snows);
+      sheet(snowTex,6,.035,13,1,1,snows);
+      snowPane(w,h,x-nx*.012,y,z-nz*.012,ry,14);
+    }else{
+      /* Skipped on mobile: these are additive quads on the most overdrawn
+         surface in the room, and the far sheet is the one whose absence costs
+         least — it is deliberately almost invisible on its own. */
+      if(!MOBILE_GPU) sheet(rainFarTex,26,.10,12,.52,.62,rains);
+      sheet(rainTex,16,.035,13,1,1,rains);
+      beadPane(w,h,x-nx*.012,y,z-nz*.012,ry,14);
+    }
   };
-  pane(GZ1-GZ0,W1-W0,RX-.6,(W0+W1)/2,(GZ0+GZ1)/2,Math.PI/2,-1);
-  pane(GX1-GX0,W1-W0,(GX0+GX1)/2,(W0+W1)/2,BZ+.6,0,1);
+  pane(0,GZ1-GZ0,W1-W0,RX-.6,(W0+W1)/2,(GZ0+GZ1)/2,Math.PI/2,-1);
+  pane(1,GX1-GX0,W1-W0,(GX0+GX1)/2,(W0+W1)/2,BZ+.6,0,1);
 }
 
 /* ═══ sky + sun ═════════════════════════════════════════════════ */
@@ -1297,7 +1778,7 @@ scene.add(new T.Mesh(new T.SphereGeometry(700,24,16),new T.ShaderMaterial({
 /* The gradient gives the sky a colour, but no scale. Stars, a real celestial
    disc and a slow cloud deck give the window something recognisably distant to
    look through. They render behind the city so towers still own the skyline. */
-const skyFX={stars:null,sun:null,moon:null,cloud:null,haze:null};
+const skyFX={stars:null,sun:null,moon:null,cloud:null,haze:null,veil:null};
 {
   let seed=101;const rnd=()=>((seed=seed*16807%2147483647)/2147483647);
   const count=MOBILE_GPU?70:190, pos=new Float32Array(count*3);
@@ -1362,7 +1843,25 @@ sun.shadow.autoUpdate=false;
 let shadowAt=-999;
 const wantShadow=h=>{ if(Math.abs(h-shadowAt)<.035) return; shadowAt=h; sun.shadow.needsUpdate=true };
 sun.target.position.set(-8,5,-20); scene.add(sun.target);
-const skyFill=[[16,19,-12],[13,19,-27]].map(([x,y,z])=>{
+/* These two stand in for the sky arriving through the opening, and they used
+   to stand just INSIDE it — (16,19,-12) and (13,19,-27), with the glass at
+   z=-30 and x=22. The second one sat 2.6 units from the vertical mullion at
+   (14,16.5,-29.65), and a decay-2 point light at 2.6 units is not a fill, it
+   is a bulb screwed to the frame: that post rendered at a mean of 158/255 at
+   13:00 and 98 at 21:00 against an unlit floor of 33 and 42. On screen it was
+   a white column smeared down the middle of the window, which is exactly the
+   "why is the glass glowing" this room keeps being caught at.
+
+   The fix is not dimmer, it is FARTHER, and outside. Sky does not light the
+   room-facing side of a window frame — it is behind that face — so putting
+   the sources beyond the glass makes the mullions fall to the ambient floor
+   by geometry rather than by a fudge, and leaves them free to be lit by the
+   sun when the sun is actually on them (17:00 still reads 83, it just no
+   longer clips at 178). The 1400 replaces 900 to hold the room where it was:
+   measured at four hours the room's mean moves by at most +0.26/255, and the
+   window-side-brighter-than-far-side gradient keeps 16.3 of its 18.8 at
+   sunset and 8.1 of its 10.2 at eight. */
+const skyFill=[[24,19,-2],[13,19,-36]].map(([x,y,z])=>{
   const L=new T.PointLight(0xcfe2ff,0,120,2); L.position.set(x,y,z); scene.add(L); return L;
 });
 
@@ -1448,9 +1947,37 @@ const cityLayers=[];
     const W=L.w, H=Math.round(L.w/4);
     const cs=document.createElement('canvas'); cs.width=W; cs.height=H;
     const cl=document.createElement('canvas'); cl.width=W; cl.height=H;
-    const s=cs.getContext('2d'), l=cl.getContext('2d');
+    /* A third pass, built only on a cold visit. Rain and snow had been sharing
+       one city: the same four WEATHER states drive both, so the only thing
+       that changed between a storm and a blizzard out there was the curtain in
+       front of it, and two hazes look alike. Accumulation is the cue that does
+       not — it is the one thing rain cannot do, and it is where a person looks
+       to answer "is that snow" without being told. */
+    const cn=COLD?document.createElement('canvas'):null;
+    if(cn){ cn.width=W; cn.height=H }
+    const s=cs.getContext('2d'), l=cl.getContext('2d'), n=cn&&cn.getContext('2d');
     let q=L.seed; const r=()=>((q=q*16807%2147483647)/2147483647);
     const px=(v)=>Math.round(v);
+    /* Snow on a ledge: flat underside on the roof it sits on, uneven top.
+       Broken into a few chunks of different depth because a rectangle of even
+       thickness is a drawn line, and a drawn line along every roofline reads
+       as an outline pass, not as weather.
+
+       Depth comes from the canvas height rather than from the tower, because
+       all four layers land within about 1.2-2.4 screen pixels per canvas pixel
+       — a constant here is very nearly a constant on screen, which is the only
+       place a viewer judges it. A physically-scaled depth would be under half
+       a pixel on the far layer and would simply not exist. */
+    const cap=(x,y,w,th,a)=>{
+      if(!n||w<1.5||th<.6) return;
+      n.fillStyle='#fff';
+      const m=Math.max(1,Math.min(5,Math.round(w/(th*3.2)))), dw=w/m;
+      for(let k=0;k<m;k++){
+        const t2=th*(.60+(((k*37+(x*11|0))%5))*.12);
+        n.globalAlpha=a;
+        n.fillRect(px(x+k*dw),px(y-t2),px(dw)+1,px(t2)+1);
+      }
+    };
 
     /* `tall` caps how much of the canvas a tower may fill. Left near 1 the
        nearest layer grew past the top of the window and the skyline stopped
@@ -1555,6 +2082,50 @@ const cityLayers=[];
         l.font='700 '+Math.max(7,Math.round(t.w*.15))+'px ui-monospace,Menlo,monospace';
         l.textAlign='center';l.fillText('DNG // 33',cx0,top+t.h*.32);l.textAlign='start';
       }
+      /* Where it lands. Every up-facing surface the crown chain just drew, in
+         one place rather than a `cap` scattered through six branches — the
+         crown geometry is cheap to recompute and the alternative is six edits
+         every time a roofline changes shape. */
+      if(n){
+        const capT=Math.min(H*.019,t.w*.30);
+        if(t.style===0){
+          const cw=t.w*.55, cx=t.x+(t.w-cw)/2, ch=t.h*.18;
+          cap(cx,top-ch,cw,capT,1);
+          cap(t.x,top,cx-t.x,capT,.92); cap(cx+cw,top,t.x+t.w-cx-cw,capT,.92);
+        }else if(t.style===1){
+          // a pitched crown sheds nearly all of it; a line near the apex is left
+          cap(cx0-t.w*.19,top-t.h*.12,t.w*.38,capT*.62,.80);
+        }else if(t.style===2){
+          cap(t.x,top,t.w,capT,1);
+          const fw=t.w*1.26, fx=t.x-(fw-t.w)/2;
+          cap(fx,top+t.h*.16,fw,capT*.85,.95);
+        }else if(t.style===4){
+          const tierW=t.w*.68, tierX=cx0-tierW/2, tierH=t.h*.12;
+          cap(tierX,top-tierH,tierW,capT,1);
+          cap(t.x,top,tierX-t.x,capT,.90); cap(tierX+tierW,top,t.x+t.w-tierX-tierW,capT,.90);
+        }else{
+          cap(t.x,top,t.w,capT,1);
+        }
+        /* The projecting mechanical decks are what turns this from a white
+           roofline into depth: a cap at the top of a tower says the roof is
+           covered, three caps down its height say the whole city is.
+
+           Held to the deck's own thickness, and thinner than the roof cap.
+           At the roof's depth these came out as wide white bands at three
+           heights on every tower in the frame, which does not read as snow at
+           all — it reads as ventilation louvres, or as another lit band in a
+           skyline that already has two. A ledge only holds a ledge's worth. */
+        for(let k=1;k<=deckN;k++){
+          const yy=top+t.h*(.20+k/(deckN+1)*.58),ext=t.w*(t.style===1?.18:.10);
+          /* .30, not .42. The roof cap got half again thicker when the
+             accumulation was made bolder, and this rode along with it — which
+             put the louvre problem back, four white bars down every tower.
+             The factor is set so the deck bands stay at the absolute
+             thickness they already read correctly at; only the rooflines
+             were meant to get heavier. */
+          cap(t.x-ext,yy,t.w+ext*2,Math.min(capT*.30,t.h*.024*.9),.66);
+        }
+      }
       /* Vertical banner down one flank — the one detail that says "not New
          York". Narrow, and broken into segments: a solid bar at this size was
          just a coloured smear, and it is the rhythm of lit blocks that reads
@@ -1628,6 +2199,7 @@ const cityLayers=[];
       s.fillRect(px(Math.min(a.x,b.x)),px(y),px(Math.abs(a.x-b.x)+a.w),3);
       l.globalAlpha=.5; l.fillStyle='#5ad0ff';
       l.fillRect(px(Math.min(a.x,b.x)),px(y),px(Math.abs(a.x-b.x)+a.w),1);
+      cap(Math.min(a.x,b.x),y,Math.abs(a.x-b.x)+a.w,Math.max(1.2,H*.006),.72);
     }
 
     /* Free-standing holo billboards on the near layers. They belong to no
@@ -1662,8 +2234,8 @@ const cityLayers=[];
       s.fillRect(px(bx+bw/2-1),px(by+bh),2,px(H-by-bh));
     }
 
-    l.globalAlpha=1;
-    return [cs,cl];
+    l.globalAlpha=1; if(n) n.globalAlpha=1;
+    return [cs,cl,cn];
   };
 
   /* three.js measures theta from +Z toward +X, and the room sits to the -X /
@@ -1672,24 +2244,37 @@ const cityLayers=[];
      backdrop hung behind the viewer, which is exactly nothing on screen. */
   const TH0=1.0, THL=2.6;
   LAYERS.forEach((L,i)=>{
-    const [cs,cl]=paint(L);
+    const [cs,cl,cn]=paint(L);
     const geo=new T.CylinderGeometry(L.rad,L.rad,L.h,MOBILE_GPU?32:64,1,true,TH0,THL);
     /* All four cylinders share a centre, so the transparent pass has no
        meaningful distance to sort them by and the order it picks is arbitrary
        — a far layer landing last would paint over the near one. renderOrder
        takes the decision away from it: farthest first, each layer's lights
        immediately after its own silhouette. */
-    const mk=(canvas,add)=>{
+    const mkq=(canvas,add,ord)=>{
       const t=new T.CanvasTexture(canvas);
       t.colorSpace=T.SRGBColorSpace;
       const m=new T.MeshBasicMaterial({map:t,transparent:true,side:T.BackSide,
         depthWrite:false,fog:false,toneMapped:false,
         blending:add?T.AdditiveBlending:T.NormalBlending});
       const q=new T.Mesh(geo,m);
-      q.position.set(RX,L.y+L.h/2,BZ); q.renderOrder=-30+i*2+(add?1:0);
-      scene.add(q); return m;
+      q.position.set(RX,L.y+L.h/2,BZ);
+      q.renderOrder=-30+i*2+(ord===undefined?(add?1:0):ord);
+      scene.add(q); return q;
     };
-    cityLayers.push({sil:mk(cs,false),lit:mk(cl,true),haze:L.haze});
+    const mk=(canvas,add,ord)=>mkq(canvas,add,ord).material;
+    const layer={sil:mk(cs,false),lit:mk(cl,true),haze:L.haze};
+    if(cn){
+      /* Half a step: after this layer's own silhouette, so the caps cover the
+         rooflines they sit on, and before its own lights, which are all below
+         a roofline anyway. Normal blending, never additive — an additive cap
+         is a light source bolted to every roof in the city, and this window
+         has already been caught glowing once when the weather turned. */
+      layer.snowQ=mkq(cn,false,.5);
+      layer.snow=layer.snowQ.material;
+      layer.snow.opacity=0; layer.snowQ.visible=false;
+    }
+    cityLayers.push(layer);
   });
 
   /* A soft band in front of every layer hides the hard meeting between the
@@ -1726,6 +2311,51 @@ const cityLayers=[];
       depthWrite:false,fog:false,toneMapped:false,blending:T.AdditiveBlending}));
   traffic.position.set(RX,34,BZ); traffic.renderOrder=-21; scene.add(traffic);
   cityLayers.traffic=traffic;
+
+  /* Weather IN the city, rather than on the window.
+
+     Everything else the rain does happens within a tenth of a unit of the
+     glass. Between that glass and a tower 215 units out there was nothing at
+     all, which is why a storm could take a quarter off the skyline's
+     brightness and still read as a dimmer rather than as weather — the room
+     was wet and the city was merely darker.
+
+     A squall at 215 units does not resolve as streaks; it resolves as a
+     travelling curtain, so that is what this is. The renderOrder is the whole
+     trick: the layers own -30..-23 in pairs, and -26.5 lands between layer 1's
+     lit pass and layer 2's silhouette. The curtain therefore fogs the two far
+     layers and leaves the two near ones sharp, which is what turns a storm
+     into depth instead of into a grey filter over the aperture.
+
+     It is also the only thing out there that MOVES with the weather — the
+     traffic strip scrolls at a fixed rate whatever the sky is doing. */
+  const vs=MOBILE_GPU?512:1024;
+  const vc=document.createElement('canvas'); vc.width=vs; vc.height=vs/4;
+  const vg=vc.getContext('2d');
+  let vq=311; const vr=()=>((vq=vq*16807%2147483647)/2147483647);
+  for(let i=0;i<80;i++){
+    /* Wide and flat: a squall is sheared by its own wind long before it
+       reaches you, so the wisps have to lie down. Round blobs at this size
+       read as clouds sitting in front of the buildings. */
+    const x=vr()*vs, y=vr()*vs/4, w=vs*(.09+vr()*.29), h=vs*(.017+vr()*.068);
+    vg.save(); vg.translate(x,y); vg.scale(w,h);
+    const rg=vg.createRadialGradient(0,0,0,0,0,1);
+    rg.addColorStop(0,'rgba(255,255,255,'+(.06+vr()*.10)+')');
+    rg.addColorStop(1,'rgba(255,255,255,0)');
+    vg.fillStyle=rg; vg.beginPath(); vg.arc(0,0,1,0,7); vg.fill(); vg.restore();
+  }
+  const vt=new T.CanvasTexture(vc);
+  vt.wrapS=T.RepeatWrapping; vt.colorSpace=T.SRGBColorSpace; vt.repeat.set(2,1);
+  /* Normal blending, not additive. Additive can only add light, so it would
+     make the far towers brighter through the rain rather than hidden by it —
+     the same mistake the beads were fixed for. A curtain has to be able to
+     take the city away. */
+  const vm=new T.MeshBasicMaterial({map:vt,transparent:true,opacity:0,
+    side:T.BackSide,depthWrite:false,fog:false,toneMapped:false});
+  const veil=new T.Mesh(new T.CylinderGeometry(215,215,150,MOBILE_GPU?32:48,1,true,TH0,THL),vm);
+  veil.position.set(RX,34,BZ); veil.renderOrder=-26.5; veil.visible=false;
+  scene.add(veil);
+  skyFX.veil={mesh:veil,mat:vm,tex:vt};
 }
 
 /* ═══ exterior foreground / civic megadeck ══════════════════════
@@ -1820,6 +2450,13 @@ const cityLayers=[];
   const roofMat=new T.MeshBasicMaterial({color:0x5ad0ff,transparent:true,opacity:.36,
     toneMapped:false,depthWrite:false,blending:T.AdditiveBlending});
   const roofs=new T.InstancedMesh(new T.PlaneGeometry(1,1),roofMat,blockCount);
+  /* The same roofs again, at full footprint and in white. These blocks are the
+     closest built thing to the glass, so a snowed city behind them and thirty
+     bare rooftops in front reads as the weather stopping at the middle
+     distance. One extra instanced draw, built only on a cold visit. */
+  const snowMat=COLD?new T.MeshBasicMaterial({color:0xdfe9f6,transparent:true,
+    opacity:0,toneMapped:false,depthWrite:false}):null;
+  const snowRoofs=snowMat?new T.InstancedMesh(new T.PlaneGeometry(1,1),snowMat,blockCount):null;
   const dummy=new T.Object3D(),roofDummy=new T.Object3D();
   let seed=313,placed=0,tries=0;const rnd=()=>((seed=seed*16807%2147483647)/2147483647);
   while(placed<blockCount&&tries++<500){
@@ -1837,11 +2474,21 @@ const cityLayers=[];
     blocks.setColorAt(placed,new T.Color().setHSL(.56+rnd()*.04,.22,.18+rnd()*.08));
     roofDummy.position.set(x,-10.3+h+.08,z);roofDummy.rotation.set(-Math.PI/2,0,ry);
     roofDummy.scale.set(w*.62,d*.62,1);roofDummy.updateMatrix();roofs.setMatrixAt(placed,roofDummy.matrix);
+    if(snowRoofs){
+      // a hair above the marking so the two do not z-fight, and the full slab
+      roofDummy.position.y+=.03;roofDummy.scale.set(w*.97,d*.97,1);
+      roofDummy.updateMatrix();snowRoofs.setMatrixAt(placed,roofDummy.matrix);
+    }
     placed++;
   }
   blocks.instanceMatrix.needsUpdate=true;if(blocks.instanceColor)blocks.instanceColor.needsUpdate=true;
   roofs.instanceMatrix.needsUpdate=true;blocks.receiveShadow=true;scene.add(blocks);scene.add(roofs);
   groundFX.glows.push(roofMat);
+  if(snowRoofs){
+    snowRoofs.instanceMatrix.needsUpdate=true;snowRoofs.visible=false;
+    snowRoofs.renderOrder=-9;scene.add(snowRoofs);
+    groundFX.snowRoofs=snowRoofs;
+  }
 
   // A handful of low-altitude shuttles make the roads legible as routes.
   const shuttleCyan=new T.MeshBasicMaterial({color:0xbdeeff,transparent:true,opacity:.9,
@@ -2534,7 +3181,7 @@ function cellMarkUpdate(dt){
        purpose: the readout waits out a swap delay before following the pointer
        to the next tile, and keying on the cell dropped the mark back to the
        board colour for those 190 ms, so the glow changed colour mid-slide. */
-    CM.tcol.set(hudAccent&&hudScr===t.s?hudAccent:t.s.col);
+    CM.tcol.set(hudState.accent&&hudState.scr===t.s?hudState.accent:t.s.col);
     if(snap) CM.col.copy(CM.tcol); else CM.col.lerp(CM.tcol,.14);
     CM.hv+=(1-CM.hv)*.2;
   } else CM.hv+=(0-CM.hv)*.14;
@@ -2580,23 +3227,101 @@ function cellMarkUpdate(dt){
   } else CM_S.uSwA.value=0;
 }
 
-const gSkin=games.filter(g=>g.section==='RESKIN');
+/* CLIP_OF is in wall-layout.js: title -> the .mp4 that previews it, for every
+   build that has one, enumerated from what is actually in demos/clips/ at bake
+   time. Listing them beats probing for them — a miss would be a 404 on every
+   hover of a cover that has no clip.
+
+   A map rather than a set of ids, and that is the point of it. This file used
+   to carry its own copy of the slug rule so it could turn a title into a
+   filename, which made three implementations of one string transform — here,
+   tools/wallsheet.py and tools/clips.py — with nothing but a docstring saying
+   they had to agree. The room does not slug anything now; it looks the answer
+   up, and the answer was produced by the run that named the files. */
+const clipOf=(typeof CLIP_OF!=='undefined'?CLIP_OF:{});
+/* Moved up here from beside the readout: the bin's card now names a clip per
+   row, and that card is an object literal built while the props are being
+   placed — a `const` declared further down is in its temporal dead zone by
+   then, and the room boots to an empty frame. */
+
+/* ── what each prop carries ───────────────────────────────────────
+   ROOM_LISTS comes from wall-layout.js: either a list the layout named build
+   by build, or a rule to run here against the data. Keeping the rule a rule
+   rather than baking it to a list is the point — a new reskin should reach the
+   reskin monitor by being a reskin, not by somebody remembering to re-run a
+   tool. A prop the layout does not mention keeps the filter written below it,
+   so this file still says what the room is without wall-layout.js. */
+function listFor(id,fallback){
+  const r=(typeof ROOM_LISTS!=='undefined'&&ROOM_LISTS[id])||null;
+  if(!r) return fallback;
+  /* A section is a property of the category, not of a project — inSection is
+     in portfolio-shared.js beside CAT, which is where the headings are
+     written down and where the bake reads them from too. */
+  if(r.auto&&'section'in r.auto) return games.filter(g=>inSection(g,r.auto.section));
+  if(r.auto&&'link'in r.auto) return games.filter(g=>has(g,r.auto.link));
+  if(!r.titles) return fallback;
+  const items=r.titles.map(t=>games.find(g=>g.title===t));
+  const gap=items.findIndex(g=>!g);
+  /* Unlike a wall, a gap here only shortens a list — nothing is indexed
+     against a baked picture — so it is a warning and the prop carries on. */
+  if(gap>=0){
+    console.warn(r.name+': "'+r.titles[gap]+'" is not in portfolio-data.js — '+
+      'that prop is showing a shorter list than the layout asks for');
+    return items.filter(Boolean);
+  }
+  return items;
+}
+const gSkin=listFor('monR',games.filter(g=>inSection(g,'RESKIN')));
 const gWeb=games.filter(g=>has(g,'WebGL'));
 const gPlay=games.filter(g=>has(g,'Android'));
-const gAR=games.filter(g=>g.section==='AR Games');
-const gTube=games.filter(g=>has(g,'Youtube'));
-/* Row order must match HERO in tools/wallsheet.py exactly: the hover maps a
-   cell index straight back into this array, so a list that has drifted out of
-   step points every cover at the wrong game and nothing reports it. */
-const WALL_HERO_TITLES=['Netcode Battle','Netcode Demo','Netcode Shooter2D','Kinder Easter','POLYGON Battle',
-  'POLYGON Adventure','POLYGON Turnbase','Color Shoot 2d','Joust them all',"Beat'em up 2",
-  'Survivor.io clone 2d'];
-const wallHeroes=WALL_HERO_TITLES.map(t=>games.find(g=>g.title===t)).filter(Boolean);
-/* filter(Boolean) closes the gap silently, which shifts every cover after the
-   missing one onto the wrong cell of the baked sheet. Say so out loud. */
-if(wallHeroes.length!==WALL_HERO_TITLES.length)
-  console.warn('wall: '+(WALL_HERO_TITLES.length-wallHeroes.length)+' hero title(s) not in '+
-    'portfolio-data.js — every cover after the first gap now maps to the wrong game');
+const gAR=listFor('ar',games.filter(g=>inSection(g,'AR Games')));
+const gTube=listFor('holo',games.filter(g=>has(g,'Youtube')));
+/* ── which build hangs where ──────────────────────────────────────
+   Nothing in this file decides that any more: WALL_ZONES and WALL_SHEET_V come
+   out of wall-layout.js, which tools/wallsheet.py generates in the same run
+   that bakes the sheets. The hover maps a cell index straight back into a
+   zone's list, so that list and the picture in the JPEG have to agree exactly —
+   and the way to guarantee it is not to check, it is to give them one source.
+   A layout edited without re-baking leaves both on the old order, which is
+   visibly nothing happening rather than invisibly the wrong game.
+
+   Edit wall-layout.txt. */
+const zonesIn=(typeof WALL_ZONES!=='undefined'?WALL_ZONES:{});
+/* ?v= is a content hash of the layout, the fields the tiles are drawn from and
+   the thumbnails themselves. three.js pulls the sheet through the texture
+   loader, so a hard reload does not always reach it — and bumping a version by
+   hand is the step you get away with locally and nobody else does. */
+const sheetV=(typeof WALL_SHEET_V!=='undefined'?WALL_SHEET_V:'0');
+function zoneOf(id){
+  const z=zonesIn[id];
+  if(!z){
+    console.error('wall '+id+': no such zone in wall-layout.js — '+
+      'run python3 tools/wallsheet.py');
+    return null;
+  }
+  const items=z.titles.map(t=>games.find(g=>g.title===t));
+  const gap=items.findIndex(g=>!g);
+  /* Dropping the hole would close the gap and shift every later cover onto the
+     wrong cell of a sheet that still carries the old picture. The bake refuses
+     to produce that, so reaching this means the two are already out of step:
+     hang no covers rather than seventeen wrong ones. */
+  if(gap>=0){
+    console.error('wall '+id+': "'+z.titles[gap]+'" is not in portfolio-data.js — '+
+      'every cover from cell '+(gap+1)+' on would map to the wrong game');
+    return null;
+  }
+  /* `aspect` is the width:height the sheet is baked at — cols, rows and the
+     fixed cell shape, arithmetic done by the tool that did the baking. The
+     planes below are shaped from it rather than carrying a height worked out
+     by hand, which is what used to make "change a grid and reshape its plane"
+     two steps with nothing but #qa=1 between them if you did only the first. */
+  return {items,cols:z.cols,rows:z.rows,aspect:z.aspect,
+          src:'models/'+z.sheet+'.jpg?v='+sheetV};
+}
+/* A zone's plane: the width is a room-layout decision, the height follows.
+   The fallback is only reached when wall-layout.js did not load at all, and
+   is the shape each sheet has today. */
+const planeH=(Z,w,fallback)=>Z&&Z.aspect?w/Z.aspect:fallback;
 
 /* ── the monitor arm: one centre panel flanked by two angled ones ──
    Built from a factory because three near-identical rigs written out three
@@ -2665,11 +3390,14 @@ monitor({id:'monR',x:.3,z:-25.8,ry:-.42,w:8,h:5,
    decoration. tools/wallsheet.py bakes them into one 240 kB JPEG instead, so
    the wall now shows the actual games. */
 {
-  const PW=24, PH=11, PX=-18, PY=26.5;
-  /* ?v= because this file is re-baked whenever the hero list changes and the
-     browser has no way to know: three.js loads it through the texture loader,
-     so a hard reload of the page does not always reach it. Bump on re-bake. */
-  const wallTex=texL.load('models/wall.jpg?v=2');
+  /* PW and the position are room layout; PH is not — it is PW over the
+     aspect the sheet was baked at, so a change to zone 1's grid reshapes
+     this plane with it instead of leaving every cell boundary off its
+     tile until somebody runs #qa=1. */
+  const PW=24, PX=-18, PY=26.5;
+  const Z=zoneOf('wall');
+  const PH=planeH(Z,PW,11);
+  const wallTex=texL.load(Z?Z.src:'models/wall.jpg');
   wallTex.colorSpace=T.SRGBColorSpace;sharpenTexture(wallTex);
   const sc=new T.Mesh(new T.PlaneGeometry(PW,PH),screenMat(wallTex));
   sc.position.set(PX,PY,BZ+.82); scene.add(sc);
@@ -2679,12 +3407,17 @@ monitor({id:'monR',x:.3,z:-25.8,ry:-.42,w:8,h:5,
   // artwork would wash all 33 tiles to the same cyan
   [PY-PH/2-.55,PY+PH/2+.55].forEach(y=>
     ledStrips.push(emit(scene,PW+2,.9,PX,y,BZ+1.2,0x5ad0ff,0)));
-  /* Every one of the six case files is already hanging here as cover art, so
-     the write-ups lead the panel and the full enumeration follows them. */
+  /* The case write-ups lead the panel and the full enumeration follows them.
+     Most of them are also hanging here as cover art, which is the reason this
+     is the surface that carries them; `wallsheet.py` warns when one is not, so
+     the claim is checked rather than assumed. */
   addScreen({id:'wall',name:'Selected work',
     tag:gCase.length+' case files · all '+games.length+' builds',
     col:'#5ad0ff',g:null,sc,w:PW,h:PH,kind:'grid',cols:4,lk:'WebGL',items:games,
-    caseItems:gCase,wallItems:wallHeroes,wallCols:4,wallRows:3});
+    /* wallItems null, not empty: hoverCell reads it as "this surface has no
+       cells" and the wall degrades to a plain panel of all 33 rather than to a
+       grid of dead hit targets. */
+    caseItems:gCase,wallItems:Z&&Z.items,wallCols:Z&&Z.cols,wallRows:Z&&Z.rows});
 }
 
 /* ── the two side columns ─────────────────────────────────────────
@@ -2700,21 +3433,22 @@ monitor({id:'monR',x:.3,z:-25.8,ry:-.42,w:8,h:5,
    reads as a shelf. Left is the prototypes, beside a poster that already glows
    magenta; right is my own builds, in the purple the desk's left panel wears.
 
-   Three tiles each, which is every remaining title that survives being baked
-   into a preview and looked at — see SKIP in tools/clips.py for the nine that
-   do not, and why. */
-const WALL_LEFT_TITLES =["Beat'em up",'Topdown Shooter','Game 2d5 Dungeon'];       // zone 8
-const WALL_RIGHT_TITLES=['Game Runner 3d','Cardgame Battle 2d','Battle Board 2d']; // zone 9
+   Three tiles on the left, four on the right. The grids are not the same and
+   do not have to be: a zone owns its own, and the plane below is shaped from
+   it rather than from its neighbour. */
 function sideWall(o){
-  const items=o.titles.map(t=>games.find(g=>g.title===t)).filter(Boolean);
-  if(items.length!==o.titles.length){
-    console.warn(o.id+': '+(o.titles.length-items.length)+' title(s) not in '+
-      'portfolio-data.js — the covers below the gap now map to the wrong game');
-    return null;
-  }
-  const tex=texL.load('models/'+o.sheet+'.jpg?v=1');
+  /* Which titles, how many, and on what grid are the zone's, not the wall's:
+     a build moved into zone 8 renders at zone 8's cell size. Everything here
+     is the mounting — where on the wall, how wide, which way it faces. */
+  const Z=zoneOf(o.id);
+  if(!Z) return null;
+  const items=Z.items;
+  /* Height is the zone's, not the mounting's: 1x3 and 1x4 bake to different
+     shapes, and the plane has to be whichever one its own sheet came out at. */
+  const h=planeH(Z,o.w,o.h);
+  const tex=texL.load(Z.src);
   tex.colorSpace=T.SRGBColorSpace; sharpenTexture(tex);
-  const sc=new T.Mesh(new T.PlaneGeometry(o.w,o.h),screenMat(tex));
+  const sc=new T.Mesh(new T.PlaneGeometry(o.w,h),screenMat(tex));
   sc.position.set(o.x,o.y,o.z); sc.rotation.y=o.ry; scene.add(sc);
   /* Rails sit a little behind the sheet and overhang it, the way the back
      wall's do, so the panel reads as mounted rather than projected. */
@@ -2725,36 +3459,43 @@ function sideWall(o){
      glass, and trim floating on a window is the tell that something is
      hanging off the end of its surface. */
   const OV=o.w+1.2;
-  [o.y-o.h/2-.8, o.y+o.h/2].forEach(y=>
+  [o.y-h/2-.8, o.y+h/2].forEach(y=>
     box(scene,1,.8,OV,o.x-o.n*.3,y,o.z,mFrame));
-  [o.y-o.h/2-.55, o.y+o.h/2+.55].forEach(y=>{
+  [o.y-h/2-.55, o.y+h/2+.55].forEach(y=>{
     const g=emit(scene,OV,.9,o.x+o.n*.4,y,o.z,o.glow,0);
     g.rotation.y=o.ry; ledStrips.push(g);
   });
-  return addScreen({id:o.id,name:o.name,tag:o.tag,col:o.col,g:null,sc,w:o.w,h:o.h,
+  return addScreen({id:o.id,name:o.name,tag:o.tag,col:o.col,g:null,sc,w:o.w,h,
     kind:'grid',cols:1,lk:'WebGL',items,
-    wallItems:items,wallCols:1,wallRows:items.length,
-    /* Not a panel of its own: three tiles do not deserve a page, and the build
+    wallItems:items,wallCols:Z.cols,wallRows:Z.rows,
+    /* Not a panel of its own: a handful of tiles does not deserve a page, and the build
        already has one in the panel named by panelAs — the reskin monitor for
        the left column, and for the right one the wall's own archive, since the
        MY GAMES monitor these three used to open is gone. Clicking a cover
        opens that panel spotlit on the build, exactly as the back wall does. */
     noPanel:true,panelAs:o.panelAs});
 }
-/* Both sit as far back along their wall as the wall allows, because on these
-   two surfaces "further forward" means "leaves the frame sooner": the left
-   wall runs out at the poster, the right one at the glass corner. */
-/* Both are 7.5 x 9.19 — the sheet aspect, 1x2 — and both sit as far back along
-   their wall as the trim allows. Back is what matters on these two surfaces:
-   forward is where they leave the frame. The left one stops 0.5 clear of the
-   poster's light strip, the right one 0.4 clear of where the wall becomes
-   glass at z=-2. */
-sideWall({id:'wallL',sheet:'wall-left',titles:WALL_LEFT_TITLES,panelAs:'monR',
-  x:LX+.85,y:24.5,z:-3,ry:Math.PI/2,n:1,w:7.5,h:13.78,
+/* Both are 7.5 wide. The left one sits as far back along its wall as the trim
+   allows, 0.5 clear of the poster's light strip, because on that surface
+   forward is where it leaves the frame. The right one is placed by eye instead:
+   its wall is solid the whole way from the glass corner at z=-2 to the front of
+   the room, so nothing forces it back, and it reads better a little lower and
+   a little further forward than square with the left one. Its trim starts at
+   z=0.05, still clear of the glass. The height on each is whatever its zone's
+   grid makes it — 1x3 on the left, 1x4 on the right. */
+sideWall({id:'wallL',panelAs:'monR',
+  x:LX+.85,y:24.5,z:-3,ry:Math.PI/2,n:1,w:7.5,h:13.78,   // h: fallback only
   name:'More prototypes',tag:'3 more reskins',col:'#df7ff5',glow:0xdf7ff5});
-sideWall({id:'wallR',sheet:'wall-right',titles:WALL_RIGHT_TITLES,panelAs:'wall',
-  x:RX-.75,y:24,z:2.8,ry:-Math.PI/2,n:-1,w:7.5,h:13.78,
-  name:'More of my own',tag:'3 more builds',col:'#7d77f7',glow:0x7d77f7});
+/* The right column carries four, so its sheet is 1x4 and 0.408 wide where the
+   left one's 1x3 is 0.544. The plane follows from that rather than restating
+   it: sideWall takes a width and reads the height off the zone's baked aspect,
+   so the two cannot be reshaped independently any more. Taller
+   rather than narrower: the width is what sets how many screen pixels a cover
+   gets, and this wall is solid and full height from z=-2 forward, so the room
+   to grow is up and down. */
+sideWall({id:'wallR',panelAs:'wall',
+  x:RX-.75,y:22,z:4.4,ry:-Math.PI/2,n:-1,w:7.5,h:18.37,  // h: fallback only
+  name:'More of my own',tag:'4 more builds',col:'#7d77f7',glow:0x7d77f7});
 /* ── neon sign, above the tower ── */
 let neonSign;
 {
@@ -2985,7 +3726,7 @@ const holoRing=[], holoPanel={};
 }
 
 /* ═══ dressing ══════════════════════════════════════════════════ */
-let floorBulb, chairG;
+let floorBulb, chairG, plushRig=null;
 const CHAIR_RY=.9436;
 const floorLight=new T.PointLight(0xffc890,0,60,2);
 
@@ -3030,41 +3771,398 @@ const PLUSH_Y=3.49, PLUSH_Z=.65;
    the beak and both feet, without a toy staring down the lens. */
 const PLUSH_RY=-0.35;
 const PLUSH_CREASE=1.2;        // 69 degrees: smooth the body, keep the beak
+/* Local to `g`, and derived rather than eyeballed. The chair stands at
+   (-21.2, -11.8) and the resting camera at (-19.8, 20.5, 31.2), so the world
+   heading that squares a quad up to it is atan2(1.4, 43.0) = 0.033. `g`
+   already carries CHAIR_RY + PLUSH_RY = 0.594 of that, which leaves -0.56
+   here. The chair's sway is +-0.107 at its widest, so the quad is never more
+   than six degrees off square and loses half a percent of its width to it. */
+const PLUSH_FACE_RY=-0.56;
+const PLUSH_MARGIN=1.22;
+
+/* ── the wobble ──────────────────────────────────────────────────
+   The cat reacts and the penguin is reacted upon, and keeping those two apart
+   is the whole design. Another animal that wakes up, breathes and turns to
+   look at you would make the pair a motif; the note at the top of this section
+   is that the toy was chosen for holding still. So it gets physics rather than
+   behaviour: it is a plush weighted at the bottom, and the only thing it ever
+   does is get knocked and settle.
+
+   One damped harmonic oscillator on two axes, and everything that moves the
+   penguin is an impulse into it — the hover, and a rare ambient tick. Not two
+   animations: one mechanism at two amplitudes, which is why they can never
+   fight, need no blend, and cannot land in a half-finished pose.
+
+   **It is kicked with velocity, not displacement.** Seeding the angle instead
+   snaps the toy to a leaning pose and eases back, which reads as a puppet.
+   Starting at rest with a velocity reads as a shove.
+
+   Numbers, and they were simulated through this exact integrator rather than
+   taken off the closed form: w0 = 14 rad/s is a period of .45s, and a velocity
+   kick of 1.75 peaks at .100s — 5.2 degrees of crest at 60fps, 5.4 at 120,
+   4.7 down at 20. The envelope is e^-2.52t, which crosses half a degree at
+   .93s, so what you actually see is **two** clear rocks and then it is over
+   inside a second. Three would have been a toy on a spring.
+
+   **The lean is aimed off the camera**, so the same hover from two yaws is not
+   the same clip. Horizontal only: the camera looks down at the chair, and a
+   kick carrying that would drive the penguin into the cushion.
+
+   Rejected: leaning the toy on the chair's own swivel, which is what a plush
+   on a turning seat would really do. The chair moves at 0.017 rad/s at its
+   fastest, so a lag long enough to be honest is a few tenths of a degree.
+   Nothing to see, and amplifying it would be inventing a force. */
+/* ── the joints, all three read off the mesh ─────────────────────
+   The neck is where the head island stops being a ball and starts being a
+   stalk: sliced in y, its radius runs .28, .47, .57, .62, .64, .65, .66 — flat
+   from y=.82 up and closing fast below it. .72 is on the closing part, low
+   enough that the head turns on a neck rather than spinning on top of itself,
+   and high enough that the tip forward does not swing the jaw out through the
+   chest. .05 back of centre because a neck is behind the face, and the head
+   island and the body island overlap from y=.54 to y=1.01 — a third of the
+   head is inside the body and stays there through every angle used here.
+
+   The shoulders are the mean of the twelve vertices of each wing nearest the
+   midline, which is the attachment and not the sculpted armpit. Measured off
+   the principal axis instead, the two wings came back at 34.8 and 45.7 degrees
+   of elevation and looked asymmetric; measured off these pivots they are 35.3
+   and 35.4, which is what the eye had been reporting all along. The wings lie
+   in the xy plane to within .04 of z, so a rotation about z is the swing and
+   there is no second axis worth having. */
+const PLUSH_NECK_Y=.72, PLUSH_NECK_Z=-.05;
+const PLUSH_ARM_R=[ .231,.633,-.040];
+const PLUSH_ARM_L=[-.227,.623,-.025];
+
+/* ── what the toy does ───────────────────────────────────────────
+   Two poses, and the modelled one is the happy one. The sculpt ships with both
+   wings up at 35 degrees, which is already a penguin celebrating — so rather
+   than author a raised pose and fight the file for it, `raise` = 1 IS the file,
+   untouched, and `raise` = 0 swings both wings down 65 degrees to rest at -30.
+   The pose that took work is the boring one, which is the right way round: the
+   pose the sculptor composed is the one the visitor is being shown.
+
+   PW_RAISE is asymmetric on purpose, and it is the cat's rule again — only the
+   flinch eases out. Going up is w=17 z=.42, which overshoots about 15% and puts
+   the wings a further 10 degrees past the sculpt at the peak; that overshoot is
+   the whole "mung vui" of it, and a symmetric ease would have read as a servo.
+   Coming down is w=7 z=.85, slower and with no overshoot at all, because a
+   plush relaxing is not a plush being put away.
+
+   The head jerk is not a third animation. It is the *velocity* of `raise`:
+   pitch = -(HEAD_UP*r + HEAD_JERK*rv), so the head snaps up hardest at the
+   instant the wings are moving fastest and eases back to a held tilt as they
+   arrive. One number, and it buys a head that leads the body — which is what
+   an excited animal does and what a rig with two separate curves usually fails
+   to do. It costs nothing: rv is already being integrated.
+
+   The idle sway is a turn about y with a small counter-tip about z, at
+   incommensurate periods so the loop never lines up with itself and reads as
+   a repeat. It fades out on (1-r): a penguin with its wings up and its head
+   thrown back is not also idly looking around. Same reason the cat's breathing
+   fades as it wakes. */
+const PW_ARM_DROP=1.134;       // 65 degrees, taking the wings from +35 to -30
+const PW_RAISE_UP=[17,.42];    // w0, zeta — snappy, overshoots
+const PW_RAISE_DN=[7,.85];     // slower, and never past the rest pose
+const PW_HEAD_UP=.20;          // 11.5 deg of held tilt while the wings are up
+const PW_HEAD_JERK=.021;       // per rad/s of raise velocity — the snap
+const PW_SWAY=[.125,3100];     // 7.2 deg of turn, 3.1 s
+const PW_TIP=[.045,4300];      // 2.6 deg of counter-tip, 4.3 s — never in step
+const PW_W0=14, PW_Z=.18;      // rad/s, damping ratio
+const PW_HOVER=1.75;           // rad/s of kick — .097 rad peak, 5.5 degrees
+const PW_AMB=.32;              // the ambient tick, about a fifth of that
+const PW_GAP=[14000,26000];    // ms between ambient ticks, picked in the range
+
+/* ── taking the toy apart ────────────────────────────────────────
+   The wings had to move, and this model has no rig, no bones and no UVs — the
+   same starting point as the cat, whose head had to be cut off a solid with a
+   tilted plane and the hole plugged with an icosahedron sized off the cut ring.
+   None of that is needed here, and the reason is a leftover from the pipeline:
+   the source is **eight ZBrush subtools**, and `sculptglb.py plush` forces them
+   onto one material so `join` can merge them into a single primitive. Merged
+   into one primitive, yes — but never welded. The pieces are still nine islands
+   that share no vertex, and a union-find over the triangles hands back exactly
+   the parts a rigger would have drawn:
+
+     591 tris  body, y from -0.908               303 verts
+     568 tris  head, up to the crest at 1.775    289 verts
+     139/126   the two wings, reaching |x| ~ 1.05
+     73 + 73   two feet, orange, below y = -0.33
+     38        beak, orange, front at z ~ 0.63
+     35 + 29   two eyes, near black, at x ~ +-0.35
+
+   So there is no cut, no seam and no plug: the split is free and it is exact.
+   The one thing worth measuring was where the joints go, which was read off
+   the geometry rather than guessed — see the three constants below.
+
+   Classification is by shape, not by index, so a re-bake that reorders the
+   islands still lands: the body is whichever island owns the lowest vertex in
+   the file and the head is whichever owns the highest. Ordering by triangle
+   count would have been a coin toss between them at 591 and 568. The wings are
+   then the two remaining islands reaching furthest from the midline, sorted
+   onto a side by the sign of their centre. Everything left over joins head or
+   body by which side of the neck plane its centre sits, which puts the feet on
+   the body and the beak and both eyes on the head. */
+const _psV=new T.Vector3();
+function plushSplit(geo){
+  const pos=geo.attributes.position, nT=pos.count/3;
+  /* Welded on a quantised position, because toNonIndexed has just duplicated
+     every shared vertex and an island split on those would come apart into
+     loose triangles. 1e5 is far finer than any feature on a toy 2.7 units tall
+     and far coarser than the float error in a matrix multiply. */
+  const id=new Map(), vid=new Int32Array(pos.count);
+  for(let i=0;i<pos.count;i++){
+    const k=Math.round(pos.getX(i)*1e5)+','+Math.round(pos.getY(i)*1e5)+','
+           +Math.round(pos.getZ(i)*1e5);
+    let v=id.get(k); if(v===undefined){ v=id.size; id.set(k,v) }
+    vid[i]=v;
+  }
+  const par=new Int32Array(id.size); for(let i=0;i<par.length;i++) par[i]=i;
+  const find=a=>{ while(par[a]!==a){ par[a]=par[par[a]]; a=par[a] } return a };
+  for(let t=0;t<nT;t++){
+    const a=find(vid[t*3]);
+    for(let j=1;j<3;j++){ const b=find(vid[t*3+j]); if(b!==a) par[b]=a }
+  }
+  const comp=new Map();
+  for(let t=0;t<nT;t++){
+    const r=find(vid[t*3]);
+    let c=comp.get(r);
+    if(!c){ c={tris:[],box:new T.Box3()}; comp.set(r,c) }
+    c.tris.push(t);
+    for(let j=0;j<3;j++) c.box.expandByPoint(_psV.fromBufferAttribute(pos,t*3+j));
+  }
+  const cs=[...comp.values()];
+  let body=cs[0], head=cs[0];
+  for(const c of cs){ if(c.box.min.y<body.box.min.y) body=c;
+                      if(c.box.max.y>head.box.max.y) head=c }
+  const rest=cs.filter(c=>c!==body&&c!==head);
+  const reach=c=>Math.max(Math.abs(c.box.min.x),Math.abs(c.box.max.x));
+  rest.sort((a,b)=>reach(b)-reach(a));
+  const wings=rest.splice(0,2);
+  const mid=c=>(c.box.min.x+c.box.max.x)/2;
+  const armR=mid(wings[0])>mid(wings[1])?wings[0]:wings[1];
+  const armL=armR===wings[0]?wings[1]:wings[0];
+  const bins={body:[body],head:[head],armL:[armL],armR:[armR]};
+  for(const c of rest)
+    bins[(c.box.min.y+c.box.max.y)/2>PLUSH_NECK_Y?'head':'body'].push(c);
+  const out={};
+  for(const key in bins) out[key]=plushTake(geo,bins[key]);
+  return out;
+}
+/* Copy the listed islands' triangles into a geometry of their own. Every
+   attribute the source carries comes across, so this does not have to know
+   that the file ships positions and COLOR_0 and nothing else.
+
+   **The destination array is the source's own type, not Float32Array.** This
+   model's whole appearance is in COLOR_0 and `sculptglb.py plush` ships it as
+   normalised unsigned bytes — sixteen bytes a vertex down to four. Widening
+   those to float while carrying `normalized` across hands the shader values of
+   0..255 with nothing left to divide them: every channel clamps at 1 and the
+   penguin renders as a featureless white blob. Copying into an array of the
+   same type keeps the flag meaning what it says, and keeps the four bytes. */
+function plushTake(geo,list){
+  let n=0; for(const c of list) n+=c.tris.length;
+  const out=new T.BufferGeometry();
+  for(const name in geo.attributes){
+    const a=geo.attributes[name], it=a.itemSize;
+    const dst=new a.array.constructor(n*3*it);
+    let w=0;
+    for(const c of list) for(const t of c.tris)
+      for(let j=0;j<3;j++){ const v=t*3+j;
+        for(let e=0;e<it;e++) dst[w++]=a.array[v*it+e]; }
+    out.setAttribute(name,new T.BufferAttribute(dst,it,a.normalized));
+  }
+  return out;
+}
+/* The .glb is one mesh today. The loop that reads it is kept because the next
+   plush will not be, and merging is four lines against a branch that silently
+   drops every mesh after the first. */
+function mergeGeos(list){
+  const out=new T.BufferGeometry();
+  for(const name in list[0].attributes){
+    const src=list[0].attributes[name], it=src.itemSize;
+    let n=0; for(const q of list) n+=q.attributes[name].count;
+    // Source type and `normalized` both preserved, for the reason at plushTake.
+    const dst=new src.array.constructor(n*it); let w=0;
+    for(const q of list){ const a=q.attributes[name].array;
+                          dst.set(a,w); w+=a.length }
+    out.setAttribute(name,new T.BufferAttribute(dst,it,src.normalized));
+  }
+  return out;
+}
 
 function chairPlush(parent){
   const g=new T.Group();
   g.position.set(0,PLUSH_Y,PLUSH_Z); g.rotation.y=PLUSH_RY; parent.add(g);
+  /* The spring turns `rock`; the pick proxies hang off `g` and hold still.
+     Hanging them off the node the wobble turns builds a feedback loop: the
+     hover kicks the toy, the toy leans, the target leans out from under the
+     cursor, the hover drops and the wobble stops. `rock`'s origin is `g`'s,
+     which the seating below puts at the penguin's feet — so tipping it rocks
+     the toy on the patch where it touches the cushion instead of swinging it
+     about its middle. That pivot is free: it is where the measurement had to
+     put things anyway. */
+  const rock=new T.Group(); g.add(rock);
+  /* Placeholder size only, the way the cat's is: `picks` is built from SCREENS
+     at module level, so the entry must exist before the .glb lands, and
+     plushFitProxy re-aims both quads once the toy has been fitted. */
+  const sc=new T.Mesh(new T.PlaneGeometry(3,3),new T.MeshBasicMaterial({
+    transparent:true,opacity:0,depthWrite:false,side:T.DoubleSide}));
+  sc.position.set(0,PLUSH_H/2,0); sc.rotation.y=PLUSH_FACE_RY; g.add(sc);
+  /* `noPanel` and `volume` for the reasons written out at the cat — and, like
+     the cat since its rim came off, no volumeFX either. An outline traced
+     round a stuffed toy is the same sticker in a different shape, and the
+     hover here is answered by the toy moving, which is the point of it. */
+  const scr=addScreen({id:'chairplush',name:'The penguin',
+                       tag:'plush · holding the chair',
+                       col:'#bcd9ee',g,sc,w:3,h:3,noPanel:true,volume:true});
   pending++;
   gltf.load('models/chairplush.glb'+MODEL_V,res=>{
     const src=res.scene; src.updateMatrixWorld(true);
-    const root=new T.Group();
+    const geos=[];
     src.traverse(n=>{ if(n.isMesh){
       let q=n.geometry.clone(); q.applyMatrix4(n.matrixWorld);
-      /* Non-indexed, then creased: the .glb ships positions and colours and
-         no normals at all, because the pipeline drops them — carrying normals
-         into the simplifier is what stops it collapsing anything. */
+      /* Non-indexed before anything else: the split below welds positions
+         itself, and an index buffer would only be unpacked again. */
       if(q.index) q=q.toNonIndexed();
-      q.computeVertexNormals(); toCreasedNormals(q,PLUSH_CREASE);
-      const m=new T.Mesh(q,new T.MeshLambertMaterial({vertexColors:true,
-                                                      flatShading:false}));
-      m.castShadow=false; m.receiveShadow=true; root.add(m);
+      geos.push(q);
     }});
+    if(!geos.length){ if(--pending===0) modelsIn=true; return }
+    const part=plushSplit(geos.length===1?geos[0]:mergeGeos(geos));
+    const root=new T.Group();
+    /* One material for every part. They were one primitive in the file and
+       they are one primitive's worth of draw calls short of it now — four
+       instead of one, which at 1,672 triangles is not a cost worth a word. */
+    const mat=new T.MeshLambertMaterial({vertexColors:true,flatShading:false});
+    /* Creased per part rather than over the whole toy. There is no seam to
+       protect — the pieces were never joined — so this is only about keeping
+       the beak and the head tuft sharp while the body stays round. */
+    const mk=q=>{ q.computeVertexNormals(); toCreasedNormals(q,PLUSH_CREASE);
+                  const m=new T.Mesh(q,mat);
+                  m.castShadow=false; m.receiveShadow=true; return m };
+    /* A joint is a Group at the measured pivot with the part's own vertices
+       translated back by the same amount, so the mesh lands exactly where it
+       started and the Group's rotation is a rotation about the joint. */
+    const joint=(q,px,py,pz)=>{
+      const j=new T.Group(); j.position.set(px,py,pz);
+      q.translate(-px,-py,-pz); j.add(mk(q)); root.add(j); return j;
+    };
+    root.add(mk(part.body));
+    const head=joint(part.head,0,PLUSH_NECK_Y,PLUSH_NECK_Z);
+    const armL=joint(part.armL,...PLUSH_ARM_L);
+    const armR=joint(part.armR,...PLUSH_ARM_R);
     /* Seated by measurement rather than by the file's origin. This model's
        feet are at y=-0.908 in its own space where the cat's happen to be at
        0, and trusting either would have been luck. Measured detached, for the
-       reason written out at the sofa cat: setFromObject reports world space. */
+       reason written out at the sofa cat: setFromObject reports world space.
+       Measured in the modelled pose, with the wings up: they reach y=1.214
+       against the crest's 1.775, so neither raising nor dropping them moves
+       the box this fit is read off. */
     root.updateMatrixWorld(true);
     const bb=new T.Box3().setFromObject(root), sz=bb.getSize(new T.Vector3());
     const k=PLUSH_H/sz.y;
     root.scale.setScalar(k);
     root.position.set(-(bb.min.x+bb.max.x)/2*k,-bb.min.y*k,
                       -(bb.min.z+bb.max.z)/2*k);
-    g.add(root);
-    // Enrol in the same camera-occlusion fade as every other prop.
-    root.traverse(n=>{ if(n.isMesh) occCand.push(n) });
+    rock.add(root);
+    /* Enrolled in the same camera-occlusion fade as every other prop, and
+       tagged as this surface's own body. pickAt throws a hover away when
+       anything in occCand is clearly nearer than the proxy, and the penguin
+       is 2.8 units of solid standing in front of a quad through its middle —
+       without the tag the toy would be the thing that vetoed every hover on
+       the toy, which is the bug the cat's comment is a monument to. Defined
+       rather than assigned for the same reason as there: `own` reaches the
+       scene, and anything running Object3D.copy over this userData would
+       walk into a cycle. */
+    root.traverse(n=>{ if(n.isMesh){
+      Object.defineProperty(n.userData,'own',{value:scr,configurable:true});
+      occCand.push(n) } });
+    plushFitProxy(scr,Math.max(sz.x,sz.z)*k);
+    plushRig={rock,head,armL,armR,x:0,z:0,vx:0,vz:0,was:false,
+              r:0,rv:0,t:0,
+              next:PW_GAP[0]+Math.random()*(PW_GAP[1]-PW_GAP[0])};
     sun.shadow.needsUpdate=true;
     if(--pending===0) modelsIn=true;
   },undefined,()=>{ if(--pending===0) modelsIn=true });
+}
+/* Both quads are scaled rather than rebuilt, so the touch bump addScreen baked
+   into the hit plane's geometry survives: it was built at o.w*hf and is scaled
+   by w/o.w, which leaves w*hf. The .035 forward offset is re-applied because
+   setting the rotation outright has just discarded it. */
+function plushFitProxy(scr,wide){
+  const w=wide*PLUSH_MARGIN, h=PLUSH_H*PLUSH_MARGIN;
+  const wf=w/scr.w, hf=h/scr.h;
+  for(const [o,dz] of [[scr.sc,0],[scr.hit,.035]]){
+    o.position.set(0,PLUSH_H/2,0); o.rotation.set(0,PLUSH_FACE_RY,0);
+    o.scale.set(wf,hf,1); o.translateZ(dz);
+  }
+  scr.w=w; scr.h=h;
+}
+const _pkV=new T.Vector3(), _pkM=new T.Matrix4();
+function plushKick(rig,v0){
+  const p=rig.rock.parent;
+  p.updateWorldMatrix(true,false);
+  _pkV.setFromMatrixPosition(rig.rock.matrixWorld).sub(camera.position);
+  _pkV.y=0;                    // the camera looks down; a kick that inherited
+  if(_pkV.lengthSq()<1e-8) return;   // that would drive the toy into the seat
+  /* Into the frame rotation.x and rotation.z are read in, which is `rock`'s
+     parent and not `rock` — reading it in `rock`'s own frame would fold the
+     lean already on the toy back into the next kick. Rotating about +x takes
+     the crest towards +z and about +z takes it towards -x, so a lean along
+     local (dx, dz) is a kick of (+dz, -dx). */
+  _pkV.normalize().transformDirection(_pkM.copy(p.matrixWorld).invert());
+  rig.vx+=v0*_pkV.z; rig.vz-=v0*_pkV.x;
+}
+/* Wings, head and the idle sway, all off `rig.r` and its velocity. */
+function plushPose(rig,r,rv,t){
+  const drop=PW_ARM_DROP*(1-r);
+  rig.armR.rotation.z=-drop; rig.armL.rotation.z=drop;
+  /* Positive pitch about x is nose-down — the model faces +z, the same
+     convention the cat is written in — so throwing the head back is negative. */
+  rig.head.rotation.x=-(PW_HEAD_UP*r+PW_HEAD_JERK*rv);
+  const calm=1-Math.min(1,r);
+  rig.head.rotation.y=calm*PW_SWAY[0]*Math.sin(t*2*Math.PI/PW_SWAY[1]);
+  rig.head.rotation.z=calm*PW_TIP[0]*Math.sin(t*2*Math.PI/PW_TIP[1]);
+}
+function updateChairPlush(rig,dt,hovered){
+  if(REDUCED_MOTION){
+    /* One blend and nothing else, the way the cat collapses to doze/alert:
+       the wings still answer the pointer, because that is a state and not a
+       flourish, but the sway, the jerk and the whole body spring are motion
+       for its own sake and go. */
+    rig.r=clamp(rig.r+(hovered?dt:-dt)/260,0,1);
+    plushPose(rig,rig.r,0,0);
+    return;
+  }
+  rig.t+=dt;
+  /* Asymmetric, and the asymmetry is the point — see the note at PW_RAISE_UP.
+     Semi-implicit Euler again, on the same clamped step and for the same
+     reason: a backgrounded tab hands back a dt of whole seconds. */
+  const h=Math.min(dt,50)/1000;
+  const [rw,rz]=hovered?PW_RAISE_UP:PW_RAISE_DN;
+  rig.rv+=(-rw*rw*(rig.r-(hovered?1:0))-2*rz*rw*rig.rv)*h;
+  rig.r+=rig.rv*h;
+  plushPose(rig,rig.r,rig.rv,rig.t);
+  /* Hover is an edge, not a level: one kick as the pointer arrives and nothing
+     while it stays. A toy does not go on reacting to being looked at. */
+  if(hovered&&!rig.was) plushKick(rig,PW_HOVER);
+  rig.was=hovered;
+  /* The ambient tick is deliberately NOT gated on hover. Touch has no
+     pointerleave and setHot runs on pointerdown, so `hot` stays on the last
+     thing tapped for the rest of the visit — gating here would mean one tap on
+     the penguin killed its idle permanently on every phone. Both sources feed
+     one spring in any case, and at a fifth of the amplitude an ambient tick
+     landing inside a hover rock cannot be seen. */
+  if((rig.next-=dt)<=0){
+    plushKick(rig,PW_AMB);
+    rig.next=PW_GAP[0]+Math.random()*(PW_GAP[1]-PW_GAP[0]);
+  }
+  /* The body spring, on the same clamped step taken above. Unclamped this
+     integrator goes unstable past w0*h = .14, and the first frame back from a
+     backgrounded tab would fire the penguin out of the room. */
+  const c=2*PW_Z*PW_W0, k2=PW_W0*PW_W0;
+  rig.vx+=(-k2*rig.x-c*rig.vx)*h; rig.x+=rig.vx*h;
+  rig.vz+=(-k2*rig.z-c*rig.vz)*h; rig.z+=rig.vz*h;
+  rig.rock.rotation.x=rig.x; rig.rock.rotation.z=rig.z;
 }
 
 /* ── the cat on the sofa ─────────────────────────────────────────
@@ -3097,14 +4195,14 @@ function chairPlush(parent){
    photoreal, or unreadable as a cat. So the resting pose is a doze — head
    down over the chest, body settled — rather than a curl.
 
-   The rig is cut from the mesh at load rather than downloaded: the .glb has no
-   skeleton and no clips. **One hinge, the neck**, and it is not an axis-aligned
-   plane. On a sitting cat the skull is up and forward and so are the forelegs,
-   so a flat cut takes the paws with the head. The cut is a plane tilted 72
-   degrees up from +z at 66% along its own axis, found by rendering the sweep
-   and reading it off rather than by arithmetic — at 45 degrees it takes the
-   whole chest, at 84 it bites into the shoulders, and at 72 it lifts 2,491
-   triangles that are the head and the neck ruff and nothing else.
+   The rig is built from the mesh at load rather than downloaded: the .glb has
+   no skeleton and no clips. **One hinge, the neck**, and it is not an
+   axis-aligned plane. On a sitting cat the skull is up and forward and so are
+   the forelegs, so a flat cut takes the paws with the head. The plane is
+   tilted 72 degrees up from +z and crossed at 66% along its own axis, found by
+   rendering the sweep and reading it off rather than by arithmetic — at 45
+   degrees it takes the whole chest, at 84 it bites into the shoulders, and at
+   72 it separates the head and the neck ruff and nothing else.
 
    **There is no tail hinge, and that is a real loss.** On the last model the
    tail was the cheapest cat signal in the file. This cat's tail is wrapped
@@ -3117,9 +4215,26 @@ function chairPlush(parent){
    which turns on the spot towards whoever moved. A cat that turns to look at
    you is a weaker signal than a flicking tail, but it is an honest one.
 
-   The seam is plugged the way both of the last build's were: a small blob
-   sized to the seam ring, parented to the still half, inside both halves at
-   rest and invisible until the head turns off it. */
+   **The plane is a weight, not a cut, and the second build of this is why.**
+   The first split the geometry in two at that plane and plugged the seam with
+   a blob sized to the ring, the way both of the last build's joints were. On
+   this mesh it tore. Measured: the ring the cut passes through is 25 vertices
+   whose distance from its own centre runs 0.134 to 0.315 — a 2.4x spread,
+   because a model simplified from 74,586 triangles to 5,566 carries the chest
+   ruff as a few long spikes rather than as a rim. A sphere at the median
+   leaves 72% of the ring outside it; rendered with the head hidden, the body's
+   cut is a crown of spikes with open valleys between them. Sizing the plug to
+   reach the spikes needs 2.2x, which is a boulder wider than the animal. The
+   idle drift alone (0.045 rad of yaw, on a pose that is otherwise held) was
+   enough to show daylight through the chest, and `wash` at 0.24 opened it.
+
+   So there is no cut and no plug. One mesh, two bones, and a vertex weight
+   that smoothsteps from body to head across a band of the same tilted axis:
+   the neck stretches instead of hinging, which is what a neck does. It also
+   retires the flange the halved pitch numbers below were working around — a
+   rigid cap can lift its own edge out of the body and a weighted one cannot —
+   though the numbers are kept, because they were chosen on how a British
+   Shorthair holds itself and not only on what the seam would take. */
 const SC_H=3.8;                // sitting height, ears included, in room units
 /* Swept, not computed, and this model is why the rule exists. Facing the
    camera works out at SC_RY = 0.3 on paper — the camera at the inspection
@@ -3133,6 +4248,11 @@ const SC_H=3.8;                // sitting height, ears included, in room units
 const SC_X=-0.4, SC_RY=1.00;
 const SC_FACE_RY=0.42;         // the hover quad squares up to the camera, not the sofa
 const SC_NECK_DEG=72, SC_NECK_AT=.66;   // the tilted neck plane, and where along it
+/* How much of the axis the head's weight fades over, as a fraction of it. Wide
+   enough that no single triangle spans the whole blend — the chest ruff's
+   longest edge is 0.31 on an axis 1.02 long — and narrow enough that the
+   shoulders stay put when the head turns. */
+const SC_NECK_BAND=.34;
 const SC_CREASE=1.36;          // 78 degrees: smooth the flanks, keep the ear edges
 const SC_LINGER=1400;          // ms of no pointer before it settles back
 let sofaCatRig=null;
@@ -3157,10 +4277,12 @@ function sofaCat(){
      twice.
      `volume`, for the reason the bin is: this is an animal, not a poster, and
      the flat mark reads as a rectangle pasted over it — which is exactly what
-     it looked like. It gets the rim on its own silhouette instead, and since
-     it is sitting on the sofa rather than standing on the floor it gets no
-     ring underneath (volumeFX, below). The border carries the idle breathe in
-     the ring's place, which is what the .16 halo used to be doing. */
+     it looked like. Unlike the bin it now gets nothing in the mark's place
+     either: no ring, because it sits on the sofa and not on the floor, and no
+     rim, because an outline round an animal is the same sticker in a
+     different shape. This is the one hotspot in the room whose hover is
+     carried entirely by the prop's own behaviour — see the volumeFX note by
+     the .glb below. */
   addScreen({id:'sofacat',name:'The cat',tag:'dozing · try not to',
              col:'#ffbf7a',g,sc,w:6,h:4,noPanel:true,volume:true});
 
@@ -3182,19 +4304,32 @@ function sofaCat(){
     for(const q of geos){ const p=q.attributes.position;
       for(let i=0;i<p.count;i++){ const d=p.getZ(i)*nz+p.getY(i)*ny;
         if(d<lo)lo=d; if(d>hi)hi=d } }
-    const neckAt=lo+(hi-lo)*SC_NECK_AT;
-    const part=(cx,cy,cz)=>(cz*nz+cy*ny>neckAt)?'head':'body';
+    const span=hi-lo, at=lo+span*SC_NECK_AT, band=span*SC_NECK_BAND;
+    /* How much of the head a vertex is: 0 below the band, 1 above it, and
+       smoothstepped between, off the same tilted plane the cut used to be. */
+    const wOf=(y,z)=>{ const u=clamp((z*nz+y*ny-at)/band+.5,0,1);
+                       return u*u*(3-2*u) };
 
     const root=new T.Group();   // parented only after it has been fitted
-    const neck=new T.Group();
-    /* Cut first, then measure the seam off the cut. The hinge sits at the
-       centre of the ring the cut actually passes through, not at the middle of
-       a bounding box — a box centre is inside the chest, and a head swung from
-       there lifts its chin off the shoulder and buries the jaw in it. */
-    const cuts=geos.map(q=>scPartition(q,part));
-    const neckSeam=scSeam(cuts);
-    neck.position.copy(neckSeam.centre);
-    root.add(neck);
+    /* Two bones, and deliberately not one inside the other. The body bone
+       carries the breathing, and a neck parented to it would breathe with it,
+       which is the pulsing whole-animal scale the reaction note below rules
+       out. A plain Group holds them so they are in the graph and their world
+       matrices update; a Skeleton wants bones, not a bone tree. */
+    const bones=new T.Group();
+    const bBody=new T.Bone(), bNeck=new T.Bone();
+    bones.add(bBody,bNeck); root.add(bones);
+    /* The hinge sits at the centroid of the band itself — the vertices that
+       are half head and half body — and not at the middle of a bounding box: a
+       box centre is inside the chest, and a head swung from there lifts its
+       chin off the shoulder and buries the jaw in it. */
+    const hinge=new T.Vector3(); let seen=0;
+    for(const q of geos){ const p=q.attributes.position;
+      for(let i=0;i<p.count;i++){ const w=wOf(p.getY(i),p.getZ(i));
+        if(w>.02&&w<.98){ hinge.x+=p.getX(i); hinge.y+=p.getY(i);
+                          hinge.z+=p.getZ(i); seen++ } } }
+    if(seen) hinge.divideScalar(seen);
+    bNeck.position.copy(hinge);
 
     const paint=m=>{
       const s0=m&&m.material, map=s0&&s0.map||null;
@@ -3217,26 +4352,44 @@ function sofaCat(){
       return new T.MeshLambertMaterial({map,flatShading:false,
         emissive:new T.Color(0x2a3040)});
     };
-    const add=(geo,parent,mat,offset)=>{
-      if(!geo) return null;
+    const add=(src,mat)=>{
+      /* Non-indexed first, then normals, then the crease, and the order is the
+         whole of it. The .glb ships positions and one UV set and nothing else —
+         dropping the normals is what let the simplifier work — and the split
+         this replaced computed them by accident, on its way to building two
+         geometries. Without that the animal renders black. toCreasedNormals
+         hands back a *new* geometry for an indexed one and edits a non-indexed
+         one in place, so the conversion is done here where the result is the
+         thing the skin attributes go on. Creased over the whole animal rather
+         than per half, because there are no halves: creasing a cut edge is
+         part of what used to shade it as a collar. */
+      const geo=src.index?src.toNonIndexed():src;
+      geo.computeVertexNormals();
       toCreasedNormals(geo,SC_CREASE);
-      const m=new T.Mesh(geo,mat);
-      if(offset) m.position.copy(offset).negate();
-      m.castShadow=false; m.receiveShadow=true; parent.add(m); return m;
+      const p=geo.attributes.position, c=p.count;
+      const ix=new Uint16Array(c*4), wt=new Float32Array(c*4);
+      for(let i=0;i<c;i++){ const w=wOf(p.getY(i),p.getZ(i));
+        ix[i*4+1]=1; wt[i*4]=1-w; wt[i*4+1]=w }
+      geo.setAttribute('skinIndex',new T.Uint16BufferAttribute(ix,4));
+      geo.setAttribute('skinWeight',new T.Float32BufferAttribute(wt,4));
+      const m=new T.SkinnedMesh(geo,mat);
+      m.castShadow=false; m.receiveShadow=true;
+      /* Picking reads the bind pose. SkinnedMesh otherwise walks every vertex
+         through its bones on the CPU for each raycast, and pickAt raycasts
+         this on every pointermove — for an occlusion test on an animal that
+         never moves a tenth of its own width. */
+      m.getVertexPosition=T.Mesh.prototype.getVertexPosition;
+      root.add(m); return m;
     };
-    let bodyMesh=null;
-    cuts.forEach((cut,i)=>{
-      const mat=paint(meshes[i]);
-      const b=add(cut.body,root,mat,null);
-      add(cut.head,neck,mat,neckSeam.centre);
-      if(b&&(!bodyMesh||scCount(b.geometry)>scCount(bodyMesh.geometry))) bodyMesh=b;
-    });
-    if(!bodyMesh){ if(--pending===0) modelsIn=true; return }
-    /* Flat fur colour, not the atlas: the plug is a sphere and the sheet is a
-       few hundred unrelated charts, so mapping it lands arbitrary scraps of
-       ear and paw in the one place a seam might show. */
-    scPlug(root,neckSeam,new T.MeshLambertMaterial({color:0x7a787e,
-                                                    emissive:new T.Color(0x2a3040)}));
+    const skins=geos.map((q,i)=>add(q,paint(meshes[i])));
+    /* Bound here, with the bones placed and `root` still at the identity: the
+       skeleton's inverses and each mesh's bind matrix have to be read in one
+       space, and this is the only moment there is a space with nothing in it.
+       What the fit does to `root` afterwards is carried by bindMatrixInverse,
+       which three.js recomputes from matrixWorld on every update. */
+    root.updateMatrixWorld(true);
+    const skel=new T.Skeleton([bBody,bNeck]);
+    skins.forEach(m=>m.bind(skel));
 
     /* Fit and seat, in that order, and measured while `root` is still detached:
        Box3.setFromObject reports world space and these numbers are about to be
@@ -3263,89 +4416,21 @@ function sofaCat(){
       Object.defineProperty(n.userData,'own',{value:scr,configurable:true});
       occCand.push(n) } });
     scFitProxy(scr,scBoxIn(bb,k,root.position,pivot));
-    /* Keep the proxy scFitProxy just aimed, and no floor ring — see volumeFX. */
-    volumeFX(scr,root,{hit:false,ring:false});
+    /* No volumeFX on the cat. The rim was the only piece of it this prop ever
+       took — `hit:false` kept scFitProxy's aimed proxy and `ring:false` kept
+       the floor ring off — and an amber outline traced round a dozing animal
+       read as a selection box on a photograph. The hover still lands: the
+       proxy picks, the readout names it, and the cat itself wakes up, which
+       is the affordance. `volume:true` stays on the surface so the flat cell
+       mark and the halo quad are still skipped for it. */
 
-    sofaCatRig={root,body:bodyMesh,neck,k,
+    sofaCatRig={root,body:bBody,neck:bNeck,k,
                 y0:root.position.y,cur:'doze',t:0,from:'doze',
                 queue:null,qi:0,idle:0,awake:false};
     sun.shadow.needsUpdate=true;
     if(--pending===0) modelsIn=true;
   },undefined,()=>{ if(--pending===0) modelsIn=true });
 }
-const scCount=g=>g.attributes.position.count/3;
-
-/* Split one geometry into named parts by triangle centroid. Centroids rather
-   than vertices, because a vertex on a boundary lands in two parts at once and
-   the seam tears. Non-indexed out; at a thousand triangles the duplicated
-   vertices are not worth an index buffer to avoid. */
-function scPartition(geo,fn){
-  const src=geo.index?geo.toNonIndexed():geo;
-  const pos=src.attributes.position, uv=src.attributes.uv;
-  const bins={};
-  for(let t=0;t<pos.count;t+=3){
-    const cx=(pos.getX(t)+pos.getX(t+1)+pos.getX(t+2))/3;
-    const cy=(pos.getY(t)+pos.getY(t+1)+pos.getY(t+2))/3;
-    const cz=(pos.getZ(t)+pos.getZ(t+1)+pos.getZ(t+2))/3;
-    const k=fn(cx,cy,cz);
-    const d=bins[k]||(bins[k]={p:[],u:[]});
-    for(let v=0;v<3;v++){
-      d.p.push(pos.getX(t+v),pos.getY(t+v),pos.getZ(t+v));
-      if(uv) d.u.push(uv.getX(t+v),uv.getY(t+v));
-    }
-  }
-  const out={};
-  for(const k in bins){
-    const d=bins[k]; if(!d.p.length) continue;
-    const gg=new T.BufferGeometry();
-    gg.setAttribute('position',new T.Float32BufferAttribute(d.p,3));
-    if(d.u.length) gg.setAttribute('uv',new T.Float32BufferAttribute(d.u,2));
-    gg.computeVertexNormals();
-    out[k]=gg;
-  }
-  return out;
-}
-/* The ring the cut actually passes through: every position that appears in
-   both a head triangle and a body triangle. That set is the cut, rather than a
-   neighbourhood of it, and the difference is not academic. The first version
-   of this collected vertices within a band of the cut plane instead, and
-   because the plane is tilted 72 degrees the band reached across the chest and
-   round the back and reported a radius of 0.38 on a cat 0.64 wide. The plug
-   built from it was an icosahedron very nearly the size of the animal, wedged
-   exactly where its head goes — which is what the first render of this model
-   showed, and it took a measurement rather than a squint to name it.
-
-   The radius is a low quantile and not the maximum, for the same reason one
-   scale down: the cut runs out along two spikes of chest ruff, and a plug
-   sized to reach those would bulge out through the throat. */
-function scSeam(cuts){
-  const key=(a,i)=>a.getX(i).toFixed(5)+','+a.getY(i).toFixed(5)+','+a.getZ(i).toFixed(5);
-  const heads=new Set(), ring=new Map();
-  for(const c of cuts){ const a=c.head&&c.head.attributes.position; if(!a) continue;
-    for(let i=0;i<a.count;i++) heads.add(key(a,i)) }
-  for(const c of cuts){ const a=c.body&&c.body.attributes.position; if(!a) continue;
-    for(let i=0;i<a.count;i++){ const s=key(a,i);
-      if(heads.has(s)&&!ring.has(s))
-        ring.set(s,new T.Vector3(a.getX(i),a.getY(i),a.getZ(i))) } }
-  const pts=[...ring.values()], centre=new T.Vector3();
-  if(!pts.length) return {centre,radius:.05,ring:0};
-  for(const p of pts) centre.add(p);
-  centre.divideScalar(pts.length);
-  const d=pts.map(p=>p.distanceTo(centre)).sort((a,b)=>a-b);
-  return {centre,radius:d[Math.floor(d.length*.25)]||.05,ring:pts.length};
-}
-/* An eighty-triangle blob at a seam, parented to the still half. It sits
-   inside both halves at rest and is invisible until the moving half turns off
-   it — fitting a plug is cheaper than making the cut clean, and at the
-   amplitudes in SC_KEY nothing ever moves far enough to show its edge. One
-   subdivision rather than none, because a bare icosahedron is a boulder and
-   this has to pass for the inside of a neck. */
-function scPlug(parent,seam,mat){
-  const m=new T.Mesh(new T.IcosahedronGeometry(seam.radius,1),mat);
-  m.position.copy(seam.centre); m.castShadow=false; m.receiveShadow=true;
-  parent.add(m); return m;
-}
-
 /* The fitted animal's box, expressed in the sofa group's space — which is the
    space the three hover quads live in. Built from the root-local box and the
    two transforms above it rather than re-read off the scene: setFromObject
@@ -3865,12 +4950,12 @@ const posterGlow=[];
      card, a click gets a real panel — with the Contents row, the #panel= deep
      link, the prev/next ring, Escape and the focus trap that come with being
      in PANELS. A bespoke hover-scroll list would have had none of that. */
-  const CASUAL_TITLES=['Archer 2d','Jump 2d','Math Game 2d',
-                       'Find Monkey 2d','Game Shooter 2d','Game2d Black Ops'];
-  const gCasual=CASUAL_TITLES.map(t=>games.find(g=>g.title===t)).filter(Boolean);
-  if(gCasual.length!==CASUAL_TITLES.length)
-    console.warn('casual: '+(CASUAL_TITLES.length-gCasual.length)+' title(s) not in '+
-      'portfolio-data.js — the bin is showing a shorter list than it says it is');
+  /* What is in the bin is a decision, not a category, so it is a named list in
+     wall-layout.txt under `trash`. The fallback is the list it held before the
+     layout file existed. */
+  const gCasual=listFor('casual',['Archer 2d','Jump 2d','Math Game 2d',
+    'Find Monkey 2d','Game Shooter 2d','Game2d Black Ops']
+    .map(t=>games.find(g=>g.title===t)).filter(Boolean));
   /* The rim is built from the model, so it cannot exist until the model does.
      addScreen runs synchronously a few lines below and the .glb lands whole
      frames later, so `binScr` is always set by the time this fires — and the
@@ -3936,11 +5021,16 @@ const posterGlow=[];
              'ship a game.',
         /* A list rather than a still: this card is six builds, not one, so the
            picture slot carries all six and scrolls instead of picking one of
-           them to stand for the rest. */
-        list:gCasual.map(x=>{const l=linkOf(x,'WebGL');
+           them to stand for the rest — and each row plays that build's own
+           clip, because what these six have to show is a mechanic moving.
+
+           `sub` and `act` went with the rows that carried them. Every one of
+           the six is WebGL, so the subtitle was the same three words six times
+           over, under a card that already says "6 playable in browser", and
+           the glyph beside it said it a third time. */
+        list:gCasual.map(x=>{const l=linkOf(x,'WebGL'), c=clipOf[x.title];
           return {u:l.url,img:thumb(x.info),t:x.title,
-                  sub:l.kind==='WebGL'?'Play in browser':l.kind,
-                  act:l.kind==='WebGL'?'▶':'↗'}}),
+                  clip:c?'clips/'+c+'.mp4':null}}),
         acts:[]}});
     /* ── what is actually in the bin ──────────────────────────────
        Screenshots of the six, stuffed in and spilling out. Quads rather than
@@ -3967,9 +5057,10 @@ const posterGlow=[];
        reads as filing, and the point is that these were thrown away.
 
        Keyed by title rather than by position. Which build has a sheet in the
-       bin is a decision, and an index into CASUAL_TITLES states it only by
+       bin is a decision, and an index into the trash list states it only by
        accident — reorder that list and a different game silently loses its
-       quad. Game2d Black Ops is deliberately absent: it is in the readout's
+       quad. A build put in the bin with no entry here simply has no paper
+       sticking out, which is a fine default and not an error. Game2d Black Ops is deliberately absent: it is in the readout's
        list and in the panel, just not in the pile. */
     const SCRAP_W=3.0, SCRAP_H=1.9;
     const SCRAPS={
@@ -4057,6 +5148,266 @@ const ACCENTS=[], ACC_PALE=new T.Color(0xcfe0f2);
 }
 
 /* ═══ time of day ═══════════════════════════════════════════════ */
+/* ── weather ────────────────────────────────────────────────────
+   The room has always had rain: one sheet, one density, falling whether or not
+   it made any sense under the sky behind it. What it did not have was a sky
+   that changes its mind, which is most of the difference between a window and
+   a photograph of a window.
+
+   Weather runs on its own clock and deliberately not on the visitor's clicks.
+   `applyTime` is a pure function of the hour and reads as one — the light
+   moves because time passed, and the scrub bar lets anyone prove it. Weather
+   hung off a click has no cause the room can show: the same cover opens sun
+   one time and a storm the next, and neither the room nor the visitor can say
+   why. It also arrives in the wrong place. The main grid is at x=-18 and the
+   glass starts at x=6, so `focusOn` parks the camera facing the far end of the
+   wall from the window and then `placePanel` covers what is left. The one
+   moment a click could trigger weather is the one moment nobody can see it.
+
+   Every field below is a multiplier or an addend on a value `applyTime` has
+   already computed. Weather never owns a number outright, so the two systems
+   cannot disagree about one, and deleting this block leaves the room exactly
+   as it was. */
+const WEATHER={
+  clear:  {rain:.55, speed:.75, cloud:0,   dark:0,   haze:0,   sun:1,   amb:1,   shaft:1,   flash:0},
+  cloudy: {rain:.85, speed:.95, cloud:.13, dark:.20, haze:.05, sun:.66, amb:.94, shaft:.42, flash:0},
+  rain:   {rain:1.7, speed:1.5, cloud:.22, dark:.38, haze:.11, sun:.34, amb:.85, shaft:.15, flash:0},
+  storm:  {rain:2.6, speed:2.4, cloud:.32, dark:.55, haze:.18, sun:.15, amb:.74, shaft:.05, flash:1}
+};
+/* An ordered walk, not a set to draw from: clear→storm inside one crossfade is
+   a cut, and the sky is the last surface in this room that should ever cut. */
+const WSEQ=['clear','cloudy','rain','storm'];
+const WNAME={clear:'Clear',cloudy:'Overcast',rain:'Rain',storm:'Storm'};
+/* Same four states, read off the other axis. `cloudy` keeps its name because a
+   cold overcast is still just an overcast — nothing is falling out of it. */
+const WNAME_COLD={clear:'Clear',cloudy:'Overcast',rain:'Snow',storm:'Blizzard'};
+/* Weighted the way `STARTS` weights the arrival hour, and for the same reason:
+   the room is at its best in weather, so a uniform draw across four states
+   spends two visits in seven on a clear sky nobody came to see. */
+const WSTART=['clear','cloudy','cloudy','rain','rain','rain','rain','storm','storm'];
+/* The walk visits the two middle states twice as often as the two ends —
+   a sweep along four states is 1,2,3,4,3,2 and only the ends appear once —
+   so `visits` is (1,2,2,1) and a flat hold spends exactly half the visit
+   with nothing falling. Half is too much: precipitation is the reason this
+   window is worth looking out of, and with temperature now a coin flip, the
+   half that is dry is also the half that is neither rain nor snow.
+
+   Weighting the HOLD rather than the walk keeps the ordering intact — a storm
+   still cannot arrive without an overcast in front of it — and moves the time
+   instead. At .60/1.40 the four states take .60, 1.20, 2.80, 1.40 of six,
+   which after the fixed 17s crossfade dilutes to about 35% dry and 65% with
+   something coming down. Against an even temperature flip that is roughly a
+   third of the time clear or overcast, a third rain, a third snow.
+
+   The cycle length is untouched: three short holds and three long ones still
+   sum to the six flat ones they replaced, about seven and a half minutes for
+   a front to cross and come back. Faster churn would be a different bug. */
+const WHOLD_MUL={clear:.60,cloudy:.60,rain:1.40,storm:1.40};
+const WHOLD=(k)=>(34000+Math.random()*46000)*WHOLD_MUL[k];
+const WFADE=17000;
+const W={};
+let wFrom=WSTART[(Math.random()*WSTART.length)|0], wTo=wFrom, wMix=1,
+    wHold=WHOLD(wFrom), wPin=false, wDir=1;
+function wBlend(){
+  const a=WEATHER[wFrom], b=WEATHER[wTo], t=wMix*wMix*(3-2*wMix);
+  for(const k in a) W[k]=lerp(a[k],b[k],t);
+  /* Thundersnow is real and it is rare, and every downstream leash on the
+     lightning — the gap, the restrike floor, the panel gate — reads W.flash.
+     Taking it out here rather than at each of them means a blizzard is quiet
+     by construction and no future caller has to remember. The debug key still
+     fires: it ignores the weather on purpose. */
+  if(COLD) W.flash=0;
+  /* ── the two weathers have to stop looking ALIKE ──
+     Rain and snow read the same W, so the city outside was identical in both
+     and the only thing that differed was the sheet on the glass. Two obscured
+     skylines are two obscured skylines; that is why a storm and a blizzard
+     were hard to tell apart at a glance.
+
+     Split the obscuration by KIND rather than by amount. Rain's murk is
+     continuous — vapour, spray off the deck, a curtain of water between here
+     and the far towers — and it is what makes a wet city dissolve at
+     distance. Snow's is discrete: the flakes themselves, already drawn, in
+     front of air that is otherwise unusually clear. So the haze and the cloud
+     deck belong to rain, and what a blizzard has instead is what has settled
+     on the rooflines, which rain structurally cannot produce.
+
+     Only the warm branch is scaled. Thinning the cold one would lift the
+     aperture by taking the curtain away, and lifting the aperture in bad
+     weather is the one thing this room has twice been told not to do —
+     whereas making rain murkier can only ever darken it. */
+  else { W.haze*=1.45; W.cloud*=1.30 }
+}
+function stepWeather(dt){
+  if(wPin) return;                                   // #w= holds the blend still
+  if(wMix<1){
+    wMix=Math.min(1,wMix+dt/WFADE);
+    if(wMix>=1){ wFrom=wTo; wHold=WHOLD(wFrom) }
+  }else if((wHold-=dt)<=0){
+    /* One step along WSEQ, so a storm never arrives without an overcast in
+       front of it — but the direction PERSISTS. Weather has momentum: a front
+       moves through and moves out again, it does not flip a coin at every step.
+
+       This was a coin flip, and it is why lightning had effectively stopped
+       existing. A reflecting random walk on four states takes NINE transitions
+       to reach the last one from the first — simulated, about eleven minutes at
+       a minute a step — so unless a visit happened to open on `storm`, the
+       storm was theoretical. Momentum cuts that to three or four.
+
+       Reversal is rolled first and reflection applied second, so a 15% flip at
+       either end cannot walk off the array. */
+    const i=WSEQ.indexOf(wTo);
+    if(Math.random()<.15) wDir=-wDir;
+    if(i+wDir<0||i+wDir>=WSEQ.length) wDir=-wDir;
+    wFrom=wTo; wTo=WSEQ[i+wDir]; wMix=0;
+  }
+  wBlend();
+}
+wBlend();
+
+/* ── wetness ──
+   Every other weather field is instantaneous: `W.rain` is whatever the blend
+   says this frame. Water is not. Glass and asphalt do not dry at the rate the
+   cloud stops, so wetness rises over about four seconds and falls over twenty
+   — the beads are still running and the street is still shining well after a
+   storm has faded to overcast. That asymmetry is the whole point of it being a
+   separate value: it is the difference between weather that happens TO the
+   scene and weather the scene remembers.
+
+   Driven off `W.rain` rather than the state name so it crosses a fade
+   smoothly, and offset by the clear-sky baseline of .55 so clear weather dries
+   to exactly zero and costs nothing — beads and sheen are `visible=false`
+   below .02, not merely transparent. */
+let wet=0, windLean=0;   // last frame's gust lean, shared with the bead sim
+/* Snow does not bead. `wet` is the whole of what the glass and the deck
+   remember about rain, so gating it here is the whole of what stops a snowy
+   visit growing drops on the window — the bead sheets are already
+   `visible=false` below .02 and cost nothing from then on. */
+const wetTarget=()=>COLD?0:clamp((W.rain-.62)/1.5,0,1);
+function stepWet(dt){
+  const t=wetTarget();
+  if(REDUCED_MOTION){ wet=t; return }
+  wet+=(t-wet)*Math.min(1,dt/(t>wet?4200:21000));
+}
+wet=wetTarget();   // a storm you arrive into has already been raining
+
+/* ── snow, the two values ──
+   `snowK` is instantaneous, the way `W.rain` is: how hard it is coming down
+   this frame. It starts above `cloudy` rather than above `clear`, so an
+   overcast is a cold grey sky with nothing falling out of it and only `rain`
+   and `storm` actually snow.
+
+   `snowLay` is what is lying on the deck, and it is the same trick as `wet`
+   with the constants pushed a long way out: snow takes half a minute to
+   settle and the better part of a minute to go, because the point of a
+   separate value is that the ground disagrees with the sky. Slower than
+   wetness in both directions, which is also true. */
+const snowTargetK=()=>COLD?clamp((W.rain-.85)/1.2,0,1):0;
+let snowK=0, snowLay=0;
+function stepSnowState(dt){
+  snowK=snowTargetK();
+  if(REDUCED_MOTION){ snowLay=snowK; return }
+  snowLay+=(snowK-snowLay)*Math.min(1,dt/(snowK>snowLay?26000:52000));
+}
+snowK=snowLay=snowTargetK();
+
+/* ── lightning ──
+   The one part of the weather allowed to be sudden, and therefore the only
+   part carrying a leash. Three rules, none of them negotiable:
+
+   - nothing under prefers-reduced-motion;
+   - nothing while a panel or the wall readout is open, because a flash behind
+     a paragraph is a flash on the paragraph;
+   - a hard 900ms floor between strikes. WCAG 2.3.1 counts flashes per second
+     and a storm is precisely the effect that likes to exceed three. The floor
+     is a separate check rather than a bigger random interval below, because a
+     random interval is a tendency and this needs to be a guarantee.
+
+   `flashK` decays every frame before any of those gates, so a strike already
+   under way when a panel opens finishes cleanly instead of freezing at full
+   brightness behind it. */
+const FLASH_GAP=()=>10000+Math.random()*10000;      // one strike every 10-20s
+let flashK=0, flashAt=-1e9, flashIn=FLASH_GAP();
+let fT=1e9, fDur=1, fPeak=0, fNear=0, fStrokes=[];
+
+/* A strike is not a blink. Real lightning is a stepped leader, a return stroke
+   and one to four restrikes spread over a few hundred milliseconds, and what
+   the eye actually receives is a flickering glow that fades — not a row of
+   separate flashes. A single linear ramp down over 240ms, which is what this
+   was, is a camera flash.
+
+   That distinction is also what keeps the restrikes inside WCAG 2.3.1. The
+   strokes modulate an envelope that never returns to dark between them, so the
+   whole strike is ONE flash with texture on it rather than four flashes inside
+   a second. A flash, in the guideline's terms, needs a pair of OPPOSING
+   luminance changes; a glow dipping to half and coming back does not supply
+   one. */
+function newStrike(){
+  /* Distance is the single roll everything else is derived from, and it is
+     what stops every strike from feeling like the same asset replayed: a far
+     one is dim, soft and slow, a near one is bright and abrupt. */
+  fNear=Math.random()*Math.random();          // skewed far — near misses are rare
+  /* Floor at .45, not 0: dropping the square in applyTime already took the
+     mid-envelope down, and a far strike that peaks at .28 on top of that is a
+     grey shrug rather than distant lightning. Distance should change the
+     CHARACTER — soft, slow, mostly on the sky — not delete the event. */
+  fPeak=.45+fNear*.55;
+  /* Lifetime is its own roll, not a function of distance. Distance only leans
+     it — a near strike is the abrupt one — but two strikes at the same distance
+     should still not last the same time, and before this they always did.
+     3.2–6.8s base, about 4.5x the 680–1150ms it used to be. */
+  fDur=(3200+Math.random()*3600)*(1-fNear*.30);
+  fT=0;
+  fStrokes=[];
+  /* Stroke timing scales with the lifetime rather than staying absolute. Left
+     at a fixed 45–180ms apart, the whole multi-stroke flicker finished inside
+     the first tenth of a five-second envelope and the remaining 90% was a plain
+     smooth fade — the strokes would have been there and unreadable. */
+  const sc=fDur/1000, n=1+(Math.random()*3.6|0);      // 1–4 strokes
+  for(let i=0,t=0;i<n;i++,t+=(45+Math.random()*135)*sc)
+    fStrokes.push({t,a:i?.35+Math.random()*.45:1});   // restrikes are weaker
+  /* Here rather than in stepFlash, so the debug key gets its thunder too and
+     there is only one place a strike can be born. */
+  sound.thunder(fNear,fPeak);
+}
+
+function stepFlash(dt,now){
+  /* The envelope runs ahead of every gate below, so a strike already in flight
+     when a panel opens fades out cleanly instead of freezing at peak. */
+  if(fT<fDur){
+    fT+=dt;
+    const env=Math.pow(1-Math.min(1,fT/fDur),2.2);   // fast rise, long tail
+    let mod=.5;
+    for(const k of fStrokes){
+      const d=fT-k.t;
+      const w=190*(fDur/1000);                        // pulse width rides the lifetime too
+      if(d>=0&&d<w) mod=Math.max(mod,.5+.5*k.a*Math.pow(1-d/w,1.6));
+    }
+    flashK=fPeak*env*mod;
+  }else flashK=0;
+
+  if(REDUCED_MOTION||W.flash<.06||focus_||hudState.card) return;
+  /* The floor is derived, not a constant. It has to outlast the strike — two
+     overlapping strikes are two flashes, and the "one strike is one flash"
+     argument above stops covering them — and `fDur` is now a roll between 2.2
+     and 6.8 seconds, so no single number is both safe at the top of that range
+     and not absurd at the bottom. `fDur` here is still the PREVIOUS strike's,
+     which is exactly the one that has to have finished. */
+  if((flashIn-=dt*W.flash)>0||now-flashAt<fDur+400) return;
+  flashAt=now; flashIn=FLASH_GAP();
+  newStrike();
+}
+
+/* ═══ sound ═════════════════════════════════════════════════════
+   Lifted into demos/room/sound.js — 275 lines that read exactly two things
+   from the room (the weather object, and whether this is a cold visit) and
+   own everything else about themselves: the graph, the mute button, the
+   volume slider, the storage, the arming on first gesture.
+
+   It is a module because it could be one without reaching back, which is the
+   bar any further split of this file has to clear. `W` is a const object
+   mutated in place, so one reference stays live; `windLean` is reassigned
+   every frame, so it goes in as a tick argument. */
+const sound=createSound({W,COLD});
 const STOPS=[
   {h:0,   top:0x050310, bot:0x150a28, sun:0x3a2a68, si:0,   ai:.42, lamp:1,  city:1,   shaft:0},
   {h:5,   top:0x0e1244, bot:0x36275e, sun:0x6165a4, si:.06, ai:.28, lamp:1,  city:.9,  shaft:.1},
@@ -4070,6 +5421,15 @@ const STOPS=[
   {h:24,  top:0x050310, bot:0x150a28, sun:0x3a2a68, si:0,   ai:.42, lamp:1,  city:1,   shaft:0}
 ];
 const cA=new T.Color(), cB=new T.Color(), cS=new T.Color(), cC=new T.Color();
+const cW=new T.Color();
+/* Overcast is not a colour, it is the removal of one. Rather than a second
+   keyframe table of grey skies per hour, the weather pulls each sky colour
+   toward its own luminance — desaturated, a shade blue, a shade darker. That
+   holds at every hour for free: a stormy dawn is still a dawn, it has just
+   lost the salmon, and a stormy midnight goes flat rather than turning into
+   a daylight overcast pasted over a night sky. */
+const wash=(c,k)=>{ const g=c.r*.30+c.g*.59+c.b*.11;
+  c.lerp(cW.setRGB(g*.86,g*.90,g),k) };
 function applyTime(h){
   h=((h%24)+24)%24;
   let i=0; while(i<STOPS.length-2 && STOPS[i+1].h<=h) i++;
@@ -4077,9 +5437,16 @@ function applyTime(h){
   const t=clamp((h-a.h)/Math.max(.001,b.h-a.h),0,1);
   SKY_TOP.copy(cA.setHex(a.top)).lerp(cB.setHex(b.top),t);
   SKY_BOT.copy(cA.setHex(a.bot)).lerp(cB.setHex(b.bot),t);
+  if(W.dark>.002){ wash(SKY_TOP,W.dark); wash(SKY_BOT,W.dark*.82) }
   sun.color.copy(cA.setHex(a.sun)).lerp(cB.setHex(b.sun),t);
-  sun.intensity=lerp(a.si,b.si,t);
-  amb.intensity=lerp(a.ai,b.ai,t);
+  /* Scaling sun.intensity is most of the weather for free — `daylight`,
+     `sunVis`, the floor patch, `sun.castShadow` and the city level are all
+     derived from it below, so an overcast dims the sun disc, pulls the patch
+     off the floor and brings the towers up without a line each. Ambient gets
+     a much gentler factor on purpose: overcast light is flatter, not absent,
+     and taking it down with the sun turns a grey afternoon into dusk. */
+  sun.intensity=lerp(a.si,b.si,t)*W.sun;
+  amb.intensity=lerp(a.ai,b.ai,t)*W.amb;
   /* A HemisphereLight's `color` is the light arriving from ABOVE, and this was
      handing it SKY_BOT — the horizon band. At dawn the horizon is 0xff9d5e and
      the dome overhead is 0x27467e, so every surface in the room was being lit
@@ -4093,7 +5460,8 @@ function applyTime(h){
      — the horizon does bounce into a room, it just does not own it. */
   amb.color.copy(SKY_TOP).lerp(SKY_BOT,.35).lerp(cB.setHex(0xffffff),.34);
   amb.groundColor.setHex(0x1d1526).lerp(cB.setHex(0x7d7263),clamp(sun.intensity/2.4,0,1));
-  const lamp=lerp(a.lamp,b.lamp,t), city=lerp(a.city,b.city,t), sh=lerp(a.shaft,b.shaft,t);
+  const lamp=lerp(a.lamp,b.lamp,t), city=lerp(a.city,b.city,t),
+        sh=lerp(a.shaft,b.shaft,t)*W.shaft;
 
   /* The sun arcs OUTSIDE the glass wall, so its light can only reach the desk
      through the opening. Azimuth sweeps back-to-front across the day, which
@@ -4108,10 +5476,10 @@ function applyTime(h){
   /* These two stand just inside the glass and stand in for light coming
      through the opening, so unlike the ambient they are entitled to the
      horizon's colour — that is the part of the sky the window actually faces.
-     They still get pulled well toward white: at 486 candela a saturated
-     source this close to the desk tints the whole room rather than warming
-     the side of it that faces the window. */
-  skyFill.forEach(L=>{L.intensity=amb.intensity*900;
+     They still get pulled well toward white: a saturated source this bright
+     tints the whole room rather than warming the side of it that faces the
+     window. */
+  skyFill.forEach(L=>{L.intensity=amb.intensity*1400;
     L.color.copy(SKY_BOT).lerp(SKY_TOP,.22).lerp(cB.setHex(0xffffff),.55)});
 
   /* The floor patch rides the same azimuth as the sun, so it slides from the
@@ -4130,12 +5498,19 @@ function applyTime(h){
   skyFX.stars.material.opacity=clamp((night-.12)/.88,0,1)*.92;
   skyFX.stars.visible=night>.08;
   if(skyFX.cloud){
-    skyFX.cloud.mat.opacity=.07+daylight*.16+night*.035;
-    skyFX.cloud.mat.color.copy(SKY_BOT).lerp(cB.setHex(0xe6f1ff),.28+daylight*.46);
+    skyFX.cloud.mat.opacity=.07+daylight*.16+night*.035+W.cloud;
+    /* The deck has to thicken AND stop catching light. Opacity alone leaves a
+       bright white overcast, which is a fair-weather sky with more of it. */
+    skyFX.cloud.mat.color.copy(SKY_BOT)
+      .lerp(cB.setHex(0xe6f1ff),(.28+daylight*.46)*(1-W.dark*.55));
   }
   if(skyFX.haze){
-    skyFX.haze.mat.color.copy(SKY_BOT).lerp(cB.setHex(0xaec7d9),.12+daylight*.18);
-    skyFX.haze.mat.opacity=.045+daylight*.105+night*.035;
+    /* The third term is the same trapped-light argument as the silhouettes:
+       under a low deck the base of a skyline glows with the city rather than
+       with the sky. Night-gated, so a rainy afternoon keeps its grey. */
+    skyFX.haze.mat.color.copy(SKY_BOT).lerp(cB.setHex(0xaec7d9),.12+daylight*.18)
+      .lerp(cB.setHex(0x3f9fd0),clamp(night*W.haze*3.4,0,1)*.55);
+    skyFX.haze.mat.opacity=.045+daylight*.105+night*.035+W.haze;
   }
   glassRefs.forEach((m,k)=>m.opacity=(.018+lamp*.055)*(k?.88:1));
 
@@ -4192,22 +5567,209 @@ function applyTime(h){
        direct sun is bright; distance, not darkness, is what makes it recede,
        and the haze lerp below is what supplies the distance. */
     cC.setHex(0x0b0716).lerp(cA.setHex(0x8aa3b8),daylight);
-    L.sil.color.copy(cC).lerp(SKY_BOT,L.haze*(.10+daylight*.52));
+    /* The weather term used to be a flat `W.dark*.30` on every layer, which
+       is the one thing weather never is: air attenuates by DISTANCE, so a
+       storm that dims the near tower and the far tower equally reads as a
+       dimmer. Weighted by the layer's own haze it costs nothing and buys the
+       depth back — measured at 21:00, storm now takes the far layer's lit
+       windows down 38% and the near layer's 13%, against a uniform 25%.
+
+       The second lerp is the part that only matters after dark, and it is the
+       reason weather in this city was previously a daylight-only mechanism.
+       Washing a silhouette toward SKY_BOT works at noon because the sky is
+       bright; at 21:00 the sky IS the silhouette colour, so the wash has
+       nowhere to go — measured across the entire clear→storm range the far
+       layer moved from (.009,.009,.022) to (.008,.006,.020), which is
+       nothing. And the physics says the opposite anyway: a low deck over a
+       neon city at night does not darken it, it traps the city's own light
+       underneath and the far towers go milky. Hence a lerp toward a lit haze,
+       gated on `night` so noon never sees it and on L.haze so it stays a
+       distance cue. Same range now lands on (.015,.031,.064). */
+    L.sil.color.copy(cC).lerp(SKY_BOT,clamp(L.haze*(.10+daylight*.52)+W.dark*L.haze*.55,0,1))
+      .lerp(cA.setHex(0x2b4c66),clamp(night*W.haze*L.haze*2.4,0,1));
     L.sil.opacity=1;
-    L.lit.opacity=(.055+daylight*.11+city*.82)*(1-L.haze*.38);
+    /* Rain does not switch the towers off, it puts water between them and the
+       glass: the window grids dim and the silhouettes wash further toward the
+       sky above, which is the same distance cue the haze term already uses. */
+    L.lit.opacity=(.055+daylight*.11+city*.82)*(1-L.haze*.38)*(1-W.dark*(.15+L.haze*.62));
     L.lit.visible=true;
+    if(L.snow){
+      /* Snow is only ever as bright as what is lighting it. At noon that is the
+         sun and the caps are white; at 21:00 it is the city underneath, which
+         is dim and blue, so the same caps have to come down to a grey that sits
+         above the tower without competing with a lit window. Held near white
+         after dark, every roofline in the frame became a light.
+
+         Then the same distance wash the silhouettes take, for the same reason:
+         without it the far layer's snow is the crispest thing in the window and
+         the skyline inverts. */
+      L.snow.color.setHex(0xeef5ff).lerp(cB.setHex(0x4a5a70),night*.62)
+        .lerp(SKY_BOT,clamp(L.haze*(.14+daylight*.50)+W.dark*L.haze*.50,0,1));
+      /* snowLay, not snowK: the ground already melts and re-covers on this
+         clock, and a city that whitened on the weather clock while the deck
+         below it took another half minute would tear the two apart. */
+      L.snow.opacity=snowLay*(.58+daylight*.38)*(1-L.haze*.30);
+      L.snowQ.visible=L.snow.opacity>.006;
+    }
   });
-  cityLayers.traffic.material.opacity=.035+daylight*.035+city*.45;
-  cityLayers.traffic.visible=true;
+  /* Flights thin out and then stop. This was the one exterior value with no
+     weather term at all: measured at 21:00 it sat at .4663 in clear air and
+     .4658 in a thunderstorm — and because everything around it dimmed 25%
+     while it did not, the aircars were MORE prominent in a storm than on a
+     clear night, which is backwards. Storm now leaves 9% of them.
+
+     Grounding traffic is worth more than any colour change out there because
+     it is behaviour rather than exposure: a sky that empties reads as weather
+     even to someone not looking for it. */
+  cityLayers.traffic.material.opacity=(.035+daylight*.035+city*.45)*clamp(1-W.dark*1.45,0,1);
+  cityLayers.traffic.visible=cityLayers.traffic.material.opacity>.004;
+  if(skyFX.veil){
+    /* Colour from the live sky, then pulled toward a lit grey: a rain curtain
+       is not sky-coloured, it is sky-coloured light scattered off water, which
+       is always paler and less saturated than the sky behind.
+
+       How far toward it is a function of the hour, and that is not a taste
+       decision. A daylight squall is lit through its whole depth and comes out
+       pale; at night the only thing lighting it is the city underneath, so it
+       is a dark curtain with a glow at its foot — which the haze band already
+       draws. Held at the daytime .45 it lifted the window's mean luminance
+       from 37.2 clear to 38.2 in a storm: a storm that makes the aperture
+       BRIGHTER, which is the wrong direction whatever the physics of trapped
+       light says. */
+    skyFX.veil.mat.color.copy(SKY_BOT).lerp(cA.setHex(0x6f93ad),.14+daylight*.42);
+    /* The curtain used to go both paler and denser in a blizzard, on the
+       argument that falling snow carries its own light. It does — and the
+       result was a window that glowed when the weather turned, which is the
+       second time this surface has been caught lifting the aperture's level.
+       Snow now reads on the rooflines, where accumulation actually is, and
+       the curtain stays the same depth cue it is in rain. */
+    skyFX.veil.mat.opacity=clamp(W.haze*2.2,0,.58);
+    skyFX.veil.mesh.visible=skyFX.veil.mat.opacity>.004;
+  }
   if(groundFX.base){
-    groundFX.base.color.setHex(0x4e4766).lerp(cA.setHex(0x97a9b8),daylight*.50);
-    const groundPower=.34+city*.66+daylight*.26;
+    /* Wet asphalt gets darker and shinier at the same time: the diffuse
+       surface drops because water fills the pores, the specular rises because
+       a film of water is a mirror. Doing only the second half made the deck
+       look like somebody had turned the brightness up. */
+    groundFX.base.color.setHex(0x4e4766).lerp(cA.setHex(0x97a9b8),daylight*.50)
+      .multiplyScalar(1-wet*.34)
+      /* Snow does the opposite of rain to a deck, in both halves. Rain darkens
+         the surface and brightens the markings cut into it; snow pales the
+         surface and BURIES the markings. Getting the second half wrong is what
+         would make a snowy megadeck read as a wet one that someone brightened
+         — which is the same mistake the wet street made in reverse. */
+      .lerp(cB.setHex(0xb8c6d8),snowLay*.60);
+    /* There was a sheen disc here too — a flat additive plate on the deck
+       standing in for a reflection. It is gone, and the reason is worth keeping.
+       Measured by diffing frames with the disc scaled to zero: at a 260-unit
+       radius it registered and painted straight over the skyline, because the
+       city layers are transparent materials that write no depth and so cannot
+       occlude anything drawn after them; shrunk to 80 units, where nothing is
+       behind it, it moved the mean luminance of the ground crop by 0.12 out of
+       255 — which is nothing. From inside, this window shows one rim of the
+       landing pad and no street at all. A sheet big enough to see is a sheet
+       that fogs the towers.
+
+       What survives is the half that was always geometrically honest: the deck
+       material darkens and the markings on it brighten. Those are the actual
+       surfaces, at the actual depth, occluded by the actual buildings. */
+    const groundPower=(.34+city*.66+daylight*.26)*(1+wet*.62)*(1-snowLay*.68);
     groundFX.glows.forEach(m=>{
       if(m.userData.baseOpacity===undefined)m.userData.baseOpacity=m.opacity;
       m.opacity=clamp(m.userData.baseOpacity*groundPower,0,1);
     });
+    if(groundFX.snowRoofs){
+      /* These sit inside the room's own lighting, unlike the painted city, so
+         they are graded against the deck rather than against the sky: the same
+         exposure the deck gets, at the same accumulation clock. */
+      const m=groundFX.snowRoofs.material;
+      m.color.setHex(0xdfe9f6).lerp(cA.setHex(0x515f74),night*.55);
+      m.opacity=snowLay*(.62+daylight*.34);
+      groundFX.snowRoofs.visible=m.opacity>.006;
+    }
   }
-  rains.forEach(m=>m.opacity=.065+city*.085);
+  /* Clamped rather than left to the multiplier: these are additive sheets on
+     the most overdrawn surface in the room (glass, reflection, rain at
+     renderOrder 10/11/12), and past about a third they stop reading as rain
+     on a window and start reading as fog inside it. */
+  /* The `city` term is the original: rain was always faintest by day, because
+     these are additive sheets and additive vanishes against a bright sky. That
+     was fine while rain was permanent scenery and wrong the moment a storm can
+     happen at noon — measured, a midday storm put the sheets at .18 and the
+     glass read as merely grey. `W.dark` adds a term that comes from the
+     weather rather than from the hour, so a storm is wet at every hour and
+     clear weather (dark=0) is left exactly as it was.
+
+     Clamped rather than left to the multiplier: these sit on the most
+     overdrawn surface in the room (glass, reflection, rain at renderOrder
+     10/11/12), and past about a third they stop reading as rain on a window
+     and start reading as fog inside it. */
+  {
+    const rk=(.065+city*.085+W.dark*.075)*W.rain;
+    rains.forEach(m=>m.opacity=clamp(rk*m.userData.op,0,.34));
+  }
+  /* Snow gets roughly twice the ceiling the rain sheets get, and it is not a
+     preference. These are additive quads: a rain streak is a thin diagonal
+     covering almost none of the pixels it crosses, a flake is a filled disc.
+     At the rain constants the snow was there and unreadable. It also does not
+     take the `city` term nearly as hard — white on a dark sky is legible at
+     any hour, which is the one advantage snow has over rain here. */
+  {
+    const sk=clamp(snowK*(.20+city*.16+W.dark*.20),0,.60);
+    snows.forEach(m=>m.opacity=sk*m.userData.op);
+    snowSheets.forEach(s=>s.m.opacity=sk*.72);
+  }
+  /* Beads ride `wet`, not `W.rain`, so they outlast the cloud that put them
+     there. Allowed a higher ceiling than the falling sheets because they are
+     small and sparse rather than a wash across the whole aperture — a bead too
+     faint to see is not rain on a window, it is nothing. */
+  {
+    /* The constant is deliberately the smallest of the three terms. Additive
+       white on a grey midday sky is a snowflake, not a raindrop, and it is only
+       by day that the constant is doing any work at all: after dark the other
+       two already carry the sum past the clamp, so lowering it costs the night
+       nothing and takes a fifth off the daylight. */
+    const bk=clamp(wet*(.13+city*.26+W.dark*.20),0,.44);
+    beadSheets.forEach(s=>s.m.opacity=bk);
+  }
+
+  /* Lightning goes last, on top of everything the hour decided, and adds
+     rather than accumulates — every value it touches is recomputed from the
+     keyframes next frame, so there is nothing to unwind. The sky lifts more
+     than the room does: the strike is outside the glass and the room only
+     catches what comes through the opening. */
+  if(flashK>0){
+    /* Was flashK*flashK. The envelope in stepFlash already carries the curve
+       (pow 2.2), and squaring it again made pow 4.4 — which is exactly the
+       240ms snap this was supposed to stop being. The shape belongs in one
+       place; this end just reads it. */
+    const f=flashK;
+    /* A strike on the horizon lights the sky and barely reaches inside. Only
+       the room-side terms take this, so distance changes what the flash DOES,
+       not just how bright it is. */
+    const fr=f*(.35+.65*fNear);
+    SKY_TOP.lerp(cW.setHex(0xbfd4ee),f*.62);
+    SKY_BOT.lerp(cW.setHex(0xd9e6f7),f*.72);
+    /* amb.color was mixed from SKY_TOP further up, so lifting the dome now
+       does not reach it — it has to be lifted on its own. */
+    amb.intensity+=fr*1.15;
+    amb.color.lerp(cW.setHex(0xd6e6ff),fr*.50);
+    skyFill.forEach(L=>{L.intensity+=fr*1500;L.color.lerp(cW.setHex(0xe4efff),fr*.60)});
+    if(skyFX.cloud) skyFX.cloud.mat.opacity+=f*.22;
+    /* A strike lights the rain between you and the city before it lights the
+       city. Unconditional because only `storm` carries flash:1 and storm
+       always carries haze, so there is no state in which this can brighten a
+       curtain that is not there. */
+    if(skyFX.veil) skyFX.veil.mat.opacity+=f*.20;
+    rains.forEach(m=>m.opacity+=f*.10*m.userData.op);
+    /* Water is the most specular thing in the frame, so it takes the strike
+       harder than anything else does — the beads on the glass flare and the
+       whole wet deck lights up for as long as the sky does. Multiplied by
+       `wet` so a dry-weather strike cannot light up water that is not there. */
+    beadSheets.forEach(s=>s.m.opacity+=f*wet*.34);
+    snows.forEach(m=>m.opacity+=f*snowK*.30*m.userData.op);
+    snowSheets.forEach(s=>s.m.opacity+=f*snowK*.30);
+  }
 }
 
 /* The clock display used to be rewritten from inside applyTime, which runs
@@ -4217,14 +5779,16 @@ const elNow=document.getElementById('nowT'), elPhase=document.getElementById('ph
 const elVn=document.getElementById('vnT');
 const PHASE=[[5.5,'Night'],[8,'Dawn'],[11,'Morning'],[14,'Midday'],
              [17,'Afternoon'],[19.5,'Sunset'],[24,'Night']];
-let lastMin=-1, lastVn='';
+let lastMin=-1, lastVn='', lastWx='';
 function paintClock(h){
-  const m=Math.floor(h*60);
-  if(m===lastMin) return;
-  lastMin=m;
+  /* The label follows whichever end of the crossfade is winning, so it flips
+     once per transition instead of flickering across the middle of one. */
+  const m=Math.floor(h*60), wx=(COLD?WNAME_COLD:WNAME)[wMix<.5?wFrom:wTo];
+  if(m===lastMin&&wx===lastWx) return;
+  lastMin=m; lastWx=wx;
   elNow.textContent=String(Math.floor(h)).padStart(2,'0')+':'
                    +String(m%60).padStart(2,'0');
-  elPhase.innerHTML='Outside<b>'+(PHASE.find(p=>h<p[0])||PHASE[6])[1]+'</b>';
+  elPhase.innerHTML='Outside<b>'+(PHASE.find(p=>h<p[0])||PHASE[6])[1]+' · '+wx+'</b>';
   const v=new Date().toLocaleTimeString('en-GB',
     {timeZone:'Asia/Ho_Chi_Minh',hour:'2-digit',minute:'2-digit'});
   if(v!==lastVn){ lastVn=v; elVn.textContent=v }
@@ -4248,6 +5812,21 @@ if(HP.has('t')){
   if(Number.isFinite(parsed)){
     timeH=((parsed%24)+24)%24; auto=false;
     realBtn.classList.remove('on'); scrub.value=Math.round(timeH*60);
+  }
+}
+/* #w=storm pins the weather the way #t= pins the hour: for the QA harness, and
+   for taking a picture of the room in the state you actually meant to show. */
+if(HP.has('w')){
+  const k=String(HP.get('w')).toLowerCase();
+  /* Snapped, not ramped: a pinned state is for screenshots and QA, and a
+     four-second wetness ramp would make every capture a race. */
+  /* `snow` and `blizzard` are not states, they are the cold readings of two
+     states that already exist — the same aliasing the clock label does. COLD
+     itself was decided at load off this same hash. */
+  const key={snow:'rain',blizzard:'storm'}[k]||k;
+  if(WEATHER[key]){
+    wFrom=wTo=key; wMix=1; wPin=true; wBlend();
+    wet=wetTarget(); snowK=snowLay=snowTargetK();
   }
 }
 
@@ -4288,8 +5867,8 @@ cv.addEventListener('pointercancel',e=>endDrag(e,true));
 addEventListener('pointermove',e=>{
   ptr.set((e.clientX/innerWidth)*2-1,-(e.clientY/innerHeight)*2+1);
   mx=e.clientX; my=e.clientY;
-  if(hudOff&&hudApproaching(e.clientX,e.clientY)){
-    clearTimeout(hudOff); hudOff=setTimeout(()=>{hudOff=0;hudDrop()},HUD_GRACE);
+  if(hudState.off&&hudApproaching(e.clientX,e.clientY)){
+    hudCancelClose(); hudState.off=setTimeout(()=>{hudState.off=0;hudDrop()},HUD_GRACE);
   }
   /* A pending swap counts stillness, not occupancy. Crossing the wall to reach
      the readout's Play button passes over four or five covers, and a hand slow
@@ -4298,10 +5877,10 @@ addEventListener('pointermove',e=>{
      still moving is still travelling; the card lands where the pointer stops.
      The 4px floor is there because a resting mouse is never quite still, and a
      timer restarted by a tremor would never fire at all. */
-  if(hudTimerAt&&hudTimerFn&&
-     Math.hypot(e.clientX-hudTimerAt[0],e.clientY-hudTimerAt[1])>4){
-    hudTimerAt=[e.clientX,e.clientY];
-    clearTimeout(hudTimer); hudTimer=setTimeout(hudTimerFn,HUD_SWAP);
+  if(hudState.timerAt&&hudState.timerFn&&
+     Math.hypot(e.clientX-hudState.timerAt[0],e.clientY-hudState.timerAt[1])>4){
+    hudState.timerAt=[e.clientX,e.clientY];
+    clearTimeout(hudState.timer); hudState.timer=setTimeout(hudState.timerFn,HUD_SWAP);
   }
   if(drag){
     const dx=e.clientX-lx, dy=e.clientY-ly; lx=e.clientX; ly=e.clientY;
@@ -4578,6 +6157,9 @@ const HUD_DWELL=340;
    crossing: 280 ms was not enough, and there is nothing else to hover in the
    gap, so a generous window costs nothing. */
 const HUD_GRACE=700;
+/* How long the shutdown owns the panel. 520ms of animation plus a frame's
+   slack, so the teardown never lands on a still-running collapse. */
+const HUD_SHUT=545;
 /* The readout is 516px wide and the wall it describes is 460px across, so the
    panel cannot sit beside a cover — it lives in a gutter, and reaching its
    Play button means dragging the pointer across four or five other covers.
@@ -4591,20 +6173,60 @@ const HUD_GRACE=700;
    short enough that moving deliberately from one cover to its neighbour still
    feels immediate. */
 const HUD_SWAP=190;
-const slugOf=t=>String(t).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
-/* Baked by tools/clips.py. Listing them beats probing for them: a miss would
-   be a 404 on every hover of a cover that has no clip. */
-const CLIPS=new Set(['battle-board-2d','beat-em-up','beat-em-up-2','cardgame-battle-2d','color-shoot-2d','game-2d5-dungeon','game-runner-3d','joust-them-all','kinder-easter','netcode-battle','netcode-demo','netcode-shooter2d','polygon-adventure','polygon-battle','polygon-turnbase','topdown-shooter']);
-/* The pending open or swap, and where the pointer was when it was scheduled.
-   Kept so a pointer that is still travelling can push its own swap back —
-   see the pointermove handler. */
-let hudTimer=0, hudTimerFn=null, hudTimerAt=null, hudOff=0, hudOver=false;
-let hudCard=null, hudScr=null, hudCell=-1, hudBox=null;
-/* The readout's accent, published so the mark on the surface can take it
-   too — see cellMarkUpdate. Without this the tile wore two colours at
-   once: the board's own on the glow, the game's on the bracket. */
-let hudAccent=null;
+/* Everything the readout is currently doing, in one place.
+
+   These were twelve loose `let`s, and the shape of every bug this thing has
+   ever had was the same: a path out of one state cleared the wrong subset of
+   them. A pending swap that survived the pointer arriving on the panel and
+   changed the card 190 ms later. A close that had to give up `card` at once
+   but hold the placement for the length of an animation. A pointerleave that
+   restarted no clock at all because the room's own hover could not. Three
+   defects, one defect — and none of them is visible while the state that has
+   to move together is spread across a dozen names.
+
+   Three timers, and they are the part that is easy to get wrong, so the only
+   way to cancel one is the matching function below. `if(x){clearTimeout(x);
+   x=0}` appeared four times for the close and four for the swap; the fifth
+   place that needed it is where a bug came from.
+
+     timer / timerFn / timerAt   the pending open or swap, and where the
+                                 pointer was when it was scheduled — kept so a
+                                 hand still travelling pushes its own swap back
+     off                         the pending close, deferred while approaching
+     shut                        the teardown behind a running shutdown
+
+   `accent` is published rather than private: the mark on the surface reads it
+   in cellMarkUpdate, and without that the tile wore two colours at once — the
+   board's own on the glow, the game's on the bracket. */
+const hudState={
+  card:null, scr:null, cell:-1, box:null, accent:null,
+  timer:0, timerFn:null, timerAt:null,
+  off:0, shut:0,
+  over:false, lastD:Infinity
+};
+/* A cancel has to be idempotent and has to clear everything that timer owns —
+   `timer` alone would leave `timerFn` behind for the pointermove handler to
+   reschedule from. */
+const hudCancelSwap=()=>{
+  if(hudState.timer) clearTimeout(hudState.timer);
+  hudState.timer=0; hudState.timerFn=null; hudState.timerAt=null;
+};
+const hudCancelClose=()=>{
+  if(hudState.off) clearTimeout(hudState.off);
+  hudState.off=0;
+};
+const hudCancelShutdown=()=>{
+  if(hudState.shut) clearTimeout(hudState.shut);
+  hudState.shut=0;
+};
 const hudShot=HUD.querySelector('.shot');
+/* Six decoders do not stop themselves. Clearing innerHTML detaches the
+   elements but a detached <video> keeps its stream alive long enough to
+   matter, and this card sits over a room that is still rendering — so the
+   clips are paused and their sources dropped on every exit from the list,
+   including the one where the next card is a still. */
+const hudListStop=()=>{ hudList.querySelectorAll('video').forEach(v=>{
+  v.pause(); v.removeAttribute('src'); v.load() }) };
 /* While the pointer is on the readout the hover is frozen rather than
    re-evaluated: the tile stays lit, the bracket stays put, and the room behind
    the panel cannot steal the hover from the panel covering it. */
@@ -4614,9 +6236,9 @@ document.getElementById('hudX').addEventListener('click',e=>{e.stopPropagation()
    cancels it. Measured before this line existed — a flick from the left
    column landed on the panel and 190 ms later the card turned into the cover
    the pointer had passed over last. */
-HUD.addEventListener('pointerenter',()=>{hudOver=true;
-  if(hudOff){clearTimeout(hudOff);hudOff=0}
-  if(hudTimer){clearTimeout(hudTimer);hudTimer=0;hudTimerFn=null;hudTimerAt=null}});
+HUD.addEventListener('pointerenter',()=>{
+  hudState.over=true; hudCancelClose(); hudCancelSwap();
+});
 /* Leaving the readout has to restart the grace clock itself, because the
    room's own hover cannot: reaching the panel means crossing the empty room
    around the target, `hot` is already null by the time the pointer arrives,
@@ -4625,7 +6247,7 @@ HUD.addEventListener('pointerenter',()=>{hudOver=true;
    and back out to bare room, and the readout stayed up indefinitely. Hover
    only: on touch this same pair fires around a tap, and the sheet is dismissed
    by its close button, not by letting go of it. */
-HUD.addEventListener('pointerleave',()=>{hudOver=false; if(HUD_HOVER) hudHide()});
+HUD.addEventListener('pointerleave',()=>{hudState.over=false; if(HUD_HOVER) hudHide()});
 /* The same manual wheel-to-scroll #gb uses, for the same two reasons: it stops
    a wheel that has run past the end of the list from falling through to the
    camera zoom, and it is what makes the behaviour reachable from the harness —
@@ -4639,12 +6261,12 @@ hudList.addEventListener('wheel',e=>{
    nearer the readout. Crossing the room to reach Play is a journey toward the
    panel, and any single grace period is either too short for a slow hand or
    still on screen long after the visitor has looked somewhere else. */
-let hudLastD=Infinity;
 function hudApproaching(x,y){
-  if(!hudBox) return false;
-  const d=Math.hypot(x-(hudBox.left+hudBox.width/2),y-(hudBox.top+hudBox.height/2));
-  const nearer=d<hudLastD-.5;
-  hudLastD=d;
+  const b=hudState.box;
+  if(!b) return false;
+  const d=Math.hypot(x-(b.left+b.width/2),y-(b.top+b.height/2));
+  const nearer=d<hudState.lastD-.5;
+  hudState.lastD=d;
   return nearer;
 }
 
@@ -4674,12 +6296,12 @@ function gameCard(g,s,cell){
   const src=g.links.find(l=>l.kind==='Source');
   if(src&&acts.length<2) acts.push({u:src.url,t:'Source \u2197',pri:!acts.length});
   const cat=(typeof CAT!=='undefined'&&CAT[g.cat])?CAT[g.cat]:null;
-  const slug=slugOf(g.title);
+  const clip=clipOf[g.title];
   return {key:'g:'+g.title,accent:cat?cat.c:'#5ad0ff',eyebrow:cat?cat.long:'Build',
     count:String(cell+1).padStart(2,'0')+' / '+String(s.wallItems.length).padStart(2,'0'),
     title:g.title,sub:[availOf(g),g.wip?'Work in progress':''].filter(Boolean).join(' \u00b7 '),
     desc:g.desc||'',img:thumb(g.info),alt:thumb(g.intro),ar:'16/9',
-    clip:CLIPS.has(slug)?'clips/'+slug+'.mp4':null,acts};
+    clip:clip?'clips/'+clip+'.mp4':null,acts};
 }
 function cardFor(hit){
   if(!hit) return null;
@@ -4713,8 +6335,14 @@ function projBox(s,cell){
   return {x0,x1,y0,y1};
 }
 function hudShow(card,s,cell){
+  /* Straight back off a shutdown: cancel the pending teardown and take .off
+     away before anything is written, so the panel is at rest and the boot
+     plays from the top instead of over a half-collapsed box. Nothing is reset
+     here — hudPlace rewrites the placement and .rv is restarted below. */
+  hudCancelShutdown();
+  HUD.classList.remove('off');
   const c=card.accent||'#5ad0ff';
-  hudAccent=c;
+  hudState.accent=c;
   HUD.style.setProperty('--hc',c); HUD.style.setProperty('--hcd',c+'59');
   hudfx.style.setProperty('--hfc',c);
   /* The preview box takes the picture's own shape. The Athena card is square,
@@ -4730,13 +6358,19 @@ function hudShow(card,s,cell){
      would spend a request on a picture the stylesheet has already hidden. */
   const list=card.list||null;
   HUD.classList.toggle('listing',!!list);
+  hudListStop();
   if(list){
     hudList.innerHTML=list.map(r=>'<a href="'+esc(r.u)+'" target="_blank" rel="noopener"'
       +(HUD_HOVER?' tabindex="-1"':'')+'>'
-      +'<img src="'+esc(r.img)+'" alt="" loading="lazy" decoding="async">'
-      +'<span><b>'+esc(r.t)+'</b><i>'+esc(r.sub)+'</i></span><u>'+esc(r.act)+'</u></a>').join('');
+      +'<video muted loop playsinline preload="none" disablepictureinpicture'
+      +' poster="'+esc(r.img)+'"'+(r.clip?' src="'+esc(r.clip)+'"':'')+'></video>'
+      +'<b>'+esc(r.t)+'</b><u>\u25b6 Play</u></a>').join('');
     hudList.scrollTop=0;
     hudImg.removeAttribute('src');
+    /* Reduced motion keeps the posters and the layout and drops the movement,
+       which is the whole of what the preference asks for here. */
+    if(!REDUCED_MOTION)
+      hudList.querySelectorAll('video[src]').forEach(v=>{v.play().catch(()=>{})});
   }else{
     hudList.innerHTML='';
     hudImg.onerror=card.alt?()=>{hudImg.onerror=null;hudImg.src=card.alt}:null;
@@ -4750,12 +6384,12 @@ function hudShow(card,s,cell){
     +(HUD_HOVER?' tabindex="-1"':'')+(a.pri?' class="pri"':'')+'>'+esc(a.t)+'</a>').join('');
   hudActs.hidden=!acts.length;
   // the clip is the only thing here that costs a request, so it goes last
-  hudVid.classList.remove('on'); HUD.classList.remove('playing');
+  hudVid.classList.remove('on'); HUD.classList.remove('playing'); sound.duck(false);
   if(!REDUCED_MOTION&&card.clip){
     hudVid.src=card.clip;
     const want=card.key;
     hudVid.play().then(()=>{
-      if(hudCard&&hudCard.key===want){hudVid.classList.add('on');HUD.classList.add('playing')}
+      if(hudState.card&&hudState.card.key===want){hudVid.classList.add('on');HUD.classList.add('playing');sound.duck(true)}
     }).catch(()=>{});
   }else if(hudVid.getAttribute('src')){ hudVid.removeAttribute('src'); hudVid.load() }
   HUD.classList.toggle('still',!card.clip);
@@ -4764,7 +6398,7 @@ function hudShow(card,s,cell){
      two changes and the animation never replays. */
   if(!REDUCED_MOTION){ hudShot.classList.remove('rv'); void hudShot.offsetWidth;
                        hudShot.classList.add('rv'); }
-  hudCard=card; hudScr=s; hudCell=cell==null?-1:cell;
+  hudState.card=card; hudState.scr=s; hudState.cell=cell==null?-1:cell;
   /* Decided here rather than in the frame loop: a readout that slid to a new
      side mid-hover while the camera drifted would be worse than one that
      sometimes sits a little off its target. The bracket and the leader keep
@@ -4777,7 +6411,7 @@ function hudShow(card,s,cell){
      able to spare them. The header's "02 / 11" says which tile it is. */
   if(HUD_HOVER) hudfx.classList.add('on');
   else HUD.setAttribute('aria-hidden','false');
-  hudBox=HUD.getBoundingClientRect(); hudLastD=Infinity;
+  hudState.box=HUD.getBoundingClientRect(); hudState.lastD=Infinity;
 }
 /* ── where the readout goes ───────────────────────────────────────────
    It used to be pinned to a gutter, and the gutter is the far side of the
@@ -4836,8 +6470,17 @@ function hudSizeFor(card,slotW,slotH,natW,chrome,ar){
      all list there is nothing to trade and the slot is simply wrong. */
   if(!ar) return 0;
   w=Math.floor((slotH-chrome)*ar);
-  if(w<HUD_MINW||w>slotW) return 0;
-  return hudMeasure(w)<=slotH?w:0;
+  /* The guess is exact for a picture, whose height is a clean multiple of the
+     width, and a few pixels short for the clip list, whose gaps and borders
+     are fixed while its rows are not. Correct off the measurement rather than
+     modelling the difference: two passes closes it, the third is slack. */
+  for(let i=0;i<3;i++){
+    if(w<HUD_MINW||w>slotW) return 0;
+    const h=hudMeasure(w);
+    if(h<=slotH) return w;
+    w=Math.floor(w-(h-slotH)*ar-1);
+  }
+  return 0;
 }
 function hudPlace(card){
   /* The sheet spans the whole width of a phone and is capped by .shot's own
@@ -4846,9 +6489,21 @@ function hudPlace(card){
   HUD.classList.remove('lf','dn','up');
   HUD.style.removeProperty('--hud-w');           // back to the stylesheet value
   const natW=HUD.offsetWidth;
+  /* Which part of the card grows with its width. A still card is chrome plus
+     its picture; the bin's card is chrome plus rows that are 16:9 of the card,
+     so it narrows by exactly the same arithmetic — and it has to, because at
+     516px three clips are 1013px of card and no slot on a laptop is that tall.
+     Measured for the list rather than declared: how many rows are under the
+     cap, and how big the gaps between them are, is the stylesheet's business.
+     Before this the list arrived here with ar 0, no slot fitted at all, and
+     the placement fell through to the gutter at full width. */
   const parts=String(card.ar||'16/9').split('/');
-  const ar=hudShot.offsetHeight?((parts.length===2&&+parts[1])?(+parts[0])/(+parts[1]):16/9):0;
-  const chrome=HUD.offsetHeight-hudShot.offsetHeight;
+  const scaler=HUD.classList.contains('listing')?hudList:hudShot;
+  const ar=scaler.offsetHeight
+    ?(scaler===hudList?HUD.offsetWidth/scaler.offsetHeight
+      :((parts.length===2&&+parts[1])?(+parts[0])/(+parts[1]):16/9))
+    :0;
+  const chrome=HUD.offsetHeight-scaler.offsetHeight;
   const cs=getComputedStyle(HUD);
   const T0=parseFloat(cs.getPropertyValue('--band-top'))||148;
   const B0=parseFloat(cs.getPropertyValue('--band-bot'))||96;
@@ -4861,11 +6516,11 @@ function hudPlace(card){
   const hr=h0.width?{left:h0.left-HUD_HPAD,right:h0.right+HUD_HPAD,
                      top:h0.top-HUD_HPAD,bottom:h0.bottom+HUD_HPAD}:null;
   const onHero=(px,py,w,h)=>!!hr&&px<hr.right&&px+w>hr.left&&py<hr.bottom&&py+h>hr.top;
-  const s=hudScr;
+  const s=hudState.scr;
   let best=null;
   if(s&&s.sc){
-    const targ=projBox(s,hudCell);
-    const surf=hudCell>=0?projBox(s,-1):targ;
+    const targ=projBox(s,hudState.cell);
+    const surf=hudState.cell>=0?projBox(s,-1):targ;
     const cxT=(targ.x0+targ.x1)/2, cyT=(targ.y0+targ.y1)/2;
     const slots=[
       {k:'rt',ax0:surf.x1+HUD_GAP,ax1:R,ay0:TP,ay1:BT,ax:'x0'},
@@ -4942,25 +6597,50 @@ function hudPlace(card){
   uiRoot.classList.toggle('hudhero',
     best.x<h0.right&&best.x+best.w>h0.left&&best.y<h0.bottom&&best.y+best.h>h0.top);
 }
-addEventListener('resize',()=>{ if(hudCard) hudPlace(hudCard) },{passive:true});
+addEventListener('resize',()=>{ if(hudState.card) hudPlace(hudState.card) },{passive:true});
+/* Closing is two steps, because the shutdown has to play on a panel that is
+   still placed and still holding its picture: --hud-x/--hud-y, .lf/.dn/.up and
+   .rv all have to outlive the close by the length of the animation. hudDrop
+   gives up everything the rest of the app reads — `card` is what says "a
+   readout is open", and it has to go now or a re-hover during the shutdown
+   would be swallowed by the "already showing this" exit in hudSet. hudReset is
+   the teardown, HUD_SHUT later, or immediately when there was nothing lit. */
 function hudDrop(){
+  const live=HUD.classList.contains('on');
+  hudState.card=null; hudState.scr=null; hudState.cell=-1; hudState.accent=null;
+  hudState.over=false;
+  HUD.classList.remove('on','playing'); sound.duck(false);
+  HUD.setAttribute('aria-hidden','true');
+  hudfx.classList.remove('on');
+  if(!live||REDUCED_MOTION){ hudReset(); return }
+  /* The clip keeps running under the rewind. It is the picture being scanned
+     off, and freezing it first is the one thing that would read as "this
+     stopped" rather than "this is being taken away" — hudReset pauses it once
+     there is nothing left to see. */
+  HUD.classList.add('off');
+  hudCancelShutdown();
+  hudState.shut=setTimeout(()=>{hudState.shut=0;hudReset()},HUD_SHUT);
+}
+function hudReset(){
+  hudCancelShutdown();
+  HUD.classList.remove('off');
   HUD.style.removeProperty('--hud-w');
   HUD.style.removeProperty('--hud-x'); HUD.style.removeProperty('--hud-y');
   HUD.classList.remove('lf','dn','up');
-  hudCard=null; hudScr=null; hudCell=-1; hudAccent=null;
-  HUD.classList.remove('on','playing'); hudShot.classList.remove('rv');
-  HUD.setAttribute('aria-hidden','true');
-  hudfx.classList.remove('on');
+  hudShot.classList.remove('rv');
+  /* Held back until here on purpose: hudhero exists so the headline is not
+     underneath the readout, and letting it come back while the panel is still
+     collapsing over it is the overlap the class was added to prevent. */
   uiRoot.classList.remove('hudhero');
-  hudOver=false;
   if(!hudVid.paused) hudVid.pause();
+  hudListStop();
 }
 function hudHide(now){
-  if(hudTimer){clearTimeout(hudTimer);hudTimer=0;hudTimerFn=null;hudTimerAt=null}
-  if(!hudCard) return;
-  if(now){ if(hudOff){clearTimeout(hudOff);hudOff=0} hudDrop(); return }
-  if(hudOver||hudOff) return;
-  hudOff=setTimeout(()=>{hudOff=0;hudDrop()},HUD_GRACE);
+  hudCancelSwap();
+  if(!hudState.card) return;
+  if(now){ hudCancelClose(); hudDrop(); return }
+  if(hudState.over||hudState.off) return;
+  hudState.off=setTimeout(()=>{hudState.off=0;hudDrop()},HUD_GRACE);
 }
 /* Every target waits its turn: a longer dwell to open the first readout, a
    shorter one to replace the open one. The pending one is dropped before
@@ -4970,14 +6650,14 @@ function hudHide(now){
 function hudSet(hit){
   if(!HUD_HOVER) return;
   const card=cardFor(hit);
-  if(hudTimer){clearTimeout(hudTimer);hudTimer=0;hudTimerFn=null;hudTimerAt=null}
+  hudCancelSwap();
   if(!card){ hudHide(); return }
-  if(hudOff){clearTimeout(hudOff);hudOff=0}      // back on a target: cancel the close
-  if(hudCard&&hudCard.key===card.key) return;
+  hudCancelClose();      // back on a target: cancel the close
+  if(hudState.card&&hudState.card.key===card.key) return;
   const s=hit.s, cell=hit.cell;
-  hudTimerFn=()=>{hudTimer=0;hudTimerFn=null;hudTimerAt=null;hudShow(card,s,cell)};
-  hudTimerAt=hudCard?[mx,my]:null;          // only a swap gets pushed back
-  hudTimer=setTimeout(hudTimerFn,hudCard?HUD_SWAP:HUD_DWELL);
+  hudState.timerFn=()=>{hudCancelSwap();hudShow(card,s,cell)};
+  hudState.timerAt=hudState.card?[mx,my]:null;          // only a swap gets pushed back
+  hudState.timer=setTimeout(hudState.timerFn,hudState.card?HUD_SWAP:HUD_DWELL);
 }
 /* Bracket and leader line are redrawn every frame the readout is up: the
    camera keeps drifting under it, and a target mark that lags its target
@@ -4994,16 +6674,16 @@ const hudP=[[0,0],[0,0],[0,0],[0,0]];      // the same four corners, in pixels
    pointing from the readout back to the thing it describes is the part that
    was doing real work, and a dashed line is not a rectangle. */
 function hudFX(){
-  const s=hudScr; if(!s) return;
+  const s=hudState.scr; if(!s) return;
   /* Measured every frame rather than once at open: at open the boot animation
      still has the panel translated and skewed, so a single reading aimed the
      leader at a box the panel was about to leave. */
-  hudBox=HUD.getBoundingClientRect();
+  hudState.box=HUD.getBoundingClientRect();
   /* The leader points at a wall cover's own cell, and at the whole surface for
      anything else — the same maths with the grid collapsed to one. */
   let u0=-.5,u1=.5,v0=.5,v1=-.5;
-  if(hudCell>=0&&s.wallCols){
-    const cx=hudCell%s.wallCols, cy=Math.floor(hudCell/s.wallCols);
+  if(hudState.cell>=0&&s.wallCols){
+    const cx=hudState.cell%s.wallCols, cy=Math.floor(hudState.cell/s.wallCols);
     u0=cx/s.wallCols-.5; u1=(cx+1)/s.wallCols-.5;
     v0=.5-cy/s.wallRows; v1=.5-(cy+1)/s.wallRows;
   }
@@ -5024,8 +6704,9 @@ function hudFX(){
      actually faces the tile, and the elbow is the same shape turned 90°. */
   const qcx=(hudP[0][0]+hudP[1][0]+hudP[2][0]+hudP[3][0])/4;
   const qcy=(hudP[0][1]+hudP[1][1]+hudP[2][1]+hudP[3][1])/4;
-  const bcx=hudBox?(hudBox.left+hudBox.right)/2:innerWidth-260;
-  const bcy=hudBox?(hudBox.top+hudBox.bottom)/2:innerHeight/2;
+  const bx=hudState.box;
+  const bcx=bx?(bx.left+bx.right)/2:innerWidth-260;
+  const bcy=bx?(bx.top+bx.bottom)/2:innerHeight/2;
   const vert=Math.abs(qcy-bcy)>Math.abs(qcx-bcx);
   const i0=vert?1:0, i1=vert?0:1;                    // the axis the leader runs along
   const near=vert?bcy<qcy:bcx<qcx;                   // readout is above / left of the tile
@@ -5034,12 +6715,11 @@ function hudFX(){
   const a0=vert?ay:ax, a1=vert?ax:ay;
   /* h0 is on the panel edge facing the tile; h1 slides along that edge to meet
      the leader, kept off the corner brackets at either end. */
-  const h0=hudBox?(vert?(near?hudBox.bottom:hudBox.top)
-                       :(near?hudBox.right:hudBox.left))
-                 :(near?360:innerWidth-360);
-  const h1=hudBox?clamp(a1,(vert?hudBox.left:hudBox.top)+24,
-                           (vert?hudBox.right:hudBox.bottom)-24)
-                 :innerHeight/2;
+  const hb=hudState.box;
+  const h0=hb?(vert?(near?hb.bottom:hb.top):(near?hb.right:hb.left))
+             :(near?360:innerWidth-360);
+  const h1=hb?clamp(a1,(vert?hb.left:hb.top)+24,(vert?hb.right:hb.bottom)-24)
+             :innerHeight/2;
   const s0=near?-1:1;
   const bend=near?Math.min(a0-20,h0+26):Math.max(a0+20,h0-26);
   const pt=(u,v)=>vert?(v+','+u):(u+','+v);
@@ -5109,9 +6789,9 @@ function activateHit(hit){
 /* No dwell here: the dwell exists to stop a pointer sweeping across eleven
    covers from opening any of them, and a tap is not a sweep. */
 function hudTap(hit,card){
-  if(hudOff){clearTimeout(hudOff);hudOff=0}
-  if(hudTimer){clearTimeout(hudTimer);hudTimer=0;hudTimerFn=null;hudTimerAt=null}
-  if(hudCard&&hudCard.key===card.key) return;   // already the open one
+  hudCancelClose();
+  hudCancelSwap();
+  if(hudState.card&&hudState.card.key===card.key) return;   // already the open one
   hudShow(card,hit.s,hit.cell);
 }
 function spotlightBuild(g){
@@ -5130,25 +6810,19 @@ function spotlightBuild(g){
     panelBody.scrollTop+=((r.top-pr.top)-Math.max(0,(pr.height-r.height)/2))/z;
   });
 }
-/* Every one of these strings comes from portfolio-data.js, which we own — but a title
-   with an ampersand in it is one edit away, and finding out by watching the
-   panel render blank is a bad way to find out. */
-const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>
-  ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]);
-const externalNote='<span class="sr"> (opens externally)</span>';
-const img=g=>`<img src="${esc(thumb(g.info))}" loading="lazy" alt=""
-  onerror="this.onerror=null;this.src='${esc(thumb(g.intro))}'">`;
+/* esc, thumb, img, externalNote and linkRow are in portfolio-shared.js. They
+   were a copy each here and in portfolio-2d.html — and since both pages load
+   that file as a plain script, two `const esc=` at the top level of two
+   classic scripts is a redeclaration error as well as a duplicate. Nothing
+   about escaping a title or resolving a thumbnail is specific to a room. */
 /* The case write-ups render the same whether they are the whole panel or the
    half of it that comes before the archive, so the markup is built once. */
 function caseHTML(items){
   return '<div class="cs">'+items.map(g=>{
-    const p=playOf(g), rest=g.links.filter(l=>l!==p).slice(0,2);
+    const p=playOf(g);
     return `<article class="cf" data-g="${esc(g.title)}"><a class="cfp" href="${esc(p.url)}" target="_blank" rel="noopener">${img(g)}${externalNote}</a><div class="bd">
       <h4><a class="cft" href="${esc(p.url)}" target="_blank" rel="noopener">${esc(g.title)}${externalNote}</a></h4><em>${esc(CAT[g.cat].n)}${g.tags&&g.tags[0]?' · '+esc(g.tags[0]):''}</em>
-      <p>${esc(g.desc||g.sub||'')}</p><div class="lk">
-      <a href="${esc(p.url)}" target="_blank" rel="noopener">${esc(shortOf(p))} ↗${externalNote}</a>
-      ${rest.map(l=>`<a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.kind)}${externalNote}</a>`).join('')}
-      </div></div></article>`;
+      <p>${esc(g.desc||g.sub||'')}</p>${linkRow(g)}</div></article>`;
   }).join('')+'</div>';
 }
 const sectionHead=(t,n)=>`<div class="sh"><b>${esc(t)}</b><i>${esc(n)}</i></div>`;
@@ -5341,6 +7015,22 @@ idxBtn.onclick=()=>{
 const allBtn=document.getElementById('allBtn'), wallScreen=SCREENS.find(s=>s.id==='wall');
 if(wallScreen) allBtn.onclick=()=>focusOn(wallScreen); else allBtn.remove();
 addEventListener('keydown',e=>{
+  /* `1` fires a strike on demand. Waiting out a weather cycle to look at a
+     700ms effect is not a workflow, and the alternative — a throwaway copy with
+     the envelope pinned — cannot show the motion, only stills of it.
+
+     It ignores the weather, because that is the point of it, and it ignores the
+     open-panel gate, because someone pressing this key is asking to see the
+     flash and knows where it will land. It does NOT ignore the other two.
+     `prefers-reduced-motion` still means no, and the 1400ms floor still holds:
+     a held key auto-repeats around 30 times a second, and without the floor
+     this one line would be a strobe generator sitting on a public page. */
+  if(e.key==='1'&&!/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName||'')){
+    if(!REDUCED_MOTION&&performance.now()-flashAt>=fDur+400){
+      flashAt=performance.now(); newStrike();
+    }
+    return;
+  }
   if(e.key==='Escape'){
     if(focus_) unfocus();else setIndex(false);return;
   }
@@ -5444,6 +7134,41 @@ async function runRoomQA(){
   for(const target of narrowTargets){renderPanelContent(target,false);await nextFrames(1);responsiveOk&&=layoutOkFor(target)}
   rows.push({name:'Narrow-anchor layouts',pass:responsiveOk,aligned:'n/a',sharp:'n/a',layout:responsiveOk,
     controls:'n/a',links:'n/a',linkHit:'n/a',scroll:'container query'});
+  /* The covers on a wall are pixels in a baked JPEG; its hit targets are cell
+     indices into an array. Nothing running in the browser can read the JPEG,
+     so this checks the half that is checkable — every cell centre lands on the
+     title the layout file put in that cell, in order, and no zone carries more
+     covers than its grid has cells. The other half, that the JPEG was baked
+     off the same list, is held by both coming out of one run of wallsheet.py. */
+  const cellPt=new T.Vector3();
+  const zoneRows=[];let mapOk=true;
+  for(const s of SCREENS.filter(x=>x.wallItems)){
+    const z=zonesIn[s.id]||{},titles=z.titles||[];
+    let ok=s.wallItems.length===titles.length&&
+           s.wallItems.length<=s.wallCols*s.wallRows-(z.plate?1:0);
+    for(let i=0;ok&&i<s.wallItems.length;i++){
+      cellPt.set(((i%s.wallCols+.5)/s.wallCols-.5)*s.w,
+                 (.5-(Math.floor(i/s.wallCols)+.5)/s.wallRows)*s.h,0);
+      const hit=wallCellAt(s,s.sc.localToWorld(cellPt));
+      ok=hit.cell===i&&hit.game===s.wallItems[i]&&hit.game.title===titles[i];
+    }
+    /* And the one thing here that does compare two independent objects: the
+       baked sheet's own proportions against the plane it is mapped onto. A
+       zone's grid decides the shape of its sheet — 4x3 is a wide one, 1x3 a
+       tall one — so changing the grid and not reshaping the plane in this file
+       leaves every cell boundary drifting away from the tile it brackets, a
+       little more with each row. The image comes off disk, the plane out of
+       this file, the grid out of the layout: nothing else in the room compares
+       them, and the tolerance is 1% because the two are matched by hand. */
+    const im=s.sc.material.map&&s.sc.material.map.image;
+    const asp=im&&im.width?(im.width/im.height)/(s.w/s.h):0;
+    const aspOk=asp>.99&&asp<1.01;
+    zoneRows.push(s.id+' '+(!ok?'MISMATCH':aspOk?'ok':'ASPECT '+asp.toFixed(3)));
+    mapOk&&=ok&&aspOk;
+  }
+  rows.push({name:'Wall cover mapping',pass:mapOk&&zoneRows.length>0,aligned:'n/a',
+    sharp:'n/a',layout:mapOk,controls:'n/a',links:zoneRows.length,linkHit:'n/a',
+    scroll:zoneRows.join(' · ')||'no walls'});
   focusOn(PANELS[0]);fB=1;await nextFrames(3);
   const anchor=focus_,start=content_,anchorCenter=fC.clone();
   document.getElementById('gn').click();await nextFrames(2);
@@ -5493,13 +7218,86 @@ function tick(now){
     timeH=(timeH+dt/CYCLE*24)%24;
     const v=Math.round(timeH*60); if(+scrub.value!==v) scrub.value=v;
   }
+  /* Ahead of applyTime, which consumes W. Reduced motion freezes the blend at
+     whatever state the visit arrived on rather than forcing clear: a still
+     storm is a legitimate sky, and clear would have been a decision the
+     preference never asked for. */
+  stepWeather(REDUCED_MOTION?0:dt);
+  /* Real dt, not the reduced-motion zero: under reduced motion stepWet snaps
+     to the target instead of easing, so it needs to run either way or the
+     glass stays permanently dry for anyone who asked for less movement. */
+  stepWet(dt);
+  stepSnowState(dt);
+  stepBeads(dt,windLean);
+  stepSnow(dt,now,windLean);
+  sound.tick(now,windLean);
+  stepFlash(dt,now);
   applyTime(timeH);
   paintClock(timeH);
 
   if(!REDUCED_MOTION){
-    rains.forEach((m,k)=>{ m.map.offset.y-=dt*(k?.0011:.0009); });
+    /* Wind exists only above the calm baseline, so clear weather keeps the
+       original dead-vertical fall and only a storm leans the sheet. The two
+       panes drift opposite ways because they face 90 degrees apart — one wind,
+       seen from two sides. */
+    /* `+=`, not `-=`. Three.js samples `uv * repeat + offset`, so RAISING
+       offset.y walks the sampled row up the texture and the streak it belongs
+       to therefore appears LOWER on the quad — measured on an isolated plane
+       with one bright band: offset 0 → 0.1 moved it +40px down a 400px
+       viewport, exactly the predicted 0.1 of the height. The room shipped with
+       `-=` and its rain has always fallen upward; nobody caught it because at
+       the old fixed opacity of .065–.15 the streaks were too faint to read a
+       direction off. Making a storm 2.6x denser and 2.4x faster is what put it
+       on screen. */
+    /* A gust is not a speed change. It is a speed change and a lean that do
+       not peak together: the sheet leans before it accelerates and is still
+       leaning after it has slowed. Two independent sums of sines at rates with
+       no common period, so the pattern never visibly repeats — a constant
+       W.speed is the single clearest tell that the rain is a looping texture,
+       and it was the same every second of every storm.
+
+       Both terms scale with `bite`, so clear weather keeps its original
+       dead-calm vertical fall and only real weather breathes. */
+    const g1=Math.sin(now*.00019)+Math.sin(now*.00047+2.1)*.62+Math.sin(now*.00111+.7)*.35,
+          g2=Math.sin(now*.00023+1.3)+Math.sin(now*.00061+4.4)*.55,
+          bite=clamp(W.speed-.8,0,2),
+          gust=1+g1*.19*bite;
+    windLean=(.5+g2*.5)*bite;
+    const wind=dt*.00030*windLean;
+    rains.forEach(m=>{ const u=m.userData;
+      m.map.offset.y+=dt*(u.pane?.0011:.0009)*W.speed*gust*u.spd;
+      m.map.offset.x+=(u.pane?wind:-wind)*u.spd; });
+    /* Check this ratio in WORLD units, never in texture offset. The rain tile
+       is 16 world units and the snow tile 6, so "a seventh of the rain's rate"
+       in offset was a THIRTY-FIFTH of it on the wall, and the 3.8x lean was
+       5.5 world units a second sideways against 1.20 down. A tiled texture
+       whose dominant motion is horizontal does not read as snow in the air —
+       it reads as a texture sliding across the pane, which is exactly the
+       report that came back: the snow looks stuck to the glass and the glass
+       is moving.
+
+       Snow does lean harder than rain and that is a real signature, so the
+       lean stays — at 1.6x rather than 3.8x, against a fall raised to .00021.
+       That is about 3.0 world units a second down and 2.3 across at a mean
+       gust, so a blizzard descends at a steep angle and only crosses past
+       horizontal at the top of a gust. Rain, for contrast, runs 11:1.
+
+       The parallax ladder still has to hold: far mass 1.40, near mass 3.02,
+       near flakes 5.9-9.0 world units a second. The mass may never overtake
+       the flakes that are supposed to be in front of it. */
+    snows.forEach(m=>{ const u=m.userData;
+      m.map.offset.y+=dt*.00021*W.speed*gust*u.spd;
+      m.map.offset.x+=(u.pane?wind:-wind)*1.6*u.spd; });
     cityLayers.traffic.material.map.offset.x=(cityLayers.traffic.material.map.offset.x+dt*.000025)%1;
-    if(skyFX.cloud) skyFX.cloud.tex.offset.x=(skyFX.cloud.tex.offset.x+dt*.0000025)%1;
+    /* Both of these used to be, or would have been, fixed rates. A cloud deck
+       that crosses the window at the same speed in a dead calm and in a
+       2.4x gale is the same tell as a rain sheet at constant W.speed was:
+       it says the sky is a loop. The curtain drifts about 15% of its texture
+       in 8 seconds under a storm and stands still under a clear sky, which is
+       also when it is invisible. */
+    if(skyFX.cloud) skyFX.cloud.tex.offset.x=(skyFX.cloud.tex.offset.x+dt*.0000025*(.5+W.speed*.6))%1;
+    if(skyFX.veil&&skyFX.veil.mesh.visible)
+      skyFX.veil.tex.offset.x=(skyFX.veil.tex.offset.x+dt*.0000075*W.speed)%1;
     if(chairG) chairG.rotation.y=CHAIR_RY+Math.sin(now*.000125)*.085
                                          +Math.sin(now*.00031+1.7)*.022;
     // the showreel drifts while it is scenery and holds still while it is a page
@@ -5567,6 +7365,7 @@ function tick(now){
      updateSofaCat carries its own reduced form. `hot` is a frame behind here —
      setHot runs later in the tick — which no eye can resolve at 60fps. */
   if(sofaCatRig) updateSofaCat(sofaCatRig,now,dt,!!hot&&hot.s.id==='sofacat'&&!focus_);
+  if(plushRig) updateChairPlush(plushRig,dt,!!hot&&hot.s.id==='chairplush'&&!focus_);
   groundFX.vehicles.forEach(v=>{
     const d=v.userData,u=REDUCED_MOTION?d.phase:(now*.000018*d.speed+d.phase)%1;
     if(d.axis==='x')v.position.set(RX+1-170+u*340,-8.9,BZ-19+d.lane);
@@ -5604,10 +7403,10 @@ function tick(now){
      it is opened by a tap and stays until dismissed, so orbiting away only
      drags its bracket along rather than closing it. */
   if(HUD_HOVER){
-    if((!drag||!moved)&&!focus_){ if(!hudOver) setHot(pickAt(mx,my)) }
+    if((!drag||!moved)&&!focus_){ if(!hudState.over) setHot(pickAt(mx,my)) }
     else hudHide(true);     // orbiting or an open panel is not a hover
   }else if(focus_) hudHide(true);   // a panel replaces the sheet
-  if(hudCard&&!focus_&&HUD_HOVER) hudFX();
+  if(hudState.card&&!focus_&&HUD_HOVER) hudFX();
   SCREENS.forEach((s,i)=>{
     const t=(hot&&s===hot.s&&!focus_)?1:0;
     s.hv+=(t-s.hv)*.16;
@@ -5827,6 +7626,7 @@ $('dbgCopy').addEventListener('click',async e=>{
   setTimeout(()=>{b.textContent=was},1100);
 });
 }
+
 
 applyTime(timeH);
 requestAnimationFrame(tick);

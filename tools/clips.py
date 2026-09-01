@@ -19,33 +19,45 @@ none of it lands in the room's ~2 MB boot payload.
 640x360 is sized from the readout: the preview box is ~340 CSS px wide, so 680
 device pixels at DPR 2. Anything above 720p is bytes the box cannot show.
 
-Sources are the project's own YouTube links in demos/portfolio-data.js. Needs
-yt-dlp and ffmpeg on PATH:
+Sources are the project's own YouTube links in demos/portfolio-data.js, and
+which builds get a clip comes from wall-layout.txt. Where to cut each one, what
+to crop out of it and which sources cannot make a preview at all are STARTS,
+CROPS and SKIP below. Needs yt-dlp and ffmpeg on PATH:
 
     brew install yt-dlp ffmpeg
-    python3 tools/clips.py              # bake every wall hero that has a video
-    python3 tools/clips.py --list       # print the CLIPS set for room-3d.html
+    python3 tools/clips.py              # bake every wall cover that has a video
+    python3 tools/clips.py --all        # every build in the dataset, wall or not
+    python3 tools/clips.py --skipped    # with --all, include the SKIP list too
+    python3 tools/clips.py --list       # the ids on disk, one per line
     python3 tools/clips.py --force      # re-bake clips that already exist
     python3 tools/clips.py --cache DIR  # keep the downloads, for picking offsets
 
 Idempotent: a clip that already exists is left alone unless --force is given.
-After adding or removing one, paste the --list output over the CLIPS set in
-demos/room-3d.html.
+Which titles it works on comes from wall-layout.txt, or from the whole dataset
+under --all. Nothing here has to be pasted anywhere: run
+`python3 tools/wallsheet.py` afterwards and the room's CLIP_OF map is
+regenerated from whatever ended up in demos/clips/.
+
+--all exists because a clip outlives the wall it was cut for: the layout moves,
+and a build promoted onto a wall next month should not have to wait on a
+download. Only the wall hovers, so a clip for a build that is not on a wall
+costs nothing at runtime — it is not in the boot payload and nothing fetches it
+— but it IS committed bytes, and once it is on disk wallsheet.py will put it in
+CLIPS, so a build that later reaches a wall gets it live with no further
+decision. That is the trap --skipped opens: SKIP is a quality verdict, and
+baking past it means the room will happily play a preview that was looked at
+and rejected.
+
+The slug that names each file, the project list and the wall map are all read
+through tools/portfolio.py — this file used to carry its own copy of the first
+two, and the docstring on the other copy said they had to agree.
 """
-import json, os, re, shutil, subprocess, sys, tempfile
+import os, shutil, subprocess, sys, tempfile
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-OUT = os.path.join(ROOT, 'demos', 'clips')
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from portfolio import ROOT, CLIPDIR, games, slug, wall_zones, clips_on_disk
 
-# Every cover that can be hovered, across all three walls. Kept in step with
-# WALL_HERO_TITLES / WALL_LEFT_TITLES / WALL_RIGHT_TITLES in room-3d.html and
-# HERO / LEFT / RIGHT in wallsheet.py.
-HERO = ['Netcode Battle', 'Netcode Demo', 'Netcode Shooter2D', 'Kinder Easter',
-        'POLYGON Battle', 'POLYGON Adventure', 'POLYGON Turnbase', 'Color Shoot 2d',
-        'Joust them all', "Beat'em up 2", 'Survivor.io clone 2d',
-        # the two side columns
-        "Beat'em up", 'Topdown Shooter', 'Game 2d5 Dungeon',        # left  (zone 8)
-        'Game Runner 3d', 'Cardgame Battle 2d', 'Battle Board 2d']  # right (zone 9)
+OUT = CLIPDIR
 
 DUR = 4             # long enough to read as gameplay, short enough to loop
 START = 12          # default: past the title card most of these open on
@@ -78,6 +90,20 @@ STARTS = {
     # and the right check (sample the video) disagree here.
     'Battle Board 2d': 220,       # 12s is the team builder, 60s the first turn
     'Game 2d5 Dungeon': 120,      # opens on a loading bar and a menu
+    # The AR pair. AAF's default lands on the avatar dressing room, and the
+    # racing that follows it is fenced by name banners — 64s, 72s and 100s each
+    # carry one across the middle of the frame, which is exactly where a
+    # portrait source gets centre-cropped to. 88s is a kart, a coin and a boost
+    # trail with nothing written over them.
+    'AAF': 88,
+    # 12s to 30s is the phone panning across a blank grey wall, and 24s is a
+    # black frame with a red bar. 36s is the rooftop skyline with three of the
+    # creatures in it, which is the only thing in the video that reads as AR.
+    'AR demo': 36,
+    # Cropped to its canvas this one is legible, but 12s is the equipment
+    # screen and 30s is an empty street. 88s is the wave closing in, which is
+    # the only four seconds that say what the game is.
+    'Survivor.io clone 2d': 88,
 }
 
 # The three netcode captures are recordings of the Unity editor running two
@@ -85,18 +111,40 @@ STARTS = {
 # illegible game views plus log spam is a worse preview at 340 px than one
 # legible view, and the readout header already says Multiplayer / Netcode. Each
 # rect is the left Game view, measured off a full-resolution frame.
+# These rects are pixels on a 1280x720 source, which is what the format
+# selector in source() still lands on for a 16:9 video. Re-measure them if that
+# ever changes.
+#
+# The second group is a different capture entirely and the same problem: five
+# of these videos are a screen recording of Edge with the Unity WebGL build
+# running in a tab, so the frame is browser chrome, a URL bar and a field of
+# page white with a 400x600 canvas somewhere in the middle. Uncropped they are
+# a screenshot of a browser, which is what SKIP measured them as; cropped to
+# the canvas they are the game, and the portrait canvas then gets the same
+# centre band that any phone capture gets. Located by taking the standard
+# deviation of six frames and finding the region that actually moves — page
+# white does not, and neither does chrome.
 CROPS = {
     'POLYGON Battle': (1066, 600, 108, 78),   # windowed editor capture too
     'Netcode Battle': (630, 354, 8, 110),
     'Netcode Demo': (630, 354, 6, 124),
     'Netcode Shooter2D': (626, 352, 12, 122),
+    'Subway Clone 3d': (400, 600, 426, 46),   # the WebGL canvas in the tab
+    'Survivor.io clone 2d': (400, 600, 426, 46),
+    'Demo Dental 3d': (525, 528, 342, 41),
+    'Archer 2d': (540, 720, 370, 0),          # fullscreen portrait, blue surround
+    'Shoot ball 3d': (408, 692, 478, 28),     # fullscreen portrait, olive surround
 }
 
 # Per-title quality override. The cropped netcode-demo is four seconds of
 # full-screen particle effects, which is the worst case for a fixed CRF: at 31
 # it came out at 289 KB, well past the 200 KB that keeps a hover feeling
 # instant. The extra compression is invisible in a 340 px box.
-CRFS = {'Netcode Demo': 35}
+# AAF is the same case: four seconds of karts, boost trails and coin sparkle,
+# all of it moving, which at 31 came out at 216 KB.
+# Subway Clone 3d joins them once cropped: the canvas is a scrolling track at
+# full frame rate, and at 31 it came out at 206 KB.
+CRFS = {'Netcode Demo': 35, 'AAF': 35, 'Subway Clone 3d': 35}
 
 # Sources that cannot make a good 16:9 preview. The readout falls back to the
 # cover art, which is what it shows before a clip loads anyway.
@@ -128,17 +176,6 @@ W, H = 640, 360
 CRF = 31
 
 
-def slug(t):
-    return re.sub(r'(^-|-$)', '', re.sub(r'[^a-z0-9]+', '-', t.lower()))
-
-
-def games():
-    """Read GAMES out of the canonical data file without a JS engine."""
-    src = open(os.path.join(ROOT, 'demos', 'portfolio-data.js'), encoding='utf-8').read()
-    body = src[src.index('['):src.rindex(']') + 1]
-    return json.loads(body)
-
-
 def youtube_of(g):
     for l in g.get('links', []):
         if l.get('kind') == 'Youtube':
@@ -162,8 +199,19 @@ def source(name, url, cache):
     raw = os.path.join(cache, name + '.src.mp4')
     if os.path.exists(raw):
         return raw, None
+    # Selected on width, not height, and the difference is the whole picture
+    # quality of a portrait source. The output is a 640x360 landscape crop, so
+    # width is the axis that survives; capping height at 720 caps a 1080x2400
+    # phone capture at its 288x640 rendition, which is then upscaled 2.2x to
+    # fill the frame. Measured on AAF: 288 wide reads as a smear, 1080 wide
+    # downscales clean. -S +width takes the SMALLEST rendition clearing the
+    # bar rather than the biggest, so a 16:9 source still comes down as the
+    # 1280x720 it always did — which is what keeps the CROPS rects valid.
     dl = subprocess.run(
-        ['yt-dlp', '-f', 'bv*[height<=720][ext=mp4]+ba[ext=m4a]/b[height<=720]/b',
+        ['yt-dlp',
+         '-f', 'bv*[width>=1280][ext=mp4]+ba[ext=m4a]/bv*[width>=1280]+ba/'
+               'bv*[width>=640][ext=mp4]+ba[ext=m4a]/bv*[width>=640]+ba/bv*+ba/b',
+         '-S', '+width',
          '--merge-output-format', 'mp4', '-o', raw, '--no-playlist',
          '--no-warnings', '-q', url],
         capture_output=True, text=True)
@@ -215,32 +263,50 @@ def bake(title, url, force, cache):
 
 def main():
     force = '--force' in sys.argv
+    every = '--all' in sys.argv
+    past_skip = '--skipped' in sys.argv
     cache = None
     if '--cache' in sys.argv:
         cache = sys.argv[sys.argv.index('--cache') + 1]
         os.makedirs(cache, exist_ok=True)
-    by_title = {g['title']: g for g in games()}
+    all_games = games()
+    by_title = {g['title']: g for g in all_games}
 
     if '--list' in sys.argv:
-        have = sorted(f[:-4] for f in os.listdir(OUT) if f.endswith('.mp4')) \
-            if os.path.isdir(OUT) else []
-        print('const CLIPS=new Set([' + ','.join(f"'{h}'" for h in have) + ']);')
+        have = clips_on_disk(OUT)
+        for h in have:
+            print(h)
+        print(f'\n{len(have)} clip(s) on disk. tools/wallsheet.py turns these into '
+              f'CLIP_OF in demos/wall-layout.js.')
         return 0
 
     if not (need('yt-dlp') and need('ffmpeg')):
         return 1
     os.makedirs(OUT, exist_ok=True)
 
+    # The wall by default, the whole archive under --all. Every cover that can
+    # be hovered, taken out of the generated wall map rather than out of the
+    # layout text: the walls are what hover, this is the same list the room
+    # indexes its covers against, and one parser for that file is enough — it
+    # lives in tools/portfolio.py. The props in the layout carry thirty builds
+    # between them and none of them hovers, so none of them wants a clip.
+    #
+    # wall_zones() is only called in the second case: --all is exactly the mode
+    # that should still work when the wall map is stale or was never generated.
+    targets = [g['title'] for g in all_games] if every else wall_zones()
+
     ok = skipped = 0
-    for title in HERO:
+    for title in targets:
         g = by_title.get(title)
         if not g:
             print(f'  ! {title}: not in portfolio-data.js')
             continue
-        if title in SKIP:
+        if title in SKIP and not past_skip:
             print(f'  - {slug(title)}: skipped — {SKIP[title]}')
             skipped += 1
             continue
+        if title in SKIP:
+            print(f'  ~ {slug(title)}: baking past SKIP — {SKIP[title]}')
         url = youtube_of(g)
         if not url:
             print(f'  - {slug(title)}: no YouTube link, readout keeps the poster')
@@ -251,8 +317,8 @@ def main():
     total = sum(os.path.getsize(os.path.join(OUT, f))
                 for f in os.listdir(OUT) if f.endswith('.mp4'))
     print(f'\n{ok} clip(s) ready, {skipped} without a source, {total//1024} KB on disk.')
-    print('Paste this over the CLIPS set in demos/room-3d.html:\n')
-    subprocess.run([sys.executable, __file__, '--list'])
+    print('Now run  python3 tools/wallsheet.py  to fold this into '
+          'demos/wall-layout.js.')
     return 0
 
 

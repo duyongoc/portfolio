@@ -1,0 +1,39 @@
+## The site is static and Pages runs no Python, so everything under
+## demos/models/ and demos/wall-layout.js is generated on someone's machine and
+## committed. That makes "edited the layout and forgot to re-bake" a silent
+## failure: the room stays consistent with the old map and simply does not
+## change, which reads as "my edit did nothing" rather than as an error.
+##
+## `wallsheet.py --check` regenerates the map in memory and compares it with
+## the committed one. It draws nothing, so it needs no Pillow, no fonts and no
+## pinned image library — which is why this job installs nothing at all and
+## cannot start failing for reasons unrelated to the repository.
+name: check
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  layout:
+    name: wall layout is baked
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: wallsheet --check
+        run: python3 tools/wallsheet.py --check
+
+  scripts:
+    name: shipped JS parses
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      # node is already on the runner, and is used here only as a parser.
+      - name: jscheck
+        run: python3 tools/jscheck.py
