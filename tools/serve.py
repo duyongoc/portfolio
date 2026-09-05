@@ -2,7 +2,7 @@
 """Serve the site locally, and re-bake the wall the moment the layout is saved.
 
 The pages need a server anyway — they are ES modules — so the watching lives
-here rather than in a second terminal. Editing wall-layout.txt and saving it is
+here rather than in a second terminal. Editing build_layout.txt and saving it is
 the whole gesture: this notices, runs wallsheet.py, and reloads the page that
 is already open.
 
@@ -10,18 +10,26 @@ It exists because the walls cannot be read from the .txt at runtime. Their
 covers are pixels in a baked JPEG, so a reorder is a re-render, and the step
 between saving and seeing is exactly the step that gets forgotten. Nothing
 here ships: the reload script is injected into the response, never written into
-demos/room-3d.html, and the deployed site has no idea this file exists.
+room-3d.html, and the deployed site has no idea this file exists.
 
     python3 tools/serve.py
 """
 import functools, http.server, os, subprocess, sys, threading, time
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-BAKE = [sys.executable, os.path.join(ROOT, 'tools', 'wallsheet.py')]
+# Two steps, in this order and not the other one: links.py writes
+# portfolio-data.js, and wallsheet.py hashes that file into the ?v= both pages
+# load it at. Baking the wall first would stamp the version of the data that is
+# about to be replaced, and the browser would be told nothing had changed.
+BAKE = [[sys.executable, os.path.join(ROOT, 'tools', t)]
+        for t in ('links.py', 'wallsheet.py')]
 
 # What a bake is made of. portfolio-data.js is in here because a new project,
-# or a retitled one, changes the sheets as surely as reordering a zone does.
-WATCH = ['wall-layout.txt', 'demos/portfolio-data.js', 'demos/portfolio-shared.js']
+# or a retitled one, changes the sheets as surely as reordering a zone does —
+# and because links.py writes it, which is what makes a build_links.txt edit
+# reload.
+WATCH = ['build_layout.txt', 'build_links.txt',
+         'demos/portfolio-data.js', 'demos/portfolio-shared.js']
 
 _lock = threading.Condition()
 _gen = 0                                # bumped once per successful bake
@@ -67,8 +75,8 @@ def watch():
         if now == last:
             continue
         time.sleep(0.15)                # let an editor finish writing
-        print('\n--- wall-layout.txt changed, baking ---', flush=True)
-        ok = subprocess.run(BAKE, cwd=ROOT).returncode == 0
+        print('\n--- a watched file changed, baking ---', flush=True)
+        ok = all(subprocess.run(step, cwd=ROOT).returncode == 0 for step in BAKE)
         last = stamp()
         if not ok:
             print('--- bake failed, the room keeps the last good sheets ---', flush=True)
@@ -126,7 +134,7 @@ def main():
     a = sys.argv[1:]
     port = int(next((x for x in a if x.isdigit()), 8000))
     bind = a[a.index('--bind') + 1] if '--bind' in a else '127.0.0.1'
-    if subprocess.run(BAKE, cwd=ROOT).returncode != 0:
+    if not all(subprocess.run(step, cwd=ROOT).returncode == 0 for step in BAKE):
         return 1                        # start from a room that is actually correct
     threading.Thread(target=watch, daemon=True).start()
     srv = http.server.ThreadingHTTPServer(

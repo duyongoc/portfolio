@@ -13,7 +13,7 @@
    drawn from here, in both pages and in tools/wallsheet.py — which reads this
    block out of this file rather than restating the colours in Python.
 
-   `section` is the heading a category is known by in wall-layout.txt (`auto
+   `section` is the heading a category is known by in build_layout.txt (`auto
    section=RESKIN`) and on the baked covers. It used to be a second field on
    every project in portfolio-data.js, kept in step with `cat` by hand across
    all 33 of them — measured, a perfect 1:1 map, so it carried no information
@@ -50,9 +50,22 @@ const JOBS=[
   {yr:'2016 — 2019',t:'Cao Thang Technical College',co:'Education'}
 ];
 
+/* A build can have no links at all: build_links.txt lets every slot be empty,
+   which is what a build under NDA with no video yet looks like. So playOf returns
+   undefined there, and everything that takes its result takes undefined —
+   rather than each caller testing g.links.length before it dares ask. */
 const playOf=g=>g.links.find(l=>l.kind==='WebGL')||g.links.find(l=>l.kind==='Android')||g.links[0];
-const actionOf=p=>p.kind==='WebGL'?'Play in browser':p.kind==='Android'?'Google Play':'Watch demo';
-const shortOf=p=>p.kind==='WebGL'?'Play':p.kind==='Android'?'Store':'Watch';
+/* One case per kind, no catch-all. The tail used to be a bare else, so a
+   Source link reaching either of these — which it does the moment a build's
+   only link is its repository, one edit to build_links.txt away — was labelled
+   "Watch demo" on a button that opens GitHub. Nothing pointed at it: playOf
+   prefers WebGL then Android, and all three builds with a Source link happen
+   to have a WebGL build too, so the branch was unreachable by accident rather
+   than by design. */
+const actionOf=p=>!p?'No public link yet':p.kind==='WebGL'?'Play in browser'
+  :p.kind==='Android'?'Google Play':p.kind==='Source'?'View source':'Watch demo';
+const shortOf=p=>!p?'':p.kind==='WebGL'?'Play'
+  :p.kind==='Android'?'Store':p.kind==='Source'?'Source':'Watch';
 const feat=()=>FEATURED.map(t=>GAMES.find(g=>g.title===t)).filter(Boolean);
 const countOf=k=>k==='all'?GAMES.length:GAMES.filter(g=>g.cat===k).length;
 
@@ -81,13 +94,28 @@ const externalNote='<span class="sr"> (opens externally)</span>';
 const img=g=>`<img loading="lazy" decoding="async" alt="" src="${esc(thumb(g.info))}"
   onerror="this.onerror=null;this.src='${esc(thumb(g.intro))}'">`;
 
-/* The row of links under a card: the one worth pressing, then up to two more.
+/* The attributes of an element that IS a link, or nothing at all when the
+   build has none. Used where a whole card is the anchor: an <a> with no href
+   is still an <a>, so the card keeps its styling, but it is not focusable, not
+   clickable and announces nothing — which is the truth about a build with no
+   link. The alternative was seven ternaries picking between two tag names. */
+const hrefAttr=l=>l?` href="${esc(l.url)}" target="_blank" rel="noopener"`:'';
+
+/* The row of links under a card: the one worth pressing, then the rest.
    Both pages render this identically and both derive it the same way, so the
    derivation lives here even though the cards around it do not — their
    wrappers really are different shapes, and folding those together would be
-   inventing a template language to save four lines. */
+   inventing a template language to save four lines.
+
+   It used to stop after two more, which was a cap from when the links were
+   hand-written in portfolio-data.js and nothing was going to add a fourth. It
+   did have something to hide: the netcode builds carry a second Youtube, and
+   that link had been in the data, unreachable from either page, the whole
+   time. build_links.txt is edited to be shown, so everything in it is shown,
+   and `.lk` already wraps. */
 const linkRow=g=>{
-  const p=playOf(g), rest=g.links.filter(l=>l!==p).slice(0,2);
+  if(!g.links.length) return '';
+  const p=playOf(g), rest=g.links.filter(l=>l!==p);
   return `<div class="lk"><a href="${esc(p.url)}" target="_blank" rel="noopener">${esc(shortOf(p))} ↗${externalNote}</a>`+
     rest.map(l=>`<a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label||l.kind)}${externalNote}</a>`).join('')+
     `</div>`;

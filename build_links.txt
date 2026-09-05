@@ -1,0 +1,228 @@
+# Which links each build carries. Edit this file, then:
+#
+#     python3 tools/links.py       (then tools/wallsheet.py, for the ?v=)
+#
+# One block per build, headed by its id — the same ids build_layout.txt uses.
+# Under it, one indented line per slot:
+#
+#     WebGL    https://...            the link
+#     WebGL    -                      no link of that kind
+#     Youtube  https://... | Watch 2  an explicit label for the button
+#
+# Every block carries all four slots, in this order, so a glance down the file
+# says which build is still missing a store page. A label defaults to the kind
+# and is only worth writing when a build has two links of the same kind — the
+# second Youtube on the netcode builds is the whole reason labels exist.
+#
+# Extra lines of a kind are allowed and are kept in the order written; the four
+# slots are the template, not a limit. The kinds themselves are not open: they
+# are WebGL, Android, Youtube and Source, and each one is a case in the button
+# helpers in demos/portfolio-shared.js.
+#
+# A build with every slot empty is allowed — its card renders with no button
+# row. A build with no block at all is a build nobody has got to yet: the tool
+# appends an empty one for it rather than guessing.
+#
+# The order of the links here is the order the buttons appear in. The one that
+# gets the primary treatment is not: that is WebGL, else Android, else the
+# first link there is (playOf, in demos/portfolio-shared.js).
+
+kinder-easter
+  WebGL    -
+  Android  -
+  Youtube  https://www.youtube.com/watch?v=D22sO9HlWPY
+  Source   -
+
+aaf
+  WebGL    -
+  Android  -
+  Youtube  https://www.youtube.com/watch?v=SCXutaYWQdY
+  Source   -
+
+ar-demo
+  WebGL    -
+  Android  https://play.google.com/store/apps/details?id=duy.ongoc.game3d_ar_survival
+  Youtube  https://youtu.be/vSZhjpZjlmo
+  Source   -
+
+netcode-battle
+  WebGL    https://webunity.github.io/webgl_netcode_battle/
+  Android  https://play.google.com/store/apps/details?id=com.duyongoc.netcode.battle
+  Youtube  https://www.youtube.com/watch?v=yqIDxTWt-Lk&list=PLClQCm2rPi2VSzjd5MXOX40sx4GdrVJHk&index=36&ab_channel=duyongoc
+  Youtube  https://www.youtube.com/watch?v=60D5mnJLUG8&list=PLClQCm2rPi2VSzjd5MXOX40sx4GdrVJHk&index=37&ab_channel=duyongoc | Youtube 2
+  Source   -
+
+netcode-shooter2d
+  WebGL    https://webunity.github.io/webgl_netcode_shooter2d/
+  Android  https://play.google.com/store/apps/details?id=com.duyongoc.netcode.shooter2d
+  Youtube  https://www.youtube.com/watch?v=_tXlH7wFrgY&list=PLClQCm2rPi2VSzjd5MXOX40sx4GdrVJHk&index=38&ab_channel=duyongoc
+  Youtube  https://www.youtube.com/watch?v=ZWL3WxXeSFg&list=PLClQCm2rPi2VSzjd5MXOX40sx4GdrVJHk&index=39&ab_channel=duyongoc | Youtube 2
+  Source   -
+
+netcode-demo
+  WebGL    https://webunity.github.io/webgl_netcode_warrior/
+  Android  https://play.google.com/store/apps/details?id=com.duyongoc.netcode.warrior
+  Youtube  https://www.youtube.com/watch?v=gSs0tuP4IL0&list=PLClQCm2rPi2VSzjd5MXOX40sx4GdrVJHk&index=40&ab_channel=duyongoc
+  Source   -
+
+color-shoot-2d
+  WebGL    https://webunity.github.io/webgl_game2d_color_shoot
+  Android  https://play.google.com/store/apps/details?id=duy.ongoc.color_shooter
+  Youtube  https://www.youtube.com/watch?v=KEey_5kXaEY
+  Source   https://github.com/duyongoc/color_shoot2d
+
+math-game-2d
+  WebGL    https://webunity.github.io/webgl_game2d_math
+  Android  https://play.google.com/store/apps/details?id=duy.ongoc.math
+  Youtube  https://www.youtube.com/watch?v=OAwvB_e-t4g
+  Source   https://github.com/duyongoc/MathGame2d
+
+find-monkey-2d
+  WebGL    https://webunity.github.io/webgl_game2d_find_monkey
+  Android  https://play.google.com/store/apps/details?id=duy.ongoc.find_monkey
+  Youtube  https://www.youtube.com/watch?v=TnbUFuuK2Dw
+  Source   https://github.com/duyongoc/game2d_find_monkey
+
+polygon-battle
+  WebGL    https://webunity.github.io/webgl_POLYGON_Battle
+  Android  https://play.google.com/store/apps/details?id=com.duyongoc.polygon.battle
+  Youtube  https://www.youtube.com/watch?v=3GD8uI5WVa4&list=PLClQCm2rPi2VSzjd5MXOX40sx4GdrVJHk&index=34&ab_channel=duyongoc
+  Source   -
+
+polygon-turnbase
+  WebGL    https://webunity.github.io/webgl_POLYGON_Turnbase
+  Android  https://play.google.com/store/apps/details?id=com.duyongoc.polygon.turnbase
+  Youtube  https://youtu.be/i3wcBk7k2WA
+  Source   -
+
+polygon-adventure
+  WebGL    https://webunity.github.io/webgl_POLYGON_Adventure
+  Android  https://play.google.com/store/apps/details?id=com.duyongoc.polygon.adventure
+  Youtube  https://youtu.be/P06ZWVtaAYM
+  Source   -
+
+game-runner-3d
+  WebGL    https://webunity.github.io/webgl_game3d_runner
+  Android  -
+  Youtube  https://www.youtube.com/watch?v=Yp9mzhLPKZs
+  Source   -
+
+game-shooter-2d
+  WebGL    https://webunity.github.io/webgl_game2d_shooter
+  Android  -
+  Youtube  https://www.youtube.com/watch?v=NOe_dEmwtL4
+  Source   -
+
+joust-them-all
+  WebGL    https://webunity.github.io/webgl_game2d_joust_them_all
+  Android  -
+  Youtube  https://www.youtube.com/watch?v=UJL4NFY6-y8
+  Source   -
+
+cardgame-battle-2d
+  WebGL    https://webunity.github.io/webgl_game2d_battle_cardgame/
+  Android  -
+  Youtube  https://youtu.be/HKlnohqEyHY
+  Source   -
+
+battle-board-2d
+  WebGL    https://webunity.github.io/webgl_game2d_battle_board/
+  Android  -
+  Youtube  https://youtu.be/xpw0TeMa0Z8
+  Source   -
+
+demo-dental-3d
+  WebGL    https://webunity.github.io/webgl_game3d_demo_teeth/
+  Android  -
+  Youtube  https://youtu.be/GCyKBid3mlg
+  Source   -
+
+subway-clone-3d
+  WebGL    https://webunity.github.io/webgl_game3d_subway_clone/
+  Android  -
+  Youtube  https://youtu.be/RL12SWwfVa4
+  Source   -
+
+topdown-sword
+  WebGL    https://webunity.github.io/webgl_game3d_topdown_sword/
+  Android  -
+  Youtube  -
+  Source   -
+
+game3d-racing
+  WebGL    https://webunity.github.io/webgl_game3d_racing/
+  Android  -
+  Youtube  -
+  Source   -
+
+survivor-io-clone-2d
+  WebGL    https://webunity.github.io/webgl_game2d_survivorIO_clone/
+  Android  -
+  Youtube  https://youtu.be/pv1M2DiOgu8
+  Source   -
+
+beat-em-up
+  WebGL    https://webunity.github.io/webgl_game2d5_beat_them_up/
+  Android  -
+  Youtube  https://youtu.be/0wvAsGU9ahw
+  Source   -
+
+beat-em-up-2
+  WebGL    https://webunity.github.io/webgl_game2d5_beat_them_up_2/
+  Android  -
+  Youtube  https://youtu.be/vxTd7zfsYsM
+  Source   -
+
+game2d-black-ops
+  WebGL    https://webunity.github.io/webgl_game2d_metal_black_ops/
+  Android  -
+  Youtube  -
+  Source   -
+
+archer-2d
+  WebGL    https://webunity.github.io/webgl_game2d_archer
+  Android  -
+  Youtube  https://www.youtube.com/watch?v=-sHI-cw3P8M
+  Source   -
+
+game-nightmares
+  WebGL    https://webunity.github.io/webgl_game3d_nightmares
+  Android  -
+  Youtube  https://www.youtube.com/watch?v=0LMDo26JBc4
+  Source   -
+
+city-zombie
+  WebGL    https://webunity.github.io/webgl_game3d_city_zombie
+  Android  -
+  Youtube  https://www.youtube.com/watch?v=XLvpvH60OD0
+  Source   -
+
+topdown-shooter
+  WebGL    https://webunity.github.io/webgl_game3d_topdown_shooter
+  Android  -
+  Youtube  https://www.youtube.com/watch?v=TB9RAgZCdWI
+  Source   -
+
+game-2d5-dungeon
+  WebGL    https://webunity.github.io/webgl_game2d5_dungeon
+  Android  -
+  Youtube  https://www.youtube.com/watch?v=GzRezjgOWBk
+  Source   -
+
+shoot-ball-3d
+  WebGL    https://webunity.github.io/webgl_game3d_shoot_ball
+  Android  -
+  Youtube  https://www.youtube.com/watch?v=dcVBPY6tN5E
+  Source   -
+
+endless-car-3d
+  WebGL    https://webunity.github.io/webgl_game3d_endless_car
+  Android  -
+  Youtube  https://www.youtube.com/watch?v=zOSg5cwtlLw
+  Source   -
+
+jump-2d
+  WebGL    https://webunity.github.io/webgl_game2d_jump
+  Android  -
+  Youtube  https://www.youtube.com/watch?v=B38FsxEjxVM
+  Source   -

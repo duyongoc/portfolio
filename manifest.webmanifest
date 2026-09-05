@@ -2,7 +2,7 @@
   "name": "O Ngoc Duy — 3D Portfolio",
   "short_name": "Duy Portfolio",
   "description": "An interactive 3D portfolio room for Unity and Unreal game development work.",
-  "start_url": "./demos/room-3d.html",
+  "start_url": "./room-3d.html",
   "scope": "./",
   "display": "fullscreen",
   "display_override": ["fullscreen", "standalone"],

@@ -22,7 +22,7 @@ import os, re, subprocess, sys, tempfile
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from portfolio import ROOT
 
-PAGES = ['demos/room-3d.html', 'demos/portfolio-2d.html']
+PAGES = ['room-3d.html', 'demos/portfolio-2d.html']
 # loaded with <script src=>, so they share one top-level scope with the pages
 PLAIN = ['demos/portfolio-data.js', 'demos/portfolio-shared.js', 'demos/wall-layout.js']
 # imported, so each has a scope of its own and can declare whatever it likes

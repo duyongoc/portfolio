@@ -27,7 +27,7 @@
    `windLean` is a `let` reassigned every frame, so it is a tick argument
    rather than a binding.
 
-   The room is 7,700 lines in one file and that is defended in PROJECT.md as
+   The room is 7,700 lines in one file and that is defended in docs/PROJECT.md as
    "no bundler". The defence is about bundling, not about files: this page has
    run `<script type="module">` for as long as it has used three.js, and a
    static host serves an import graph without a build step. So the question

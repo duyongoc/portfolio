@@ -15,24 +15,24 @@
 <meta property="og:site_name" content="O Ngoc Duy">
 <meta property="og:title" content="O Ngoc Duy — Unity Game Developer">
 <meta property="og:description" content="A cyberpunk room you look around. 33 shipped titles, a whole day outside the glass every ten minutes.">
-<meta property="og:url" content="https://duyongoc.github.io/profile/demos/room-3d.html">
-<meta property="og:image" content="https://duyongoc.github.io/profile/demos/models/og.jpg">
+<meta property="og:url" content="https://duyongoc.github.io/room-3d.html">
+<meta property="og:image" content="https://duyongoc.github.io/demos/models/og.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="A cyberpunk studio at night: three monitors, a wall of game covers, a neon skyline through the glass.">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#04060c">
-<link rel="manifest" href="../manifest.webmanifest">
+<link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2304060c'/%3E%3Ccircle cx='16' cy='16' r='7' fill='none' stroke='%235ad0ff' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.5' fill='%23ff5aa0'/%3E%3C/svg%3E">
 <!-- ?v= on both: see MODEL_V below. It has to be here too or the preload is a
      different URL from the one the loader asks for, and the warm copy is
      fetched, parked and never read. -->
-<link rel="preload" as="fetch" href="models/desk.glb?v=2" crossorigin>
+<link rel="preload" as="fetch" href="demos/models/desk.glb?v=2" crossorigin>
 <!-- three's TextureLoader sets crossOrigin="anonymous", so a preload without it
      is a different request in the browser's eyes: it does not match, the warm
      copy goes unused, and the atlas is fetched twice. Measured: two requests
      for cybercity.png where there should be one. -->
-<link rel="preload" as="image" href="models/cybercity.png?v=2" crossorigin>
+<link rel="preload" as="image" href="demos/models/cybercity.png?v=2" crossorigin>
 <style>
 :root{
   --paper:#eaf2ff; --acc:#ff5aa0; --cy:#5ad0ff;
@@ -547,7 +547,7 @@ html.touch #hudX:active{background:var(--hc);color:#04121c}
 @media (max-height:895px){#hud .hlist{--vrows:2}}
 @media (max-height:718px){#hud .hlist{--vrows:1}}
 
-#hud .ha{display:flex;gap:9px;padding:0 15px 15px}
+#hud .ha{display:flex;flex-wrap:wrap;gap:9px;padding:0 15px 15px}
 /* Play and Watch used to share the row evenly, which gave a build you can run
    in the browser exactly as much weight as a video of it. */
 #hud .ha a{flex:1 1 0;min-width:0;text-align:center;text-decoration:none;padding:13px 10px;
@@ -557,6 +557,20 @@ html.touch #hudX:active{background:var(--hc);color:#04121c}
 #hud .ha a:hover{background:var(--hc);border-color:var(--hc);color:#04121c}
 #hud .ha a.pri{flex:1.45 1 0;background:var(--hc);border-color:var(--hc);color:#04121c}
 #hud .ha a.pri:hover{filter:brightness(1.14)}
+/* Four buttons, two to a row. The readout shows every link a build has now,
+   and four across the narrowest HUD is 75px each — under "GOOGLE PLAY", which
+   is the longest label there is and is already at its limit at three.
+
+   Two ways not to do it. A basis of 0 never wraps, because zero always fits:
+   the buttons squeeze instead. A fixed basis big enough to force the fourth
+   down also pushes three over the narrowest HUD, which would break the case
+   that has always worked in order to fix the one that never happened. So the
+   rule is scoped to a row that actually holds four or more, and one, two or
+   three buttons lay out exactly as they did before. 5px rather than 4.5 is a
+   pixel of slack against a fractional content width rounding the wrong way and
+   wrapping every button onto a line of its own. */
+#hud .ha a:first-child:nth-last-child(n+4),
+#hud .ha a:first-child:nth-last-child(n+4)~a{flex-basis:calc(50% - 5px)}
 
 /* the leader line and the target bracket, drawn in viewport pixels so they
    can be laid straight over the projected corners of the hovered tile */
@@ -942,7 +956,7 @@ html.touch #hudX:active{background:var(--hc);color:#04121c}
 
   <button id="idxBtn" aria-label="Open room content navigation" aria-expanded="false" aria-controls="idx">☰ Contents</button>
   <div id="idx" aria-hidden="true" inert></div>
-  <a id="gridBtn" href="portfolio-2d.html">▦ View 2D</a>
+  <a id="gridBtn" href="demos/portfolio-2d.html">▦ View 2D</a>
 
   <!-- Redundant with the archive panel by design: a mouse affordance, not a
        route to information. aria-hidden and out of the tab order, so the
@@ -995,10 +1009,10 @@ html.touch #hudX:active{background:var(--hc);color:#04121c}
   <div class="boot-k">SYS // PERSONAL COMMAND DECK</div>
   <b>Initializing room</b><span id="loadStatus">Geometry · textures · project archive</span>
   <div class="boot-bar"><i></i></div>
-  <a href="portfolio-2d.html">Open lightweight archive</a>
+  <a href="demos/portfolio-2d.html">Open lightweight archive</a>
 </div></div>
 <div id="nogl"><div><p>This browser could not start WebGL.</p>
-  <p style="margin-top:12px"><a href="portfolio-2d.html">→ Open the 2D version instead</a></p></div></div>
+  <p style="margin-top:12px"><a href="demos/portfolio-2d.html">→ Open the 2D version instead</a></p></div></div>
 <div id="qa" role="dialog" aria-modal="true" aria-labelledby="qaTitle"></div>
 <div id="dbg" role="dialog" aria-label="Room debug readout" aria-hidden="true">
   <h3>Debug<s></s><span id="dbgFps">--</span> fps</h3>
@@ -1016,13 +1030,13 @@ html.touch #hudX:active{background:var(--hc);color:#04121c}
   </div>
 </div>
 
-<script src="portfolio-data.js?v=02d81107"></script>
-<script src="portfolio-shared.js?v=84e55704"></script>
-<!-- Generated by tools/wallsheet.py from wall-layout.txt, in the same
+<script src="demos/portfolio-data.js?v=c1cb3ef6"></script>
+<script src="demos/portfolio-shared.js?v=3028096f"></script>
+<!-- Generated by tools/wallsheet.py from build_layout.txt, in the same
      run that bakes models/wall*.jpg. A plain script rather than a fetch:
      the module below builds its walls synchronously, and an await there
      would put a round trip on the boot path for 400 bytes. -->
-<script src="wall-layout.js?v=11b9bf2f"></script>
+<script src="demos/wall-layout.js?v=3381f0d6"></script>
 <script>
 addEventListener('error',e=>{
   const l=document.getElementById('load');
@@ -1033,13 +1047,13 @@ addEventListener('error',e=>{
 });
 </script>
 <script type="module">
-import * as T from './lib/three.module.min.js';
-import {GLTFLoader} from './lib/GLTFLoader.js';
-import {toCreasedNormals} from './lib/BufferGeometryUtils.js';
+import * as T from './demos/lib/three.module.min.js';
+import {GLTFLoader} from './demos/lib/GLTFLoader.js';
+import {toCreasedNormals} from './demos/lib/BufferGeometryUtils.js';
 /* The room's own pieces. See demos/room/sound.js for why that one is a
    file and what a further split has to be able to say for itself. */
-import {clamp,lerp} from './room/math.js';
-import {createSound} from './room/sound.js';
+import {clamp,lerp} from './demos/room/math.js';
+import {createSound} from './demos/room/sound.js';
 
 const V=(x,y,z)=>new T.Vector3(x,y,z);
 const MOBILE_GPU=matchMedia('(pointer:coarse)').matches||Math.min(innerWidth,innerHeight)<600;
@@ -1158,8 +1172,8 @@ const gltf=new GLTFLoader(gltfMgr), texL=new T.TextureLoader();
    The atlas name inside each .glb stays unversioned and still matches the null
    image the manager swaps in below — that path never reaches the network. */
 const MODEL_V='?v=4';
-const ATLAS={cybercity:texL.load('models/cybercity.png'+MODEL_V),
-             scifi:texL.load('models/scifi.png'+MODEL_V)};
+const ATLAS={cybercity:texL.load('demos/models/cybercity.png'+MODEL_V),
+             scifi:texL.load('demos/models/scifi.png'+MODEL_V)};
 for(const k in ATLAS){
   /* These are tightly packed Synty palette atlases, not photographs. Mipmaps
      and anisotropic filtering cross the unpadded UV islands and pull rainbow
@@ -1177,7 +1191,7 @@ function prop(name,o){
   g.position.set(o.x,o.y||0,o.z); g.rotation.y=o.ry||0;
   (o.parent||scene).add(g);
   pending++;
-  gltf.load('models/'+name+'.glb'+MODEL_V,res=>{
+  gltf.load('demos/models/'+name+'.glb'+MODEL_V,res=>{
     const root=res.scene, m=atlas(o.tex||'cybercity');
     root.traverse(n2=>{ if(n2.isMesh){
       n2.material=new T.MeshLambertMaterial({map:m});
@@ -3285,7 +3299,7 @@ const gTube=listFor('holo',games.filter(g=>has(g,'Youtube')));
    A layout edited without re-baking leaves both on the old order, which is
    visibly nothing happening rather than invisibly the wrong game.
 
-   Edit wall-layout.txt. */
+   Edit build_layout.txt. */
 const zonesIn=(typeof WALL_ZONES!=='undefined'?WALL_ZONES:{});
 /* ?v= is a content hash of the layout, the fields the tiles are drawn from and
    the thumbnails themselves. three.js pulls the sheet through the texture
@@ -3316,7 +3330,7 @@ function zoneOf(id){
      by hand, which is what used to make "change a grid and reshape its plane"
      two steps with nothing but #qa=1 between them if you did only the first. */
   return {items,cols:z.cols,rows:z.rows,aspect:z.aspect,
-          src:'models/'+z.sheet+'.jpg?v='+sheetV};
+          src:'demos/models/'+z.sheet+'.jpg?v='+sheetV};
 }
 /* A zone's plane: the width is a room-layout decision, the height follows.
    The fallback is only reached when wall-layout.js did not load at all, and
@@ -3397,7 +3411,7 @@ monitor({id:'monR',x:.3,z:-25.8,ry:-.42,w:8,h:5,
   const PW=24, PX=-18, PY=26.5;
   const Z=zoneOf('wall');
   const PH=planeH(Z,PW,11);
-  const wallTex=texL.load(Z?Z.src:'models/wall.jpg');
+  const wallTex=texL.load(Z?Z.src:'demos/models/wall.jpg');
   wallTex.colorSpace=T.SRGBColorSpace;sharpenTexture(wallTex);
   const sc=new T.Mesh(new T.PlaneGeometry(PW,PH),screenMat(wallTex));
   sc.position.set(PX,PY,BZ+.82); scene.add(sc);
@@ -3643,7 +3657,7 @@ const cornerLeds=[];
   deskRight.add(g);
   box(g,5.3,.51,2.88,0,0,.6,mMetal);
   const b=box(g,5.21,3.26,.47,0,.42,-.19,mDark); b.rotation.x=-.30;
-  const badge=texL.load('models/badge.jpg?v=2');
+  const badge=texL.load('demos/models/badge.jpg?v=2');
   badge.colorSpace=T.SRGBColorSpace;sharpenTexture(badge);
   const sc=new T.Mesh(new T.PlaneGeometry(4.59,2.61),screenMat(badge));
   sc.position.set(0,1.95,.43); sc.rotation.x=-.30; g.add(sc);
@@ -4016,7 +4030,7 @@ function chairPlush(parent){
                        tag:'plush · holding the chair',
                        col:'#bcd9ee',g,sc,w:3,h:3,noPanel:true,volume:true});
   pending++;
-  gltf.load('models/chairplush.glb'+MODEL_V,res=>{
+  gltf.load('demos/models/chairplush.glb'+MODEL_V,res=>{
     const src=res.scene; src.updateMatrixWorld(true);
     const geos=[];
     src.traverse(n=>{ if(n.isMesh){
@@ -4287,7 +4301,7 @@ function sofaCat(){
              col:'#ffbf7a',g,sc,w:6,h:4,noPanel:true,volume:true});
 
   pending++;
-  gltf.load('models/sofacat.glb'+MODEL_V,res=>{
+  gltf.load('demos/models/sofacat.glb'+MODEL_V,res=>{
     const src=res.scene; src.updateMatrixWorld(true);
     const meshes=[]; src.traverse(n=>{ if(n.isMesh) meshes.push(n) });
     if(!meshes.length){ if(--pending===0) modelsIn=true; return }
@@ -4951,7 +4965,7 @@ const posterGlow=[];
      link, the prev/next ring, Escape and the focus trap that come with being
      in PANELS. A bespoke hover-scroll list would have had none of that. */
   /* What is in the bin is a decision, not a category, so it is a named list in
-     wall-layout.txt under `trash`. The fallback is the list it held before the
+     build_layout.txt under `trash`. The fallback is the list it held before the
      layout file existed. */
   const gCasual=listFor('casual',['Archer 2d','Jump 2d','Math Game 2d',
     'Find Monkey 2d','Game Shooter 2d','Game2d Black Ops']
@@ -5029,8 +5043,8 @@ const posterGlow=[];
            over, under a card that already says "6 playable in browser", and
            the glyph beside it said it a third time. */
         list:gCasual.map(x=>{const l=linkOf(x,'WebGL'), c=clipOf[x.title];
-          return {u:l.url,img:thumb(x.info),t:x.title,
-                  clip:c?'clips/'+c+'.mp4':null}}),
+          return {u:l?l.url:null,img:thumb(x.info),t:x.title,
+                  clip:c?'demos/clips/'+c+'.mp4':null}}),
         acts:[]}});
     /* ── what is actually in the bin ──────────────────────────────
        Screenshots of the six, stuffed in and spilling out. Quads rather than
@@ -6283,25 +6297,43 @@ function hudApproaching(x,y){
    build is under NDA — which their own descriptions already say. */
 const availOf=g=>{
   const kinds=new Set(g.links.map(l=>l.kind));
+  /* No links at all is a state build_links.txt can express, and the line below would
+     otherwise reach the NDA fallback and claim a video that does not exist. */
+  if(!kinds.size) return 'No public link yet';
+  /* Youtube is named rather than left as the else. It used to be the fallback,
+     so a build whose only link was its repository read "Video only · build
+     under NDA · source open" — no video, no NDA, and the suffix arguing with
+     the head of its own sentence. */
   const how=kinds.has('WebGL')?'Playable in browser'
     :kinds.has('Android')?'Android build'
-    :'Video only · build under NDA';
-  return kinds.has('Source')?how+' · source open':how;
+    :kinds.has('Youtube')?'Video only · build under NDA'
+    :'Source only';
+  return kinds.has('Source')&&kinds.size>1?how+' · source open':how;
 };
+/* What a link's button says. The kinds are closed — the four in build_links.txt, and
+   tools/links.py refuses a fifth — so this is a table rather than a chain of
+   guesses. A label is only in the data when it differs from the kind, which is
+   how the netcode builds' second Youtube names itself. */
+const ACT_OF={WebGL:'\u25b6 Play',Android:'Google Play',Youtube:'Watch \u2197',Source:'Source \u2197'};
+/* Raw text, not markup: hudActs escapes every act's label itself, the way
+   it escapes the plain ones the other cards hand it. */
+const actOfLink=l=>l.label?l.label+' \u2197':ACT_OF[l.kind]||l.kind;
 function gameCard(g,s,cell){
-  const acts=[], p=playOf(g);
-  if(p&&p.kind!=='Youtube') acts.push({u:p.url,t:p.kind==='WebGL'?'\u25b6 Play':'Google Play',pri:true});
-  const yt=g.links.find(l=>l.kind==='Youtube');
-  if(yt) acts.push({u:yt.url,t:'Watch \u2197',pri:!acts.length});
-  const src=g.links.find(l=>l.kind==='Source');
-  if(src&&acts.length<2) acts.push({u:src.url,t:'Source \u2197',pri:!acts.length});
+  const p=playOf(g);
+  /* Every link the build has, playable one first, in the order build_links.txt
+     lists the rest. This used to pick three kinds by hand and then drop the
+     third unless one of the first two had missed — so a build with a store
+     page, a video and open source showed two of them and no sign that a third
+     existed. The row wraps now, so there is nothing left to ration. */
+  const acts=(p?[p,...g.links.filter(l=>l!==p)]:[])
+    .map((l,i)=>({u:l.url,t:actOfLink(l),pri:!i}));
   const cat=(typeof CAT!=='undefined'&&CAT[g.cat])?CAT[g.cat]:null;
   const clip=clipOf[g.title];
   return {key:'g:'+g.title,accent:cat?cat.c:'#5ad0ff',eyebrow:cat?cat.long:'Build',
     count:String(cell+1).padStart(2,'0')+' / '+String(s.wallItems.length).padStart(2,'0'),
     title:g.title,sub:[availOf(g),g.wip?'Work in progress':''].filter(Boolean).join(' \u00b7 '),
     desc:g.desc||'',img:thumb(g.info),alt:thumb(g.intro),ar:'16/9',
-    clip:clip?'clips/'+clip+'.mp4':null,acts};
+    clip:clip?'demos/clips/'+clip+'.mp4':null,acts};
 }
 function cardFor(hit){
   if(!hit) return null;
@@ -6360,7 +6392,7 @@ function hudShow(card,s,cell){
   HUD.classList.toggle('listing',!!list);
   hudListStop();
   if(list){
-    hudList.innerHTML=list.map(r=>'<a href="'+esc(r.u)+'" target="_blank" rel="noopener"'
+    hudList.innerHTML=list.map(r=>'<a'+(r.u?' href="'+esc(r.u)+'" target="_blank" rel="noopener"':'')
       +(HUD_HOVER?' tabindex="-1"':'')+'>'
       +'<video muted loop playsinline preload="none" disablepictureinpicture'
       +' poster="'+esc(r.img)+'"'+(r.clip?' src="'+esc(r.clip)+'"':'')+'></video>'
@@ -6820,8 +6852,8 @@ function spotlightBuild(g){
 function caseHTML(items){
   return '<div class="cs">'+items.map(g=>{
     const p=playOf(g);
-    return `<article class="cf" data-g="${esc(g.title)}"><a class="cfp" href="${esc(p.url)}" target="_blank" rel="noopener">${img(g)}${externalNote}</a><div class="bd">
-      <h4><a class="cft" href="${esc(p.url)}" target="_blank" rel="noopener">${esc(g.title)}${externalNote}</a></h4><em>${esc(CAT[g.cat].n)}${g.tags&&g.tags[0]?' · '+esc(g.tags[0]):''}</em>
+    return `<article class="cf" data-g="${esc(g.title)}"><a class="cfp"${hrefAttr(p)}>${img(g)}${p?externalNote:''}</a><div class="bd">
+      <h4><a class="cft"${hrefAttr(p)}>${esc(g.title)}${p?externalNote:''}</a></h4><em>${esc(CAT[g.cat].n)}${g.tags&&g.tags[0]?' · '+esc(g.tags[0]):''}</em>
       <p>${esc(g.desc||g.sub||'')}</p>${linkRow(g)}</div></article>`;
   }).join('')+'</div>';
 }
@@ -6830,16 +6862,16 @@ function bodyFor(s){
   if(s.kind==='grid'){
     const grid=`<div class="gr pg pg${s.cols}" style="--cols:${s.cols}">`+
       s.items.map(g=>{const l=linkOf(g,s.lk);
-        return `<a class="tile" data-g="${esc(g.title)}" href="${esc(l.url)}" target="_blank" rel="noopener">${img(g)}
-          <b>${esc(g.title)}</b><i>${l.kind==='WebGL'?'▶ play now':esc(l.kind)}</i>${externalNote}</a>`}).join('')+'</div>';
+        return `<a class="tile" data-g="${esc(g.title)}"${hrefAttr(l)}>${img(g)}
+          <b>${esc(g.title)}</b><i>${!l?'no public link yet':l.kind==='WebGL'?'▶ play now':esc(l.kind)}</i>${l?externalNote:''}</a>`}).join('')+'</div>';
     if(!s.caseItems||!s.caseItems.length) return grid;
     return sectionHead('Case files',s.caseItems.length+' written up')+caseHTML(s.caseItems)+
            sectionHead('Everything else','all '+s.items.length+' builds')+grid;
   }
   if(s.kind==='list') return `<div class="gr pl">`+
     s.items.map(g=>{const l=linkOf(g,s.lk);
-      return `<a class="lrow" data-g="${esc(g.title)}" href="${esc(l.url)}" target="_blank" rel="noopener">${img(g)}
-        <span><b>${esc(g.title)}</b><i>${esc(l.kind)}</i></span>${externalNote}</a>`}).join('')+'</div>';
+      return `<a class="lrow" data-g="${esc(g.title)}"${hrefAttr(l)}>${img(g)}
+        <span><b>${esc(g.title)}</b><i>${l?esc(l.kind):'no public link yet'}</i></span>${l?externalNote:''}</a>`}).join('')+'</div>';
   if(s.kind==='case') return caseHTML(s.items);
   if(s.kind==='jobs') return '<div class="tl">'+s.items.map(j=>`<article class="jr">
     <div class="jm"><u>${esc(j.yr)}</u><i>${esc(j.co)}</i></div><div class="jd"><b>${esc(j.t)}</b>
@@ -6848,7 +6880,7 @@ function bodyFor(s){
   if(s.kind==='contact'){
     const primary=s.items.slice(0,2),social=s.items.slice(2);
     // the contact panel opens off the badge, so it leads with the same face
-    return `<div class="me"><img src="models/avatar.jpg?v=2" alt="O Ngoc Duy" width="220" height="220">
+    return `<div class="me"><img src="demos/models/avatar.jpg?v=2" alt="O Ngoc Duy" width="220" height="220">
       <div class="mi"><b>O Ngoc Duy</b><i>Unity Game Developer · Ho Chi Minh City</i></div>
       <div class="mcta">${primary.map(c=>`<a href="${esc(c.url)}" target="_blank" rel="noopener">
         ${c.title==='Email'?'Email me':'View CV ↗'}${externalNote}</a>`).join('')}</div></div>
@@ -7477,7 +7509,7 @@ $('dbgX').addEventListener('click',()=>dbgOpen(false));
 /* ── the zone overlay ──
    Numbered patches painted onto the surfaces worth talking about, so "put it
    at 2" is a sentence both ends of a conversation can hold. The numbers match
-   the ones written down in PROJECT.md; renumbering them silently would be
+   the ones written down in docs/PROJECT.md; renumbering them silently would be
    worse than leaving a gap, so retire an id rather than reuse it.
    Bounds are the real ones — 1 is the wall panel as it actually stands, not
    the size it could grow to.

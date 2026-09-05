@@ -14,7 +14,7 @@ the sky is still readable as sky. Re-shoot it with:
       --headless=new --disable-gpu-sandbox --enable-unsafe-swiftshader \\
       --use-gl=angle --use-angle=swiftshader --window-size=1600,900 \\
       --virtual-time-budget=26000 --screenshot=tools/og-source.png \\
-      "http://127.0.0.1:8000/demos/room-3d.html#t=20.6"
+      "http://127.0.0.1:8000/room-3d.html#t=20.6"
 
 (with #ui hidden, or simply accept the chrome — it is the same room either
 way), then:

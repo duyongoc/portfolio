@@ -11,8 +11,8 @@
 <meta property="og:site_name" content="O Ngoc Duy">
 <meta property="og:title" content="O Ngoc Duy — Unity Game Developer">
 <meta property="og:description" content="6+ years in production. 33 shipped titles: gameplay systems, multiplayer netcode, AR and C++ tools.">
-<meta property="og:url" content="https://duyongoc.github.io/profile/demos/portfolio-2d.html">
-<meta property="og:image" content="https://duyongoc.github.io/profile/demos/models/og.jpg">
+<meta property="og:url" content="https://duyongoc.github.io/demos/portfolio-2d.html">
+<meta property="og:image" content="https://duyongoc.github.io/demos/models/og.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="A cyberpunk studio at night: three monitors, a wall of game covers, a neon skyline through the glass.">
@@ -365,7 +365,7 @@ footer{border-top:1px solid var(--line);margin-top:60px;padding:21px 0 44px;colo
   <div class="links">
     <a href="#index">Projects</a><a href="#exp">Experience</a><a href="#contact">Contact</a>
   </div>
-  <a class="btn room" href="room-3d.html">◧ Room mode</a>
+  <a class="btn room" href="../room-3d.html">◧ Room mode</a>
   <a class="btn fill" href="https://drive.google.com/file/d/1Dg0RwxwD1Mo2dcrAQM__pCDnZUCc6c6g/view?usp=sharing" target="_blank" rel="noopener">My CV ↗</a>
 </div></nav>
 <nav class="secbar" aria-label="Sections"><div class="in">
@@ -445,8 +445,8 @@ footer{border-top:1px solid var(--line);margin-top:60px;padding:21px 0 44px;colo
     <span>Unity · Unreal · C# · C++ · Ho Chi Minh City</span></footer>
 </div></section>
 
-<script src="portfolio-data.js?v=02d81107"></script>
-<script src="portfolio-shared.js?v=84e55704"></script>
+<script src="portfolio-data.js?v=c1cb3ef6"></script>
+<script src="portfolio-shared.js?v=3028096f"></script>
 <script>
 /* ═══════════════════════════════════════════════════════════════
    The flat companion to room-3d.html. Same 33 builds, same links,
@@ -689,7 +689,7 @@ document.getElementById('cnt').textContent=GAMES.length+' builds';
         const g=pts[best].g, p=playOf(g);
         tip.innerHTML=`<b>${esc(g.title)}</b>
           <div class="c">${esc(CAT[g.cat].n)} · node ${String(best+1).padStart(2,'0')}</div>
-          <div class="go">${esc(actionOf(p))} ↗</div>`;
+          <div class="go">${esc(actionOf(p))}${p?' ↗':''}</div>`;
         tip.classList.add('on');
       } else tip.classList.remove('on');
     }
@@ -716,7 +716,10 @@ document.getElementById('cnt').textContent=GAMES.length+' builds';
   cv.addEventListener('pointerleave',()=>{hover=-1;tip.classList.remove('on')});
   cv.addEventListener('click',e=>{
     const hit=pick(e.clientX,e.clientY);
-    if(moved<6&&hit>=0) open(playOf(pts[hit].g).url,'_blank','noopener,noreferrer');
+    /* A build with no link is still a node on this map — it just has nothing
+       to open, so the click is a no-op rather than a crash. */
+    const l=hit>=0?playOf(pts[hit].g):null;
+    if(moved<6&&l) open(l.url,'_blank','noopener,noreferrer');
   });
 
   /* Paused off-screen and when the tab is hidden: this canvas is the only
@@ -809,12 +812,12 @@ function render(k){
   const list=GAMES.filter(g=>k==='all'||g.cat===k);
   grid.innerHTML=list.map(g=>{
     const p=playOf(g), v=CAT[g.cat], n=GAMES.indexOf(g)+1;
-    return `<a class="card cut" href="${esc(p.url)}" target="_blank" rel="noopener">
+    return `<a class="card cut"${hrefAttr(p)}>
       <div class="im">${img(g)}<span class="no">${String(n).padStart(2,'0')}</span>
         <span class="st" style="background:${v.c}"></span></div>
       <div class="bd"><h4>${esc(g.title)}${g.wip?' <span class="wip">WIP</span>':''}</h4>
         <div class="mt"><span>${esc(v.n)}</span><span class="stack">${esc(g.tags.slice(0,2).join(' · '))}</span>
-          <em>${esc(shortOf(p))} ↗</em></div></div></a>`;
+          ${p?`<em>${esc(shortOf(p))} ↗</em>`:''}</div></div></a>`;
   }).join('');
   document.getElementById('cnt').textContent=list.length+' builds';
   watch(grid);

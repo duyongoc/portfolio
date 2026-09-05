@@ -20,7 +20,7 @@ none of it lands in the room's ~2 MB boot payload.
 device pixels at DPR 2. Anything above 720p is bytes the box cannot show.
 
 Sources are the project's own YouTube links in demos/portfolio-data.js, and
-which builds get a clip comes from wall-layout.txt. Where to cut each one, what
+which builds get a clip comes from build_layout.txt. Where to cut each one, what
 to crop out of it and which sources cannot make a preview at all are STARTS,
 CROPS and SKIP below. Needs yt-dlp and ffmpeg on PATH:
 
@@ -33,7 +33,7 @@ CROPS and SKIP below. Needs yt-dlp and ffmpeg on PATH:
     python3 tools/clips.py --cache DIR  # keep the downloads, for picking offsets
 
 Idempotent: a clip that already exists is left alone unless --force is given.
-Which titles it works on comes from wall-layout.txt, or from the whole dataset
+Which titles it works on comes from build_layout.txt, or from the whole dataset
 under --all. Nothing here has to be pasted anywhere: run
 `python3 tools/wallsheet.py` afterwards and the room's CLIP_OF map is
 regenerated from whatever ended up in demos/clips/.

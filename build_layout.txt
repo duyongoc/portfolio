@@ -1,5 +1,5 @@
 # What the room shows, and in what order.
-# Edit this file, then:  python3 tools/wallsheet.py   (guide: wall-layout.md)
+# Edit this file, then:  python3 tools/wallsheet.py   (guide: doc_build_layout.md)
 #
 # Walls take a grid, so their covers are named one by one, left to right and
 # top to bottom — line breaks are cosmetic, the grid decides where a cover
@@ -17,7 +17,7 @@
 # the right prop without anyone editing anything. A list is taken as written.
 #
 # Use the id, not the title: the table at the foot of this file is every build
-# there is. Why this order — see PROJECT.md.
+# there is. Why this order — see docs/PROJECT.md.
 
 zone 1
   netcode-battle | netcode-demo | netcode-shooter2d | game2d-black-ops

@@ -13,7 +13,7 @@ needs it to still exist, because every section below is a mistake that was
 expensive to find and is cheap to make again.
 
 Nothing here is a rule. The rules were lifted into
-[PROJECT.md § 8](../PROJECT.md#8-if-you-change-one-thing-know-this) as they were
+[PROJECT.md § 8](PROJECT.md#8-if-you-change-one-thing-know-this) as they were
 found; what is left below is the working out.
 
 ---
@@ -114,7 +114,7 @@ wall. The hover maps a cell index straight back into an array, so a list that
 had drifted pointed every cover at the wrong game and rendered perfectly while
 doing it.
 
-**They are now one file and a generator.** `wall-layout.txt` is the only
+**They are now one file and a generator.** `build_layout.txt` is the only
 hand-edited copy, and it carries one thing — a heading and the builds under it,
 in reading order, left to right and top to bottom, by id rather than by title.
 `zone 1`, `zone 8` and `zone 9` are the three walls; `trash`, `monitor`,

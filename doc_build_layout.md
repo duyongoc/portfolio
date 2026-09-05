@@ -1,10 +1,10 @@
 # Changing what the room shows
 
-`wall-layout.txt` at the repo root decides which build hangs where, and in what
+`build_layout.txt` at the repo root decides which build hangs where, and in what
 order. It is the only file to edit for that. This is how to edit it, how to
 bake the result, and how to get it onto the site.
 
-Why it is built this way — see `PROJECT.md`.
+Why it is built this way — see `docs/PROJECT.md`.
 
 ## The file
 
@@ -80,7 +80,7 @@ holds 4.
 Changing a grid is a two-file job, and the second file is easy to forget. The
 grid lives in `ZONES` in `tools/wallsheet.py`, and it sets the baked sheet's
 proportions; the plane that sheet is painted onto lives in the `sideWall(...)`
-calls near the end of `demos/room-3d.html`. Change one without the other and
+calls near the end of `room-3d.html`. Change one without the other and
 every cell boundary drifts off the tile it brackets, a little more with each
 row. Load the room with `#qa=1` after any grid change — the *Wall cover
 mapping* row compares the two and says which zone is wrong.
@@ -125,7 +125,7 @@ pixels beside an old map. It names the entry and the zone, all of them in one
 run, and the room keeps the sheets it had.
 
 ```
-wall-layout.txt: zone 9 has no game 'nope-not-a-game' — the ids are listed at the foot of that file
+build_layout.txt: zone 9 has no game 'nope-not-a-game' — the ids are listed at the foot of that file
 ```
 
 **A warning means the files were written**, and something claimed elsewhere may
@@ -142,13 +142,13 @@ proportions against the plane it is mapped onto.
 
 ## Getting it onto the site
 
-GitHub Pages serves the repo as it stands and runs no Python. `wall-layout.txt`
+GitHub Pages serves the repo as it stands and runs no Python. `build_layout.txt`
 is inert there — what the room reads is the baked JPEGs and the generated JS —
 so the commit has to carry the output, not just the input:
 
 ```sh
 python3 tools/wallsheet.py
-git add wall-layout.txt demos/wall-layout.js demos/models/wall*.jpg
+git add build_layout.txt demos/wall-layout.js demos/models/wall*.jpg
 git commit -m "reorder the wall" && git push
 ```
 
@@ -160,8 +160,11 @@ missing.
 ## Adding a build
 
 Add it to `demos/portfolio-data.js` first — that is the canonical list, and a
-build the layout names but the data does not stops the bake. Then put its id in
-`wall-layout.txt` if it belongs on a wall or a prop; a build matched by a
+build the layout names but the data does not stops the bake. Its links are the
+one part not written there: run `python3 tools/links.py` and it appends an empty
+block for the new build to `build_links.txt`, which is where you fill them in
+— see [doc_build_links.md](doc_build_links.md). Then put its id in
+`build_layout.txt` if it belongs on a wall or a prop; a build matched by a
 prop's `auto` rule needs nothing.
 
 A cover on a wall wants a preview clip: `python3 tools/clips.py` (it reads the

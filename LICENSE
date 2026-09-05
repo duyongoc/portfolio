@@ -1,0 +1,65 @@
+Copyright (c) 2023-2026 O Ngoc Duy <ongocduy.dev@gmail.com>
+All rights reserved.
+
+This repository is published so the work in it can be read and evaluated.
+It is not open source. Except as set out below, no licence is granted to
+use, copy, modify, merge, publish, distribute, sublicense or sell any part
+of it.
+
+
+WHAT THIS COVERS
+
+  The original work here: index.html, room-3d.html and
+  demos/portfolio-2d.html; the JavaScript written for them, including
+  demos/portfolio-data.js, demos/portfolio-shared.js, demos/wall-layout.js
+  and demos/room/; the Python in tools/; the written material in README.md
+  and docs/; and the images and recordings made for this site --
+  demos/models/avatar.jpg, badge.jpg, og.jpg, wall.jpg, wall-left.jpg,
+  wall-right.jpg and the screen captures in demos/clips/.
+
+
+WHAT YOU MAY DO WITHOUT ASKING
+
+  Read the source, in this repository or in your browser.
+  Quote short excerpts, with attribution and a link back.
+  Link to the published site.
+
+
+WHAT NEEDS PERMISSION
+
+  Everything else -- in particular reusing the room, its layout or its code
+  as the basis of another portfolio or product. Ask first.
+
+
+THIRD-PARTY COMPONENTS
+
+  The following are NOT covered by the terms above. They remain under their
+  own licences and are not mine to relicense.
+
+  three.js
+    demos/lib/three.module.min.js, demos/lib/GLTFLoader.js,
+    demos/lib/BufferGeometryUtils.js
+    Copyright (c) 2010-2025 three.js authors. MIT Licence.
+    https://github.com/mrdoob/three.js/blob/dev/LICENSE
+
+  "Sitting cat (British Shorthair Blue Cat)" -- demos/models/sofacat.glb
+    by 3D Creator (3DChuang-Ke-Ji), CC BY 4.0.
+    Decimated, cut at the neck and animated here.
+    https://sketchfab.com/3d-models/sitting-catbritish-shorthair-blue-cat-ee5dcbdd0c2b4c33adf83d4c6708e6ae
+
+  "Cute Penguin 9th May 2020" -- demos/models/chairplush.glb
+    by Felix_Lim, CC BY 4.0. Decimated here.
+    https://sketchfab.com/3d-models/cute-penguin-9th-may-2020-d2156bead52541e58a9c8ff3ec59624c
+
+  Synty Studios POLYGON packs
+    The remaining .glb props in demos/models/, and the texture atlases
+    demos/models/cybercity.png and demos/models/scifi.png.
+    Copyright (c) Synty Studios, used under their asset licence. These are
+    present as part of a published work, not offered for reuse.
+
+
+NO WARRANTY
+
+  The work is provided "as is", without warranty of any kind, express or
+  implied. The author is not liable for any claim, damages or other
+  liability arising from the work or its use.

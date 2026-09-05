@@ -1,7 +1,7 @@
 // Canonical project data shared by both portfolio experiences.
 //
 // `cat` is the only taxonomy. Its heading ("RESKIN", "AR Games" — what
-// wall-layout.txt's `auto section=` rules match on and what the baked covers
+// build_layout.txt's `auto section=` rules match on and what the baked covers
 // stripe by), its label and its colour are all properties of the category and
 // live in CAT in portfolio-shared.js. There used to be a `section` here as
 // well, a per-project copy of that heading kept in step by hand across all 33
@@ -23,8 +23,7 @@ const GAMES = [
   "links": [
    {
     "kind": "Youtube",
-    "url": "https://www.youtube.com/watch?v=D22sO9HlWPY",
-    "label": "Youtube"
+    "url": "https://www.youtube.com/watch?v=D22sO9HlWPY"
    }
   ],
   "tags": [
@@ -42,8 +41,7 @@ const GAMES = [
   "links": [
    {
     "kind": "Youtube",
-    "url": "https://www.youtube.com/watch?v=SCXutaYWQdY",
-    "label": "Youtube"
+    "url": "https://www.youtube.com/watch?v=SCXutaYWQdY"
    }
   ],
   "tags": [
@@ -61,13 +59,11 @@ const GAMES = [
   "links": [
    {
     "kind": "Android",
-    "url": "https://play.google.com/store/apps/details?id=duy.ongoc.game3d_ar_survival",
-    "label": "Android"
+    "url": "https://play.google.com/store/apps/details?id=duy.ongoc.game3d_ar_survival"
    },
    {
     "kind": "Youtube",
-    "url": "https://youtu.be/vSZhjpZjlmo",
-    "label": "Youtube"
+    "url": "https://youtu.be/vSZhjpZjlmo"
    }
   ],
   "tags": [
@@ -86,18 +82,15 @@ const GAMES = [
   "links": [
    {
     "kind": "WebGL",
-    "url": "https://webunity.github.io/webgl_netcode_battle/",
-    "label": "WebGL"
+    "url": "https://webunity.github.io/webgl_netcode_battle/"
    },
    {
     "kind": "Android",
-    "url": "https://play.google.com/store/apps/details?id=com.duyongoc.netcode.battle",
-    "label": "Android"
+    "url": "https://play.google.com/store/apps/details?id=com.duyongoc.netcode.battle"
    },
    {
     "kind": "Youtube",
-    "url": "https://www.youtube.com/watch?v=yqIDxTWt-Lk&list=PLClQCm2rPi2VSzjd5MXOX40sx4GdrVJHk&index=36&ab_channel=duyongoc",
-    "label": "Youtube"
+    "url": "https://www.youtube.com/watch?v=yqIDxTWt-Lk&list=PLClQCm2rPi2VSzjd5MXOX40sx4GdrVJHk&index=36&ab_channel=duyongoc"
    },
    {
     "kind": "Youtube",
@@ -122,18 +115,15 @@ const GAMES = [
   "links": [
    {
     "kind": "WebGL",
-    "url": "https://webunity.github.io/webgl_netcode_shooter2d/",
-    "label": "WebGL"
+    "url": "https://webunity.github.io/webgl_netcode_shooter2d/"
    },
    {
     "kind": "Android",
-    "url": "https://play.google.com/store/apps/details?id=com.duyongoc.netcode.shooter2d",
-    "label": "Android"
+    "url": "https://play.google.com/store/apps/details?id=com.duyongoc.netcode.shooter2d"
    },
    {
     "kind": "Youtube",
-    "url": "https://www.youtube.com/watch?v=_tXlH7wFrgY&list=PLClQCm2rPi2VSzjd5MXOX40sx4GdrVJHk&index=38&ab_channel=duyongoc",
-    "label": "Youtube"
+    "url": "https://www.youtube.com/watch?v=_tXlH7wFrgY&list=PLClQCm2rPi2VSzjd5MXOX40sx4GdrVJHk&index=38&ab_channel=duyongoc"
    },
    {
     "kind": "Youtube",
@@ -158,18 +148,15 @@ const GAMES = [
   "links": [
    {
     "kind": "WebGL",
-    "url": "https://webunity.github.io/webgl_netcode_warrior/",
-    "label": "WebGL"
+    "url": "https://webunity.github.io/webgl_netcode_warrior/"
    },
    {
     "kind": "Android",
-    "url": "https://play.google.com/store/apps/details?id=com.duyongoc.netcode.warrior",
-    "label": "Android"
+    "url": "https://play.google.com/store/apps/details?id=com.duyongoc.netcode.warrior"
    },
    {
     "kind": "Youtube",
-    "url": "https://www.youtube.com/watch?v=gSs0tuP4IL0&list=PLClQCm2rPi2VSzjd5MXOX40sx4GdrVJHk&index=40&ab_channel=duyongoc",
-    "label": "Youtube"
+    "url": "https://www.youtube.com/watch?v=gSs0tuP4IL0&list=PLClQCm2rPi2VSzjd5MXOX40sx4GdrVJHk&index=40&ab_channel=duyongoc"
    }
   ],
   "tags": [
@@ -189,23 +176,19 @@ const GAMES = [
   "links": [
    {
     "kind": "WebGL",
-    "url": "https://webunity.github.io/webgl_game2d_color_shoot",
-    "label": "WebGL"
+    "url": "https://webunity.github.io/webgl_game2d_color_shoot"
    },
    {
     "kind": "Android",
-    "url": "https://play.google.com/store/apps/details?id=duy.ongoc.color_shooter",
-    "label": "Android"
+    "url": "https://play.google.com/store/apps/details?id=duy.ongoc.color_shooter"
    },
    {
     "kind": "Youtube",
-    "url": "https://www.youtube.com/watch?v=KEey_5kXaEY",
-    "label": "Youtube"
+    "url": "https://www.youtube.com/watch?v=KEey_5kXaEY"
    },
    {
     "kind": "Source",
-    "url": "https://github.com/duyongoc/color_shoot2d",
-    "label": "Source"
+    "url": "https://github.com/duyongoc/color_shoot2d"
    }
   ],
   "tags": [
@@ -226,23 +209,19 @@ const GAMES = [
   "links": [
    {
     "kind": "WebGL",
-    "url": "https://webunity.github.io/webgl_game2d_math",
-    "label": "WebGL"
+    "url": "https://webunity.github.io/webgl_game2d_math"
    },
    {
     "kind": "Android",
-    "url": "https://play.google.com/store/apps/details?id=duy.ongoc.math",
-    "label": "Android"
+    "url": "https://play.google.com/store/apps/details?id=duy.ongoc.math"
    },
    {
     "kind": "Youtube",
-    "url": "https://www.youtube.com/watch?v=OAwvB_e-t4g",
-    "label": "Youtube"
+    "url": "https://www.youtube.com/watch?v=OAwvB_e-t4g"
    },
    {
     "kind": "Source",
-    "url": "https://github.com/duyongoc/MathGame2d",
-    "label": "Source"
+    "url": "https://github.com/duyongoc/MathGame2d"
    }
   ],
   "tags": [
@@ -263,23 +242,19 @@ const GAMES = [
   "links": [
    {
     "kind": "WebGL",
-    "url": "https://webunity.github.io/webgl_game2d_find_monkey",
-    "label": "WebGL"
+    "url": "https://webunity.github.io/webgl_game2d_find_monkey"
    },
    {
     "kind": "Android",
-    "url": "https://play.google.com/store/apps/details?id=duy.ongoc.find_monkey",
-    "label": "Android"
+    "url": "https://play.google.com/store/apps/details?id=duy.ongoc.find_monkey"
    },
    {
     "kind": "Youtube",
-    "url": "https://www.youtube.com/watch?v=TnbUFuuK2Dw",
-    "label": "Youtube"
+    "url": "https://www.youtube.com/watch?v=TnbUFuuK2Dw"
    },
    {
     "kind": "Source",
-    "url": "https://github.com/duyongoc/game2d_find_monkey",
-    "label": "Source"
+    "url": "https://github.com/duyongoc/game2d_find_monkey"
    }
   ],
   "tags": [
@@ -300,18 +275,15 @@ const GAMES = [
   "links": [
    {
     "kind": "WebGL",
-    "url": "https://webunity.github.io/webgl_POLYGON_Battle",
-    "label": "WebGL"
+    "url": "https://webunity.github.io/webgl_POLYGON_Battle"
    },
    {
     "kind": "Android",
-    "url": "https://play.google.com/store/apps/details?id=com.duyongoc.polygon.battle",
-    "label": "Android"
+    "url": "https://play.google.com/store/apps/details?id=com.duyongoc.polygon.battle"
    },
    {
     "kind": "Youtube",
-    "url": "https://www.youtube.com/watch?v=3GD8uI5WVa4&list=PLClQCm2rPi2VSzjd5MXOX40sx4GdrVJHk&index=34&ab_channel=duyongoc",
-    "label": "Youtube"
+    "url": "https://www.youtube.com/watch?v=3GD8uI5WVa4&list=PLClQCm2rPi2VSzjd5MXOX40sx4GdrVJHk&index=34&ab_channel=duyongoc"
    }
   ],
   "tags": [
@@ -331,18 +303,15 @@ const GAMES = [
   "links": [
    {
     "kind": "WebGL",
-    "url": "https://webunity.github.io/webgl_POLYGON_Turnbase",
-    "label": "WebGL"
+    "url": "https://webunity.github.io/webgl_POLYGON_Turnbase"
    },
    {
     "kind": "Android",
-    "url": "https://play.google.com/store/apps/details?id=com.duyongoc.polygon.turnbase",
-    "label": "Android"
+    "url": "https://play.google.com/store/apps/details?id=com.duyongoc.polygon.turnbase"
    },
    {
     "kind": "Youtube",
-    "url": "https://youtu.be/i3wcBk7k2WA",
-    "label": "Youtube"
+    "url": "https://youtu.be/i3wcBk7k2WA"
    }
   ],
   "tags": [
@@ -362,18 +331,15 @@ const GAMES = [
   "links": [
    {
     "kind": "WebGL",
-    "url": "https://webunity.github.io/webgl_POLYGON_Adventure",
-    "label": "WebGL"
+    "url": "https://webunity.github.io/webgl_POLYGON_Adventure"
    },
    {
     "kind": "Android",
-    "url": "https://play.google.com/store/apps/details?id=com.duyongoc.polygon.adventure",
-    "label": "Android"
+    "url": "https://play.google.com/store/apps/details?id=com.duyongoc.polygon.adventure"
    },
    {
     "kind": "Youtube",
-    "url": "https://youtu.be/P06ZWVtaAYM",
-    "label": "Youtube"
+    "url": "https://youtu.be/P06ZWVtaAYM"
    }
   ],
   "tags": [
@@ -393,13 +359,11 @@ const GAMES = [
   "links": [
    {
     "kind": "WebGL",
-    "url": "https://webunity.github.io/webgl_game3d_runner",
-    "label": "WebGL"
+    "url": "https://webunity.github.io/webgl_game3d_runner"
    },
    {
     "kind": "Youtube",
-    "url": "https://www.youtube.com/watch?v=Yp9mzhLPKZs",
-    "label": "Youtube"
+    "url": "https://www.youtube.com/watch?v=Yp9mzhLPKZs"
    }
   ],
   "tags": [
@@ -418,13 +382,11 @@ const GAMES = [
   "links": [
    {
     "kind": "WebGL",
-    "url": "https://webunity.github.io/webgl_game2d_shooter",
-    "label": "WebGL"
+    "url": "https://webunity.github.io/webgl_game2d_shooter"
    },
    {
     "kind": "Youtube",
-    "url": "https://www.youtube.com/watch?v=NOe_dEmwtL4",
-    "label": "Youtube"
+    "url": "https://www.youtube.com/watch?v=NOe_dEmwtL4"
    }
   ],
   "tags": [
@@ -443,13 +405,11 @@ const GAMES = [
   "links": [
    {
     "kind": "WebGL",
-    "url": "https://webunity.github.io/webgl_game2d_joust_them_all",
-    "label": "WebGL"
+    "url": "https://webunity.github.io/webgl_game2d_joust_them_all"
    },
    {
     "kind": "Youtube",
-    "url": "https://www.youtube.com/watch?v=UJL4NFY6-y8",
-    "label": "Youtube"
+    "url": "https://www.youtube.com/watch?v=UJL4NFY6-y8"
    }
   ],
   "tags": [
@@ -468,13 +428,11 @@ const GAMES = [
   "links": [
    {
     "kind": "WebGL",
-    "url": "https://webunity.github.io/webgl_game2d_battle_cardgame/",
-    "label": "WebGL"
+    "url": "https://webunity.github.io/webgl_game2d_battle_cardgame/"
    },
    {
     "kind": "Youtube",
-    "url": "https://youtu.be/HKlnohqEyHY",
-    "label": "Youtube"
+    "url": "https://youtu.be/HKlnohqEyHY"
    }
   ],
   "tags": [
@@ -493,13 +451,11 @@ const GAMES = [
   "links": [
    {
     "kind": "WebGL",
-    "url": "https://webunity.github.io/webgl_game2d_battle_board/",
-    "label": "WebGL"
+    "url": "https://webunity.github.io/webgl_game2d_battle_board/"
    },
    {
     "kind": "Youtube",
-    "url": "https://youtu.be/xpw0TeMa0Z8",
-    "label": "Youtube"
+    "url": "https://youtu.be/xpw0TeMa0Z8"
    }
   ],
   "tags": [
@@ -518,13 +474,11 @@ const GAMES = [
   "links": [
    {
     "kind": "WebGL",
-    "url": "https://webunity.github.io/webgl_game3d_demo_teeth/",
-    "label": "WebGL"
+    "url": "https://webunity.github.io/webgl_game3d_demo_teeth/"
    },
    {
     "kind": "Youtube",
-    "url": "https://youtu.be/GCyKBid3mlg",
-    "label": "Youtube"
+    "url": "https://youtu.be/GCyKBid3mlg"
    }
   ],
   "tags": [
@@ -543,13 +497,11 @@ const GAMES = [
   "links": [
    {
     "kind": "WebGL",
-    "url": "https://webunity.github.io/webgl_game3d_subway_clone/",
-    "label": "WebGL"
+    "url": "https://webunity.github.io/webgl_game3d_subway_clone/"
    },
    {
     "kind": "Youtube",
-    "url": "https://youtu.be/RL12SWwfVa4",
-    "label": "Youtube"
+    "url": "https://youtu.be/RL12SWwfVa4"
    }
   ],
   "tags": [
@@ -568,8 +520,7 @@ const GAMES = [
   "links": [
    {
     "kind": "WebGL",
-    "url": "https://webunity.github.io/webgl_game3d_topdown_sword/",
-    "label": "WebGL"
+    "url": "https://webunity.github.io/webgl_game3d_topdown_sword/"
    }
   ],
   "tags": [
@@ -587,8 +538,7 @@ const GAMES = [
   "links": [
    {
     "kind": "WebGL",
-    "url": "https://webunity.github.io/webgl_game3d_racing/",
-    "label": "WebGL"
+    "url": "https://webunity.github.io/webgl_game3d_racing/"
    }
   ],
   "tags": [
@@ -606,13 +556,11 @@ const GAMES = [
   "links": [
    {
     "kind": "WebGL",
-    "url": "https://webunity.github.io/webgl_game2d_survivorIO_clone/",
-    "label": "WebGL"
+    "url": "https://webunity.github.io/webgl_game2d_survivorIO_clone/"
    },
    {
     "kind": "Youtube",
-    "url": "https://youtu.be/pv1M2DiOgu8",
-    "label": "Youtube"
+    "url": "https://youtu.be/pv1M2DiOgu8"
    }
   ],
   "tags": [
@@ -631,13 +579,11 @@ const GAMES = [
   "links": [
    {
     "kind": "WebGL",
-    "url": " https://webunity.github.io/webgl_game2d5_beat_them_up/",
-    "label": "WebGL"
+    "url": "https://webunity.github.io/webgl_game2d5_beat_them_up/"
    },
    {
     "kind": "Youtube",
-    "url": "https://youtu.be/0wvAsGU9ahw",
-    "label": "Youtube"
+    "url": "https://youtu.be/0wvAsGU9ahw"
    }
   ],
   "tags": [
@@ -656,13 +602,11 @@ const GAMES = [
   "links": [
    {
     "kind": "WebGL",
-    "url": " https://webunity.github.io/webgl_game2d5_beat_them_up_2/",
-    "label": "WebGL"
+    "url": "https://webunity.github.io/webgl_game2d5_beat_them_up_2/"
    },
    {
     "kind": "Youtube",
-    "url": "https://youtu.be/vxTd7zfsYsM",
-    "label": "Youtube"
+    "url": "https://youtu.be/vxTd7zfsYsM"
    }
   ],
   "tags": [
@@ -681,8 +625,7 @@ const GAMES = [
   "links": [
    {
     "kind": "WebGL",
-    "url": "https://webunity.github.io/webgl_game2d_metal_black_ops/",
-    "label": "WebGL"
+    "url": "https://webunity.github.io/webgl_game2d_metal_black_ops/"
    }
   ],
   "tags": [
@@ -700,13 +643,11 @@ const GAMES = [
   "links": [
    {
     "kind": "WebGL",
-    "url": "https://webunity.github.io/webgl_game2d_archer",
-    "label": "WebGL"
+    "url": "https://webunity.github.io/webgl_game2d_archer"
    },
    {
     "kind": "Youtube",
-    "url": "https://www.youtube.com/watch?v=-sHI-cw3P8M",
-    "label": "Youtube"
+    "url": "https://www.youtube.com/watch?v=-sHI-cw3P8M"
    }
   ],
   "tags": [
@@ -725,13 +666,11 @@ const GAMES = [
   "links": [
    {
     "kind": "WebGL",
-    "url": "https://webunity.github.io/webgl_game3d_nightmares",
-    "label": "WebGL"
+    "url": "https://webunity.github.io/webgl_game3d_nightmares"
    },
    {
     "kind": "Youtube",
-    "url": "https://www.youtube.com/watch?v=0LMDo26JBc4",
-    "label": "Youtube"
+    "url": "https://www.youtube.com/watch?v=0LMDo26JBc4"
    }
   ],
   "tags": [
@@ -750,13 +689,11 @@ const GAMES = [
   "links": [
    {
     "kind": "WebGL",
-    "url": "https://webunity.github.io/webgl_game3d_city_zombie",
-    "label": "WebGL"
+    "url": "https://webunity.github.io/webgl_game3d_city_zombie"
    },
    {
     "kind": "Youtube",
-    "url": "https://www.youtube.com/watch?v=XLvpvH60OD0",
-    "label": "Youtube"
+    "url": "https://www.youtube.com/watch?v=XLvpvH60OD0"
    }
   ],
   "tags": [
@@ -775,13 +712,11 @@ const GAMES = [
   "links": [
    {
     "kind": "WebGL",
-    "url": "https://webunity.github.io/webgl_game3d_topdown_shooter",
-    "label": "WebGL"
+    "url": "https://webunity.github.io/webgl_game3d_topdown_shooter"
    },
    {
     "kind": "Youtube",
-    "url": "https://www.youtube.com/watch?v=TB9RAgZCdWI",
-    "label": "Youtube"
+    "url": "https://www.youtube.com/watch?v=TB9RAgZCdWI"
    }
   ],
   "tags": [
@@ -800,13 +735,11 @@ const GAMES = [
   "links": [
    {
     "kind": "WebGL",
-    "url": "https://webunity.github.io/webgl_game2d5_dungeon",
-    "label": "WebGL"
+    "url": "https://webunity.github.io/webgl_game2d5_dungeon"
    },
    {
     "kind": "Youtube",
-    "url": "https://www.youtube.com/watch?v=GzRezjgOWBk",
-    "label": "Youtube"
+    "url": "https://www.youtube.com/watch?v=GzRezjgOWBk"
    }
   ],
   "tags": [
@@ -825,13 +758,11 @@ const GAMES = [
   "links": [
    {
     "kind": "WebGL",
-    "url": "https://webunity.github.io/webgl_game3d_shoot_ball",
-    "label": "WebGL"
+    "url": "https://webunity.github.io/webgl_game3d_shoot_ball"
    },
    {
     "kind": "Youtube",
-    "url": "https://www.youtube.com/watch?v=dcVBPY6tN5E",
-    "label": "Youtube"
+    "url": "https://www.youtube.com/watch?v=dcVBPY6tN5E"
    }
   ],
   "tags": [
@@ -850,13 +781,11 @@ const GAMES = [
   "links": [
    {
     "kind": "WebGL",
-    "url": "https://webunity.github.io/webgl_game3d_endless_car",
-    "label": "WebGL"
+    "url": "https://webunity.github.io/webgl_game3d_endless_car"
    },
    {
     "kind": "Youtube",
-    "url": "https://www.youtube.com/watch?v=zOSg5cwtlLw",
-    "label": "Youtube"
+    "url": "https://www.youtube.com/watch?v=zOSg5cwtlLw"
    }
   ],
   "tags": [
@@ -875,13 +804,11 @@ const GAMES = [
   "links": [
    {
     "kind": "WebGL",
-    "url": "https://webunity.github.io/webgl_game2d_jump",
-    "label": "WebGL"
+    "url": "https://webunity.github.io/webgl_game2d_jump"
    },
    {
     "kind": "Youtube",
-    "url": "https://www.youtube.com/watch?v=B38FsxEjxVM",
-    "label": "Youtube"
+    "url": "https://www.youtube.com/watch?v=B38FsxEjxVM"
    }
   ],
   "tags": [

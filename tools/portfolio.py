@@ -20,7 +20,7 @@ import json, os, re
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA = os.path.join(ROOT, 'demos/portfolio-data.js')
 SHARED = os.path.join(ROOT, 'demos/portfolio-shared.js')
-LAYOUT = os.path.join(ROOT, 'wall-layout.txt')
+LAYOUT = os.path.join(ROOT, 'build_layout.txt')
 GEN = os.path.join(ROOT, 'demos/wall-layout.js')
 CLIPDIR = os.path.join(ROOT, 'demos/clips')
 
@@ -28,7 +28,7 @@ CLIPDIR = os.path.join(ROOT, 'demos/clips')
 def slug(title):
     """The id a build is known by outside portfolio-data.js.
 
-    It names its clip file and it is what wall-layout.txt is written in. There
+    It names its clip file and it is what build_layout.txt is written in. There
     is exactly one implementation on the build side — this one — and the
     browser has none at all: wallsheet.py resolves every title to its clip up
     front and generates the map, so nothing in room-3d.html ever has to slug a
@@ -127,7 +127,7 @@ def clips_on_disk(path=CLIPDIR):
 def wall_zones(path=GEN):
     """The generated wall map, back out of demos/wall-layout.js.
 
-    clips.py works from this rather than from wall-layout.txt on purpose: the
+    clips.py works from this rather than from build_layout.txt on purpose: the
     walls are what hover, and this is the same list the room indexes its covers
     against. One parser for that file is enough, and it lives here rather than
     in the tool that happens to need it second."""
