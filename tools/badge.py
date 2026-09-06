@@ -16,12 +16,28 @@ import os, sys
 from PIL import Image, ImageDraw, ImageFont
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SRC = os.path.join(ROOT, 'images/user.jpg')
+# images/user-3.png, not images/user.jpg. Both are 636x553 and the same frame,
+# but the PNG is the lossless master the JPEG was encoded from (PSNR 45.6 dB
+# between them). Nothing here is served straight to a browser — every output is
+# cropped and then upscaled 2-3x — so starting from the master keeps one
+# generation of JPEG ringing out of a picture that gets magnified afterwards.
+SRC = os.path.join(ROOT, 'images/user-3.png')
 OUT = os.path.join(ROOT, 'demos/models/badge.jpg')
+PLATE = os.path.join(ROOT, 'demos/models/portrait.jpg')
 
 W, H = 704, 400                     # the card is 4.4 x 2.5 world units
 FACE = (272, 74, 468, 322)          # head-and-shoulders box in the source
 AVATAR_SIZE = 768                    # large enough for the 1/3-panel portrait
+# The contact panel's left third is a full-height plate, not a circle. It is
+# baked at 0.719 while the plate displays at ~0.615, on purpose: an image cut to
+# exactly the box's aspect gives object-fit:cover nothing to crop, which makes
+# object-position inert and the framing unadjustable in CSS. The 14% of extra
+# width is the slack that lets the subject be nudged across the plate.
+# Vertically it stops at y=430 of 553 — below that is the white tablecloth,
+# which is the brightest thing in the source and would own the bottom third of
+# the panel.
+PLATE_W, PLATE_H = 604, 840
+PLATE_TOP, PLATE_BOT = 10, 430
 INK, DIM, CY, AC = (233, 243, 251), (142, 164, 184), (90, 208, 255), (255, 90, 160)
 
 
@@ -47,19 +63,42 @@ def mono(size):
 
 
 def portrait_crop():
-    """Return the single square crop used by every profile surface."""
+    """Return the single square crop used by every profile surface.
+
+    The half-width is a fraction of the face box, and 47% was too tight: at
+    that size the head filled the circle edge to edge with the hair clipped at
+    the top, which reads as a photo somebody zoomed into rather than a
+    portrait. 64% is the widest crop the source still supports — beyond ~70%
+    the box runs off the top of images/user.jpg and the subject drifts left of
+    centre against empty curtain. It also takes 316 source pixels instead of
+    232, so the upscale to AVATAR_SIZE is 2.4x rather than 3.3x."""
     im = Image.open(SRC).convert('RGB')
     cx = (FACE[0] + FACE[2]) // 2
     cy = FACE[1] + (FACE[3] - FACE[1]) * 42 // 100
-    half = (FACE[3] - FACE[1]) * 47 // 100
+    half = (FACE[3] - FACE[1]) * 64 // 100
     box = (max(0, cx - half), max(0, cy - half),
            min(im.width, cx + half), min(im.height, cy + half))
     return im.crop(box)
 
 
+def plate_crop():
+    """The tall crop for the contact panel's portrait plate.
+
+    Same horizontal centre as portrait_crop, so the badge on the desk and the
+    panel it opens still read as one photograph — only the frame differs.
+    """
+    im = Image.open(SRC).convert('RGB')
+    h = PLATE_BOT - PLATE_TOP
+    w = round(h * PLATE_W / PLATE_H)
+    cx = (FACE[0] + FACE[2]) // 2
+    left = max(0, min(im.width - w, cx - w // 2))
+    return im.crop((left, PLATE_TOP, left + w, PLATE_BOT))
+
+
 def main():
     try:
         portrait = portrait_crop()
+        plate = plate_crop()
     except Exception as e:
         print('portrait failed: %s' % e, file=sys.stderr)
         return 1
@@ -69,6 +108,9 @@ def main():
     out2 = os.path.join(ROOT, 'demos/models/avatar.jpg')
     portrait.resize((AVATAR_SIZE, AVATAR_SIZE), Image.LANCZOS).save(
         out2, 'JPEG', quality=90, optimize=True, subsampling=0)
+
+    plate.resize((PLATE_W, PLATE_H), Image.LANCZOS).save(
+        PLATE, 'JPEG', quality=90, optimize=True, subsampling=0)
 
     card = Image.new('RGB', (W, H), (13, 20, 34))
     d = ImageDraw.Draw(card)
@@ -116,6 +158,9 @@ def main():
     print('%s  %dx%d  %.0f kB' % (OUT, W, H, os.path.getsize(OUT) / 1024))
     print('%s  %dx%d  %.0f kB' %
           (out2, AVATAR_SIZE, AVATAR_SIZE, os.path.getsize(out2) / 1024))
+    print('%s  %dx%d  %.0f kB  (source crop %dx%d)' %
+          (PLATE, PLATE_W, PLATE_H, os.path.getsize(PLATE) / 1024,
+           plate.width, plate.height))
 
 
 if __name__ == '__main__':

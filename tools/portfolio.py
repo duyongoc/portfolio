@@ -23,6 +23,13 @@ SHARED = os.path.join(ROOT, 'demos/portfolio-shared.js')
 LAYOUT = os.path.join(ROOT, 'build_layout.txt')
 GEN = os.path.join(ROOT, 'demos/wall-layout.js')
 CLIPDIR = os.path.join(ROOT, 'demos/clips')
+# The two families of media the pages fetch at runtime by a path they build
+# themselves, as against the ones a bake names: the thumbnails every card and
+# hover readout renders, and the previews the room plays under the pointer.
+# Both are content-addressed in demos/asset-v.js -- see asset_versions() in
+# wallsheet.py for why that file exists.
+THUMBDIR = os.path.join(ROOT, 'images/thumb')
+ASSETV = os.path.join(ROOT, 'demos/asset-v.js')
 
 
 def slug(title):

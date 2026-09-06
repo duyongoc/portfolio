@@ -196,19 +196,47 @@ surface means adding a `SCREENS` entry, not touching the render loop.
 **`SCREENS` is not the same list as `PANELS`.** Every entry is raycastable and
 glows under the pointer; only `PANELS = SCREENS.filter(s => !s.noPanel)` opens
 anything. The index, the prev/next ring, the `3/10` counter and the `#panel=`
-deep links all walk `PANELS`. There is currently one `noPanel` surface — the
-centre monitor — and `activateHit` swallows its click while `setHot` withholds
-the pointer cursor from it, so the glow says "this responds to you" without the
-cursor promising a panel that is not there.
+deep links all walk `PANELS`. Three surfaces are `noPanel` — the centre
+monitor, the cat and the penguin — and `activateHit` swallows their clicks while
+`setHot` withholds the pointer cursor, so the glow says "this responds to you"
+without the cursor promising a panel that is not there. All three say everything
+they have to say in the room itself; none of them carries cover tiles, which is
+why `activateHit` needs no second branch here any more. The two side columns
+used to be in this list and are not — see the side-wall section.
 
 **The centre monitor carries the employer, not the work.** It used to hold the
-six case files, on the reasoning that the camera points at it. It now shows the
-Athena Studio lockup, and the case files moved to the wall — where all six of
-them are already hanging as cover art, which is a better place to read about
-them than a screen on the other side of the room. The wall panel therefore
-leads with `caseItems` prose and follows with the full enumeration, under two
-`.sh` section rules. This also puts the richest content behind the hero's
+case files, on the reasoning that the camera points at it. It now shows the
+Athena Studio lockup, and the case files moved to the wall — where they are
+already hanging as cover art, which is a better place to read about them than a
+screen on the other side of the room. The wall panel therefore leads with
+`caseItems` prose and follows with the full enumeration, under two `.sh` section
+rules.
+
+That whole arrangement rests on one claim: every card in the lead is also a
+cover on the wall behind it. `FEATURED` is written by hand and the layout moves
+covers, so the two drifted — two of the six stopped hanging on zone 1 and the
+panel went on leading with them, which put a set of six at the top of a page
+about eleven with a third of it about builds that are not on that wall. It is
+an intersection now, in the wall's own order, so the claim holds by
+construction; the heading says which (`4 of the 11 on this wall`) rather than a
+bare count. A featured build that is not on the wall keeps its tile in the
+archive below and loses the lead — `wallsheet.py` warns that its `FEATURED`
+entry no longer does anything, which is the half of this a tool can still tell
+you. This also puts the richest content behind the hero's
 `ALL 33 BUILDS` button, which previously opened a bare grid.
+
+**The archive under it reads in the wall's order.** `items` was `games` —
+portfolio-data.js order, which is a maintenance order grouped by category, so
+the wall's first cover was the panel's third tile and its fourth cover was the
+panel's thirty-third, with Shooter2D above Demo and Turnbase above Adventure.
+Zoom into a wall and the page that opens has to be that wall's page: the
+visitor has just read eleven covers in a particular order and the tiles under
+them are the same eleven, so finding the one they pressed should be a glance
+and not a search. `gWall` is `zWall.items` followed by everything the wall does
+not hang — the same 33, permuted. The two side columns never had this to fix;
+they pass `Z.items` through as their `items` because they hold nothing else.
+`zWall` is the single `zoneOf('wall')` the plane, `gCase` and `gWall` are all
+cut from.
 
 ### The panel: two placement modes
 
@@ -268,6 +296,31 @@ The layout inside the panel responds to `@container panel` queries on `#glass`,
 not to viewport media queries, so it adapts to the panel's own width in either
 mode.
 
+**The flight is timed in seconds, not in frames.** The camera's four eases —
+the open ramp `fB`, the orbit's `yaw`/`pit`/`dist`, and the `fPos`/`fLook`/`gUp`
+chase — were written as a fixed fraction of the way there *per frame*, which
+makes the frame rate the clock. That is 1.48 s of flight at 60 Hz, 0.74 s on a
+120 Hz panel and 2.96 s on a machine that has dropped to 30. Worse, the rate is
+not fixed for the length of one flight: the frames during a zoom are the most
+expensive the room renders — a panel laying out, thumbnails decoding — so the
+camera changed speed with whatever the renderer managed that instant, which
+reads as an uneven zoom rather than a slow one. `ease(rate, dt)` =
+`1 - (1-rate)^(dt/16.67)` converts each to a fraction per 1/60 s; at 16.67 ms it
+returns `rate` unchanged, so every constant keeps the value it was tuned to and
+60 Hz is bit-identical. `dt` is already clamped to 50 ms, which caps a stalled
+frame's step. Every other integrator in `tick` already took `dt`; these were the
+last four that did not.
+
+**The bin was the worst of them, for a second reason.** Its readout is the only
+card carrying a list, and five of its six rows play a clip. `hudDrop` left them
+running for the whole `HUD_SHUT` (545 ms) so the single-clip card could scan off
+without freezing — but those 545 ms start on the click that closes the card,
+which is the click that starts the fly-in. The bin spent the opening half-second
+of its zoom decoding five videos nobody was looking at. `hudDrop` now calls
+`hudListStop()` immediately; the rows scan off on their posters. The single
+`hudVid` keeps its run-under-the-rewind, which is what that effect was for and
+costs one decoder rather than five.
+
 ### The wall readout
 
 Hovering a cover on the wall opens `#hud`: a sci-fi panel in the right gutter
@@ -305,12 +358,31 @@ That is why the first two were kept off the columns. Everything else that has a
 source now has a clip, including the twelve that `SKIP` had rejected — see the
 tooling section for what that changed.
 
-Neither column is a panel. A handful of tiles does not deserve a page, and every build
-on them already has one somewhere, so a cover click runs `focusOn` against the
-screen named by `panelAs` — `monR` for the prototypes, and `wall` for my own,
-since the MY GAMES monitor those three used to open is gone — spotlit on that
-build, exactly as the back wall behaves. They stay out of `PANELS`, so the
-index and the prev/next cycle do not grow.
+**Each column is its own panel, and for a while neither was.** The argument for
+`panelAs` was that a handful of tiles does not deserve a page and every build on
+them already has one somewhere, so a cover click ran `focusOn` against another
+screen — `monR` for the prototypes, `wall` for my own, since the MY GAMES
+monitor those three used to open is gone — spotlit on that build. The
+destination was right and the journey was wrong. You press a column captioned
+"3 more reskins" on the left wall; the camera flies across the room to a monitor
+titled something else, holding fifteen builds, and yours is highlighted
+somewhere down the scroll. Nothing warns that this is about to happen and
+nothing on arrival says that it did, so what it reads as is the room zooming to
+the wrong thing — which is exactly how it was reported.
+
+Both columns are in `PANELS` now, so the index and the prev/next cycle carry
+them, and a cover click opens the column it is on. What the redirect was
+actually for survives as `more`: the id of the archive holding the rest of that
+column's kind, rendered by `moreRow` as a labelled row at the foot of the panel
+and taking its name, tag and accent from the target screen rather than from a
+string written twice. The jump is the same jump; it is a control now instead of
+a side effect.
+
+Their panels are the narrowest in the room, because a panel is its surface's
+projected rectangle and these surfaces are 0.54 and 0.41 wide-over-tall: 462 and
+347 logical pixels at 1080p, against 1358 for the reskin monitor. One column of
+cards at both, which is what `cols:1` and the 380px container query already
+agreed on.
 
 **Trim on a side wall cannot be careless.** The back wall's panel overhangs its
 frame rails by .8 at each end and nothing notices, because the wall runs well
@@ -1891,6 +1963,81 @@ Fullscreen API is available. On iPhone, use **Share → Add to Home Screen**;
 launching that icon uses the manifest's fullscreen display mode and safe-area
 layout. A normal Safari tab keeps Safari's own chrome by design.
 
+**Orientation is asked for, never taken.** Two APIs would take it —
+`screen.orientation.lock('landscape')` behind fullscreen, and the manifest's
+`orientation` field for an installed PWA — and both were built and then removed
+on purpose. A lock is not a rotation: it pins the room landscape, so a visitor
+who turns the phone back is ignored, and it only works on Android, so the two
+platforms would diverge for a reason nobody outside this file can see. What is
+shipped instead is `#rotate`, a dismissible card shown in portrait on a device
+that can actually be turned, and after that every platform simply follows the
+device. The manifest stays at `"orientation": "any"`. **Do not reintroduce the
+lock without also having an answer for how the visitor gets back out of it.**
+
+**The card's gate is `(pointer:coarse)`, not `MOBILE_GPU` / `.touch`, and the
+difference is not cosmetic.** `MOBILE_GPU` is `pointer:coarse` *or* a short
+side under 600px, so a narrow desktop window publishes `.touch` as well — this
+is deliberate and documented above, but it means a card keyed off `.touch`
+tells someone at a 520x900 desktop window to turn a device they are not
+holding, when the answer there is to widen the window. Measured: that window
+reports `pointer:coarse` false and `html.touch` true, which is exactly the gap.
+The heading says "device" and not "phone" for the neighbouring reason — a
+tablet held upright is coarse-pointered, in portrait, and gets the card too.
+
+Because it covers the viewport and swallows every tap, the card is modal in
+fact, so `aria-modal` is honest only if the room goes inert behind it —
+`showRotate` sets `inert` on `#cv` and `#ui` and moves focus to the button,
+`dismissRotate` puts all of it back. That is the same contract `#glass`
+already keeps; a dialog that claims modality without it lets a screen reader
+walk into a room the pointer cannot reach.
+
+The compat facts behind that, since they are the first thing anyone re-checks:
+**WebKit ships no `ScreenOrientation.lock` anywhere** — not iPhone, not iPad,
+not desktop Safari (`safari: false` in MDN's compat data, `safari_ios`
+mirroring it) — and WebKit ignores the manifest's `orientation` field outright.
+Fullscreen is the only piece that differs by device: iPhone has no
+`Element.requestFullscreen`, iPad has had it since Safari 16.4. So even the
+version that did lock was Android-only, which is half of why it went.
+
+**A visitor whose device has rotation locked at the OS level turns the phone
+and nothing happens, and the page cannot see that.** There is no API for the
+setting. It is a Control Center toggle rather than a Settings page, so there is
+nothing to deep-link to either — `prefs:root=` is a private scheme Apple
+rejects apps for and Safari will not open it from a page at all. The one
+detection that exists is comparing `screen.orientation.type` against the
+accelerometer, and that needs `DeviceOrientationEvent.requestPermission()` on
+iOS 14.5+, which is a system permission prompt. Showing someone a scary prompt
+to diagnose a problem you then only tell them about is a bad trade.
+
+So the card escalates on a timer instead. Eight seconds after it appears,
+`#rotate .stuck` fades in under a rule with the sentence that would have needed
+the detection. **Nothing is being detected and nothing needs to be**: a card
+still up at eight seconds belongs either to someone who has not turned the
+phone or to someone who turned it and got nothing, and the same sentence serves
+both. Someone who simply rotates never sees it, because the card is gone
+seconds earlier — and `dismissRotate` clears the timer, so it cannot fire into
+a card that has already closed.
+
+Which switch to name is decided by `screen.orientation.lock` being absent —
+Control Center if it is, quick settings if it is not. That is a capability
+test standing in for a platform, which is normally a smell, but here it is
+exact: the card only ever shows on a touch device, and WebKit is the only touch
+engine missing the API. A UA string would say the same thing less reliably.
+
+It is a hint, not a gate. Portrait is not a broken state — `fit()` opens the
+vertical FOV below 16:10 specifically so it is not (see §Camera) — so the card
+has one button, the room behind it is already running, and `room-rotate-seen`
+means it asks once. Turning the phone answers it too: a `matchMedia` listener on
+`(orientation:landscape)` clears it, because someone who has done the thing
+should not still be asked. The controls hint (`#onboard`) is held behind it and
+released by whichever of those happens, since two cards asking two different
+things in the same corner is not a layout the hud has.
+
+The card sits at `z-index:8`, under `#load` (9) and `#nogl` (20). That is not
+arbitrary: it means the card waits out the boot overlay without a timer, and a
+device that could not start WebGL shows the WebGL message rather than an
+invitation to rotate something that is not going to render either way.
+
 ---
 
 ## 8. If you change one thing, know this
@@ -1943,9 +2090,9 @@ layout. A normal Safari tab keeps Safari's own chrome by design.
   page's revealed card are genuinely different shapes, and folding them
   together would be inventing a template language to save four lines.
 - **The shared scripts are loaded at a `?v=` and never by bare name.**
-  `wallsheet.py` hashes `portfolio-data.js`, `portfolio-shared.js` and
-  `wall-layout.js` and rewrites the `<script src=>` on both pages; `--check`
-  fails if a page is at the wrong one. This is the price of the rule above it.
+  `wallsheet.py` hashes `portfolio-data.js`, `portfolio-shared.js`,
+  `wall-layout.js` and `asset-v.js` and rewrites the `<script src=>` on both
+  pages; `--check` fails if a page is at the wrong one. This is the price of the rule above it.
   While every helper had a copy inline in the page that used it, a page and its
   helpers could not be from different releases. Now they can: a browser holding
   yesterday's `portfolio-shared.js` next to today's page does not degrade, it
@@ -1957,6 +2104,28 @@ layout. A normal Safari tab keeps Safari's own chrome by design.
   no-store` on everything. `python3 -m http.server` sends no cache headers at
   all, which lets a browser decide for itself how long a file stays fresh, and
   it is generous.
+- **Every picture and every clip carries a content hash too, out of
+  `demos/asset-v.js`.** This list used to stop at the scripts, on a note in
+  `wallsheet.py` claiming everything else was versioned already — the sheets by
+  `WALL_SHEET_V`, the models by `MODEL_V`, the modules by being named relative
+  to the page. That note was wrong about the two biggest families on the site.
+  A thumbnail is named by `thumb()` rewriting an image path and a preview by
+  `CLIP_OF` handing back a slug, so neither URL moves when the file behind it is
+  re-cropped or re-cut, and a browser holding the old bytes has no way to find
+  out. Where it shows is the wall: the cover is baked into a JPEG that carries
+  `WALL_SHEET_V` and updates, while the readout that opens over it and the panel
+  behind that go on playing the previous cut and drawing the previous crop —
+  which reads as the room zooming to a stale picture, and is how it was
+  reported. `asset_versions()` hashes each file on its own rather than issuing
+  one token over all of them: the two families are about 5 MB, and re-cutting
+  one 60 kB clip should not evict ninety-six others from every cache that
+  already holds them. `vsrc()` in `portfolio-shared.js` appends the hash, and
+  both pages load the map — the flat page plays no clips but draws the same
+  stills, and a map only one of them has is a stale picture on the other.
+  `--check` fails if any hashed file has moved without the map being
+  regenerated. None of this is visible under `tools/serve.py`, which sends
+  `no-store`; it is only ever visible on the deployed site, which is the worst
+  place to find out.
 - **The room does not know how to slug a title, and must not learn.** The clip
   a build previews with is `CLIP_OF[title]` out of `wall-layout.js`, produced
   by the same run that named the files. There used to be three implementations

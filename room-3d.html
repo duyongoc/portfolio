@@ -627,11 +627,29 @@ html.touch #hudX:active{background:var(--hc);color:#04121c}
 #gx:hover{background:var(--cy);color:#04121c;border-color:var(--cy)}
 #gb{flex:1;min-height:0;overflow-y:auto;padding:11px;overscroll-behavior:contain;touch-action:pan-y;
   -webkit-overflow-scrolling:touch;user-select:text}
+/* The contact panel's photograph is full-bleed, so for that one body the
+   frame's own padding has to step aside; every other kind keeps it. */
+#gb:has(.cw){padding:0}
 #gb.swap{animation:panel-content-in .18s ease-out}
 @keyframes panel-content-in{
   from{opacity:.2;transform:translateY(4px)}to{opacity:1;transform:none}
 }
 #gb::-webkit-scrollbar{width:5px}#gb::-webkit-scrollbar-thumb{background:#ffffff26}
+/* "There is more below", and nothing else. Tied to how much is actually left
+   rather than parked on: a gradient that is always on starts lying the moment
+   the reader reaches the end, and one that only exists while a panel overflows
+   never appears over the contact photograph, which is full-bleed and is the
+   one body in the room where a permanent dark band along the bottom would be
+   read as part of the picture. Absolutely positioned, so it is not a third
+   flex item in #glass. */
+#glass::after{content:"";position:absolute;left:0;right:0;bottom:0;height:38px;
+  pointer-events:none;opacity:var(--sc,0);transition:opacity .2s;
+  background:linear-gradient(to top,#070b16 12%,rgba(7,11,22,0))}
+/* Faint while the camera is between two surfaces. The pose is continuous
+   across that move but the anchor is not — for one frame the panel stops
+   being the left monitor's rectangle and becomes the back wall's — and this
+   is what covers the jump. */
+#glass.on.travel{opacity:.25}
 .gr{display:grid;gap:8px}
 .pg{grid-template-columns:repeat(var(--cols,1),minmax(0,1fr))}
 .pl{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -648,9 +666,45 @@ html.touch #hudX:active{background:var(--hc);color:#04121c}
 .tile:active,.lrow:active,.cr:active{border-color:var(--cy);background:rgba(90,208,255,.18);
   transform:translateY(1px)}
 .tile img{width:100%;aspect-ratio:16/10;object-fit:cover;display:block;background:#0d1428}
-.tile b{display:block;padding:6px 8px 2px;font-size:12px;line-height:1.2;font-weight:600}
-.tile i{display:block;padding:0 8px 7px;font:500 8.5px/1.3 var(--mono);letter-spacing:.08em;
-  text-transform:uppercase;color:#dae4f775;font-style:normal}
+/* What the link is, stated once on the picture instead of on a caption line.
+   Fifteen tiles that all read "PLAY NOW" spend a whole line of every card
+   saying the one thing the panel already promised; the same fact as a chip in
+   the corner is read at a glance and gives the line back to the build's own
+   description, which is the only text on the card that differs between two
+   builds. .off is the one state worth spelling out: no link, nothing to click. */
+.tp{position:relative;display:block}
+.tb{position:absolute;left:7px;bottom:7px;font-style:normal;padding:4px 7px;
+  font:700 8.5px/1 var(--mono);letter-spacing:.09em;text-transform:uppercase;
+  color:var(--cy);background:rgba(4,10,20,.82);border:1px solid rgba(90,208,255,.42);
+  transition:.15s}
+.tb.off{color:#93a3b9;border-color:rgba(255,255,255,.18)}
+.tile:hover .tb{background:var(--cy);border-color:var(--cy);color:#04121c}
+.tile:hover .tb.off{background:rgba(4,10,20,.82);border-color:rgba(255,255,255,.18);color:#93a3b9}
+.tile b{display:block;padding:7px 9px 2px;font-size:12.5px;line-height:1.2;font-weight:600}
+/* Two lines, clamped: the descriptions run from six words to about twenty, and
+   an unclamped third line on one card in a row pushes that whole row taller. */
+.tile i{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+  padding:0 9px 8px;font-weight:400;font-size:11px;line-height:1.4;color:#a4b3c8;font-style:normal}
+/* The foot of a side column's panel: the archive that holds the rest of its
+   kind. Deliberately not a .tile — it is not a build, and a fourth card under a
+   grid of three would be read as one. A full-width row instead, carrying the
+   destination's own accent as a rail down its left edge, which is the swatch
+   the index already uses to mean "this panel" — so the two places in the room
+   that name a panel name it the same way. */
+.pmore{display:flex;align-items:center;gap:10px;width:100%;margin-top:10px;
+  padding:11px 12px;background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.1);color:inherit;text-align:left;
+  cursor:pointer;font:inherit;transition:.15s}
+.pmore:hover{border-color:var(--cy);background:rgba(90,208,255,.1)}
+.pmore:active{border-color:var(--cy);background:rgba(90,208,255,.18);transform:translateY(1px)}
+.pmore s{flex:none;width:3px;align-self:stretch;text-decoration:none}
+.pmore span{flex:1;min-width:0}
+.pmore b{display:block;font-size:12.5px;font-weight:600;line-height:1.2}
+.pmore i{display:block;margin-top:3px;font-style:normal;
+  font:500 8.5px/1.4 var(--mono);letter-spacing:.08em;text-transform:uppercase;
+  color:#a9b8cf;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pmore u{flex:none;text-decoration:none;font-size:15px;line-height:1;color:#a9b8cf;transition:.15s}
+.pmore:hover u{color:var(--cy)}
 .lrow{display:flex;gap:9px;align-items:center;padding:7px;background:rgba(255,255,255,.04);
   border:1px solid rgba(255,255,255,.08);text-decoration:none;color:inherit;transition:.15s}
 .lrow:hover{border-color:var(--cy)}
@@ -665,52 +719,93 @@ html.touch #hudX:active{background:var(--hc);color:#04121c}
 .jm u,.jm i{display:block;text-decoration:none;font:650 8.5px/1.55 var(--mono);
   letter-spacing:.1em;text-transform:uppercase}
 .jm u{color:var(--cy)}.jm i{color:#a9b8cf;font-style:normal;margin-top:3px}
+/* Two of these rows print a domain. Printed and not clickable, an underlined
+   .com in a CV is a control that does nothing — so where JOBS carries a url the
+   company becomes the link, and where it does not the markup stays plain text
+   rather than growing a link affordance with nothing behind it. */
+.jm i a{color:inherit;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.22);
+  transition:.15s}
+.jm i a:hover,.jm i a:focus-visible{color:var(--cy);border-color:var(--cy)}
 .jd b{display:block;font-size:14px;line-height:1.25}
-.jd p{color:#afbed2;font-size:11.5px;margin-top:5px;line-height:1.5}
-.jd ul{margin:7px 0 0 16px;color:#a9b8cf;font-size:11px;line-height:1.55}
-.cr{display:block;padding:11px;text-decoration:none;color:inherit;
-  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);transition:.15s}
-.cr:hover{border-color:var(--cy)}
-.cr b{display:block;font-size:14px}
-.cr i{font-style:normal;font:500 10px/1.5 var(--mono);color:#dae4f790}
-.me{--avatar:clamp(112px,31cqi,220px);display:grid;
-  grid-template-columns:var(--avatar) minmax(0,1fr);grid-template-rows:1fr auto;
-  align-items:center;gap:12px 22px;
-  padding:5px 3px 17px;
-  border-bottom:1px solid rgba(255,255,255,.09);margin-bottom:11px}
-.me img{width:var(--avatar);height:var(--avatar);grid-row:1/3;border-radius:50%;object-fit:cover;flex:none;
-  border:1px solid rgba(255,90,160,.7);background:#0d1428;
-  box-shadow:0 0 0 5px rgba(255,90,160,.07)}
-.mi{min-width:0;align-self:end;padding-bottom:4px}
-.me b{display:block;font-size:17px;font-weight:700;letter-spacing:-.02em}
-.me i{font-style:normal;font:600 9px/1.6 var(--mono);letter-spacing:.13em;
-  text-transform:uppercase;color:var(--cy);margin-top:4px}
-.mcta{grid-column:2;align-self:start;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-start}
-.mcta a{min-height:38px;padding:0 10px;display:inline-flex;align-items:center;justify-content:center;
+/* The panel is as wide as the monitor it opens off, which at 1080p is a 1334px
+   column for a sentence that is 90 characters long. Cap the measure and the
+   prose stops being a thin line ruled across an empty half-panel. */
+.jd p{color:#afbed2;font-size:11.5px;margin-top:5px;line-height:1.5;max-width:68ch}
+.jd ul{margin:7px 0 0 16px;color:#a9b8cf;font-size:11px;line-height:1.55;max-width:72ch}
+/* Contact is the one panel whose content does not grow with the panel. Every
+   other kind has n items and gets taller as it gets wider; this one is a fixed
+   set of blocks, so on a 1080p screen it filled 527 of 807 logical pixels and
+   dumped the rest at the bottom as a black band.
+
+   Packing the copy more efficiently only moves that band around, because the
+   surface is 4.59 x 2.61 and its height is decided by its width, not by what
+   is in it. So the height goes to the one element that can be any height at
+   all: the photograph runs the full depth of the panel down the left third,
+   and the leftover space stops being a hole and becomes the picture. */
+.cw{display:grid;grid-template-columns:minmax(0,1fr);min-height:100%}
+.plate{position:relative;overflow:hidden;background:#0d1428;height:60cqi}
+.plate img{width:100%;height:100%;object-fit:cover;display:block;
+  /* X is the dial for the column: the bake is 0.719 against a ~0.615 box, so
+     cover crops 14% off the width and under 50% shows more of the photograph's
+     left side, which slides the subject to the right.
+     Y only matters in banner mode, where a 0.719 image in a ~1.7 box overflows
+     vertically instead. 32% against the 60cqi height is the one pairing that
+     clears the head at both ends: it shows source rows 86..268 of a face that
+     runs 95..260, so nothing is cropped off it. Change either number and this
+     wants recomputing. */
+  object-position:32% 32%}
+/* The copy starts a few pixels into the photograph, so the two are one surface
+   rather than two panels butted together. Pointer-transparent: the plate is
+   not a link and this must never eat a click meant for the column beside it. */
+.plate::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(90deg,rgba(7,11,22,0) 58%,rgba(7,11,22,.82) 100%)}
+/* Capped, not full-bleed. Beside a 492px plate the copy column runs to 999px
+   at 1080p, and letting the block use all of it stretched the rule under the
+   buttons into a 950px hairline with 40 characters sitting on it. */
+.cx{min-width:0;max-width:660px;padding:20px 22px;display:flex;flex-direction:column;
+  justify-content:flex-start;gap:9px}
+.cx>.eyeb{font:600 9px/1 var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--cy)}
+.cx>b{font-size:clamp(22px,3.1cqi,38px);font-weight:700;letter-spacing:-.03em;line-height:1.04}
+.cx>i{font-style:normal;font:600 9px/1.5 var(--mono);letter-spacing:.13em;
+  text-transform:uppercase;color:var(--cy)}
+/* The tag on this surface is "hire me" and until now the panel never said what
+   for. Every other panel in the room carries prose; this was the only one that
+   was pure chrome. */
+.cx>p{color:#b6c5d8;font-size:12.5px;line-height:1.55;max-width:38ch}
+/* The address itself, not a button that hides it. `desc` has carried this
+   string all along and the old markup threw it away, so the one panel asking
+   for a reply never showed where the reply goes and it could not be copied
+   out of a mailto. */
+.cmail{font:500 15px/1.3 var(--mono);letter-spacing:-.01em;color:var(--paper);
+  text-decoration:none;overflow-wrap:anywhere;border-bottom:1px solid rgba(255,255,255,.18);
+  align-self:flex-start;padding-bottom:2px;transition:.15s}
+.cmail:hover,.cmail:focus-visible{color:var(--cy);border-color:var(--cy)}
+.mcta{display:flex;gap:8px;flex-wrap:wrap;margin-top:3px}
+.mcta a{min-height:46px;padding:0 18px;display:inline-flex;align-items:center;justify-content:center;
   border:1px solid rgba(255,255,255,.2);color:var(--paper);text-decoration:none;
-  font:700 8.5px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;transition:.15s}
+  font:700 10px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;transition:.15s}
 .mcta a:first-child{border-color:var(--cy);background:rgba(90,208,255,.08);color:var(--cy)}
 .mcta a:hover{background:var(--cy);border-color:var(--cy);color:#04121c}
-/* the contact panel is the one people are meant to act on, so it leads with
-   what the rest of the room spends ten props establishing */
-.st{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;margin-bottom:11px;
-  background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.09)}
-.st div{background:#080d18;padding:9px 10px;min-height:55px}
-.st b{display:block;font-size:17px;font-weight:700;letter-spacing:-.03em}
-.st i{font-style:normal;font:600 8px/1.5 var(--mono);letter-spacing:.12em;
-  text-transform:uppercase;color:#9eacc1}
-.contact-links{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+/* Everything below the buttons is reference, so it is set as one quiet block:
+   a rule, the record on one line, the three destinations on the next. No
+   border, fill or radius anywhere in it — spending those on four stat tiles
+   and three cards is what made the old panel read as seven equal objects. */
+.cfoot{margin-top:7px;padding-top:12px;border-top:1px solid rgba(255,255,255,.1);
+  display:flex;flex-direction:column;gap:8px}
+.cfacts{font:600 9.5px/1.5 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:#9eacc1}
+.cfacts b{color:var(--paper);font-weight:700}
+.clinks{display:flex;gap:18px;flex-wrap:wrap}
+.clinks a{font:700 10px/1.4 var(--mono);letter-spacing:.1em;color:var(--cy);
+  text-decoration:none;border-bottom:1px solid transparent;transition:.15s}
+.clinks a:hover,.clinks a:focus-visible{border-color:var(--cy)}
 /* The room's props are licensed assets that ask for nothing; the cat on the
    sofa is CC-BY and asks for a name. One line, at the foot of the one panel a
    visitor opens to find out who made this. */
-.colophon{margin-top:18px;padding-top:12px;border-top:1px solid rgba(255,255,255,.08);
-  font-size:11px;line-height:1.6;color:rgba(226,232,240,.45)}
-.colophon a{color:rgba(226,232,240,.62);text-decoration:underline;text-underline-offset:2px}
-.colophon a:hover,.colophon a:focus-visible{color:#fff}
-.cr{display:flex;align-items:center;gap:10px}
-.cr span{min-width:0}.cr i{overflow-wrap:anywhere}
-.cr u{margin-left:auto;text-decoration:none;font:700 10px/1 var(--mono);
-  letter-spacing:.14em;color:var(--cy);flex:none}
+/* The third-party credit is a destination, not a paragraph — but it is an
+   obligation rather than an invitation, so it sits apart from the three links
+   people are actually meant to follow. */
+.clinks a.cred-link{color:#8fa0b8;margin-left:auto}
+.clinks a.cred-link:hover,.clinks a.cred-link:focus-visible{color:var(--paper);border-color:#8fa0b8}
 /* The wall panel now runs prose then archive, so each half needs a name.
    A rule under the label rather than a boxed heading: it has to separate two
    blocks without competing with the case-file cards below it. */
@@ -755,22 +850,59 @@ html.touch #hudX:active{background:var(--hc);color:#04121c}
    is a 540px measure for prose that wants ~65 characters. */
 @container panel (min-width:900px){
   .cs{grid-template-columns:repeat(3,minmax(0,1fr))}
+  /* The declared cols was a floor that behaved like a ceiling: the queries
+     below only ever step a grid DOWN, so the reskin monitor held 2 columns from
+     390px to 1358px. Wider did not mean denser, it meant bigger — a 663px cell
+     for a 512px thumbnail, 2.4 of 15 builds on screen and 4.7 panel-heights of
+     scrolling. .pg2 climbs on the same 900/1300 breaks .cs already uses, which
+     puts the cell back near the size these thumbnails were baked at. */
+  .pg2{grid-template-columns:repeat(3,minmax(0,1fr))}
+  /* 118px wrapped "Bacoor · bountykinds.com" onto two lines, which is the one
+     row-meta that now has to read as a single link. */
+  .jr{grid-template-columns:180px minmax(0,1fr);gap:24px;padding:16px 6px;align-items:center}
   .about-hero p{max-width:72ch}
+  /* The plate only earns a column where one is real: under 900px a 33% strip
+     is ~290px and the copy beside it would be squeezed to nothing, so below
+     this the photograph is a banner across the top instead and the panel
+     scrolls, which is what the phone sheet wants anyway.
+     grid-template-rows is what makes the plate full-bleed vertically: one 1fr
+     row against .cw's min-height:100% gives it the panel's whole depth
+     regardless of how short the copy beside it happens to be. */
+  .cw{grid-template-columns:33% minmax(0,1fr);grid-template-rows:minmax(0,1fr)}
+  .plate{height:auto}
+  .plate img{object-position:32% 50%}
+  /* Beside the plate the copy is centred against the photograph's full depth;
+     stacked under a banner it starts at the top, where a reader expects it. */
+  .cx{padding:26px 34px 26px 30px;justify-content:center}
+}
+/* Jobs are a fixed list on a surface whose height is set by its width, so at
+   desk-monitor size the timeline used 416 of 773px and left the rest black. The
+   rows take the depth instead — but only where they actually fit, which is the
+   whole reason this is its own breakpoint rather than part of the 900 block.
+   An `fr` row cannot be shorter than any sibling's min-content, so five rows
+   cost 5x the tallest one: the Gameloft entry measures 131px at every width
+   from 865 to 1358, and 5x131 = 655 needs ~697px of body, which this surface
+   first has at ~1170px wide. 1240 is that with room to spare. Below it the
+   timeline keeps its natural height, which is what it always had. If a row ever
+   grows past 131px, this number wants recomputing or the panel starts to
+   scroll for the sake of vertical padding. */
+@container panel (min-width:1240px){
+  .tl{min-height:100%;grid-auto-rows:minmax(min-content,1fr)}
 }
 /* A 1080p screen puts the wall panel at ~1500px logical. Three columns there
    is a 490px card for a 16:9 still and three lines of copy; four is 365, which
    is the size these cards were drawn at. */
 @container panel (min-width:1300px){
   .cs{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .pg2{grid-template-columns:repeat(4,minmax(0,1fr))}
 }
 @container panel (max-width:560px){
   /* .pg3 as well as .pg4: three columns in a 390px sheet is a 110px tile with
      the title wrapping under it, which is the shape this rule exists to stop. */
   .cs{grid-template-columns:1fr}.pg4,.pg3{grid-template-columns:repeat(2,minmax(0,1fr))}
   .pl{grid-template-columns:1fr}.jr{grid-template-columns:1fr;gap:4px}
-  .me{grid-template-columns:var(--avatar) minmax(0,1fr);gap:10px 13px}
-  .mcta{grid-column:2;display:grid;grid-template-columns:1fr 1fr}.contact-links{grid-template-columns:1fr}
-  .st,.about-facts{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .mcta{display:grid;grid-template-columns:1fr 1fr;width:100%}
+  .about-facts{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @container panel (max-width:380px){
   .pg{grid-template-columns:1fr}.mcta{grid-template-columns:1fr}.about-facts{grid-template-columns:1fr}
@@ -781,22 +913,39 @@ html.touch #hudX:active{background:var(--hc);color:#04121c}
 @container panel (max-width:480px){
   #gh{flex-wrap:wrap;row-gap:5px}
   #gh b{order:1;flex:1 1 auto}
-  #gh nav,#gh #gv{order:2}
+  #gh nav{order:2}
   #gh i{order:3;flex:1 0 100%;max-width:100%;margin-left:0;text-align:left}
 }
 /* The open panel is a DOM element inside #css3d, which sits below #ui. Room UI
    dims and becomes inert while it is open, leaving navigation in the header. */
-#gv{flex:none;min-height:36px;padding:0 10px;cursor:pointer;background:rgba(90,208,255,.08);
-  border:1px solid rgba(90,208,255,.55);color:var(--cy);font:700 8px/1 var(--mono);
-  letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;transition:.15s}
-#gv:hover{background:var(--cy);color:#04121c;border-color:var(--cy)}
-#gv[hidden]{display:none}
 #gh nav{display:flex;gap:4px;margin-left:0}
 #gh nav button{min-width:36px;height:36px;padding:0;display:grid;place-items:center;cursor:pointer;
   background:none;border:1px solid rgba(255,255,255,.18);color:var(--paper);
   font:600 12px/1 var(--mono);transition:.15s}
 #gh nav button:hover{background:var(--cy);color:#04121c;border-color:var(--cy)}
 #gh nav button:active{transform:translateY(1px);background:rgba(90,208,255,.25)}
+/* Where the arrow goes, written on the arrow. Both names were already being
+   computed for the tooltip and the aria-label, which meant a mouse could find
+   out what "next" meant and a finger could not — and now that paging flies the
+   camera to another surface, next is a larger promise than a bare chevron can
+   make. Shown only where the header has room for it; under that the chevrons
+   stand alone exactly as before. */
+/* The cap is written as the two things it is made of because 1ch in a mono
+   face is the character advance and nothing else: it does not know about
+   letter-spacing, so a plain 16ch is 16 characters' worth of glyph and none of
+   the 16 gaps between them. That is how "MORE PROTOTYPES" — 15 characters,
+   needing 92px — came to be ellipsised under an 86px cap the moment the two
+   side columns joined the ring and made the longest name longer. */
+#gh nav u{display:none;text-decoration:none;font:600 9px/1 var(--mono);
+  letter-spacing:.08em;text-transform:uppercase;max-width:calc(16ch + 16*.08em);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@container panel (min-width:720px){
+  #gp,#gn{width:auto;padding:0 10px;grid-auto-flow:column;gap:7px}
+  /* Two labelled buttons at the 4px the bare chevrons use share an edge and
+     read as one segmented control. */
+  #gh nav{gap:7px}
+  #gh nav u{display:block}
+}
 
 #load{position:fixed;inset:0;z-index:9;display:grid;place-items:center;background:#04060c;
   transition:opacity .8s;font:600 10px/1.5 var(--mono);letter-spacing:.2em;
@@ -821,6 +970,40 @@ html.touch #hudX:active{background:var(--hc);color:#04121c}
 #onboard button{margin-left:auto;flex:none;width:34px;height:34px;border:1px solid rgba(255,255,255,.25);
   background:none;color:var(--paper);cursor:pointer}
 #onboard.on{display:flex}
+/* The room is framed for a landscape viewport. Portrait is not broken — fit()
+   opens the vertical FOV below 16:10 so the horizontal field survives — but it
+   is the narrow read of a wide room. Turning the device is the only fix and it
+   is the visitor's to make; nothing here takes the rotation, on any platform.
+   A hint, not a gate — one button, and the room behind it is already running.
+   z-index 8 puts it under #load, so it waits out the boot overlay without a
+   timer, and under #nogl, so a device that could not start WebGL gets that
+   message rather than an invitation to turn something that will not render.
+   The gate is pointer:coarse, NOT .touch: MOBILE_GPU folds in a short-side
+   test, so .touch is also true of a narrow desktop window, where there is no
+   phone to turn and the answer is to widen the window. */
+#rotate{position:fixed;inset:0;z-index:8;display:none;place-items:center;padding:24px;
+  background:rgba(4,6,12,.88);backdrop-filter:blur(12px);text-align:center}
+@media (orientation:portrait){#rotate.on{display:grid}}
+#rotate .card{width:min(330px,100%);padding:24px 22px;border:1px solid rgba(90,208,255,.3);
+  background:rgba(7,11,22,.9);
+  clip-path:polygon(14px 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%,0 14px)}
+#rotate .ph{width:34px;height:54px;margin:0 auto;border:2px solid var(--cy);border-radius:5px;
+  box-shadow:0 0 18px rgba(90,208,255,.35);animation:turn 2.6s ease-in-out infinite}
+#rotate b{display:block;margin-top:20px;font:700 11px/1.4 var(--mono);letter-spacing:.18em;
+  text-transform:uppercase;color:var(--cy)}
+#rotate p{margin-top:9px;font:600 10px/1.6 var(--mono);letter-spacing:.06em;color:#b7c7dc}
+#rotate button{margin-top:20px;min-height:44px;padding:0 20px;background:none;cursor:pointer;
+  border:1px solid rgba(90,208,255,.55);color:var(--paper);
+  font:700 10px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase}
+@keyframes turn{0%,32%{transform:rotate(0)}62%,100%{transform:rotate(-90deg)}}
+/* The escalation. Quieter than the ask above it and below a rule, because it
+   is for the minority who are stuck rather than the majority who just turn the
+   phone. Its animation is covered by the global prefers-reduced-motion rule. */
+#rotate .stuck{display:none;margin-top:18px;padding-top:15px;
+  border-top:1px solid rgba(90,208,255,.16);
+  font:600 9px/1.6 var(--mono);letter-spacing:.05em;color:#8ea2bc}
+#rotate .stuck.on{display:block;animation:stuckIn .45s ease-out}
+@keyframes stuckIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
 #nogl{position:fixed;inset:0;z-index:20;display:none;place-items:center;text-align:center;
   background:#04060c;padding:30px}#nogl a{color:var(--cy)}
 #qa{position:fixed;inset:18px;z-index:50;display:none;overflow:auto;padding:18px;
@@ -889,11 +1072,11 @@ html.touch #hudX:active{background:var(--hc);color:#04121c}
   #onboard{top:calc(158px + var(--safe-top));bottom:auto}
 }
 @media (pointer:coarse){
-  #gh nav button,#gx{min-width:44px;width:44px;height:44px}
-  #gv{min-height:44px}
+  #gh nav button{min-width:44px;height:44px}
+  #gx{min-width:44px;width:44px;height:44px}
   #onboard button{width:44px;height:44px}
-  .cf .lk a,.mcta a{min-height:44px;padding:8px 11px}
-  .lrow,.cr{min-height:48px}
+  .cf .lk a{min-height:44px;padding:8px 11px}
+  .lrow{min-height:48px}
   /* These used to get their 44px from the max-width:820px block, which a
      tablet is wider than: measured on a 1024x1366 iPad, Contents and View 2D
      were 124x27 and Resume was 76x25 — the two main room controls, under the
@@ -913,7 +1096,7 @@ html.touch #hudX:active{background:var(--hc);color:#04121c}
    wide on a phone and the header had nowhere to put it. The sheet is now full
    width and the container query above gives it its own row, so which position
    the visitor is at survives on a phone. */
-@media (max-width:620px){#gh b{flex:1}#gv{padding:0 7px}}
+@media (max-width:620px){#gh b{flex:1}}
 @media (max-height:520px) and (orientation:landscape){
   #hero{display:none}
   #brand{top:calc(12px + var(--safe-top))}
@@ -1000,8 +1183,8 @@ html.touch #hudX:active{background:var(--hc);color:#04121c}
 </div>
 
 <div id="css3d"><div id="c3d"><div id="panelSlot">
-  <div id="glass" role="dialog" aria-modal="true" aria-labelledby="panelTitle" aria-hidden="true" inert><div id="gh"><s></s><b id="panelTitle" aria-live="polite"></b><i></i><button id="gv" type="button" hidden>View in room</button><nav aria-label="Panel navigation">
-    <button id="gp" title="Previous (←)" aria-label="Previous panel">‹</button><button id="gn" title="Next (→)" aria-label="Next panel">›</button>
+  <div id="glass" role="dialog" aria-modal="true" aria-labelledby="panelTitle" aria-hidden="true" inert><div id="gh"><s></s><b id="panelTitle" aria-live="polite"></b><i></i><nav aria-label="Panel navigation">
+    <button id="gp" title="Previous (←)" aria-label="Previous panel">‹<u></u></button><button id="gn" title="Next (→)" aria-label="Next panel"><u></u>›</button>
     <button id="gx" title="Close (Esc)" aria-label="Close panel">✕</button></nav></div><div id="gb"></div></div>
 </div></div></div>
 
@@ -1011,6 +1194,15 @@ html.touch #hudX:active{background:var(--hc);color:#04121c}
   <div class="boot-bar"><i></i></div>
   <a href="demos/portfolio-2d.html">Open lightweight archive</a>
 </div></div>
+<div id="rotate" role="dialog" aria-modal="true" aria-labelledby="rotateTitle" aria-hidden="true">
+  <div class="card">
+    <div class="ph" aria-hidden="true"></div>
+    <b id="rotateTitle">Turn your device</b>
+    <p>The room is built wide. Held upright you get about half of it.</p>
+    <button id="rotateGo" type="button">Continue</button>
+    <p class="stuck" id="rotateStuck"></p>
+  </div>
+</div>
 <div id="nogl"><div><p>This browser could not start WebGL.</p>
   <p style="margin-top:12px"><a href="demos/portfolio-2d.html">→ Open the 2D version instead</a></p></div></div>
 <div id="qa" role="dialog" aria-modal="true" aria-labelledby="qaTitle"></div>
@@ -1031,7 +1223,13 @@ html.touch #hudX:active{background:var(--hc);color:#04121c}
 </div>
 
 <script src="demos/portfolio-data.js?v=c1cb3ef6"></script>
-<script src="demos/portfolio-shared.js?v=3028096f"></script>
+<!-- Content hash per thumbnail and per clip, generated by tools/wallsheet.py.
+     Loads before portfolio-shared.js, which reads it in vsrc(): without it
+     every still and every preview is fetched at a path that does not move
+     when the file behind it is re-cropped or re-cut, and a browser holding
+     the old bytes has no way to find out. -->
+<script src="demos/asset-v.js?v=ff50ebb4"></script>
+<script src="demos/portfolio-shared.js?v=688f84f5"></script>
 <!-- Generated by tools/wallsheet.py from build_layout.txt, in the same
      run that bakes models/wall*.jpg. A plain script rather than a fetch:
      the module below builds its walls synchronously, and an await there
@@ -1056,7 +1254,19 @@ import {clamp,lerp} from './demos/room/math.js';
 import {createSound} from './demos/room/sound.js';
 
 const V=(x,y,z)=>new T.Vector3(x,y,z);
-const MOBILE_GPU=matchMedia('(pointer:coarse)').matches||Math.min(innerWidth,innerHeight)<600;
+/* Two questions, and only one of them is about the device.
+
+   CAN_TOUCH is "is there a finger" — the input. MOBILE_GPU is "is this a
+   compact viewport" — a coarse pointer OR a short side — and it is
+   deliberately true of a narrow desktop window as well: it drives the render
+   budget and it selects the compact layouts (the .touch block below, SHEET,
+   HUD_HOVER), all of which are the right answer for a narrow window too.
+
+   Anything that acts on the DEVICE rather than on the layout has to use
+   CAN_TOUCH instead. A narrow window on a desktop is not a phone: there is
+   nothing to rotate there, and nothing that should be taking it fullscreen. */
+const CAN_TOUCH=matchMedia('(pointer:coarse)').matches;
+const MOBILE_GPU=CAN_TOUCH||Math.min(innerWidth,innerHeight)<600;
 const games=(typeof GAMES!=='undefined'?GAMES:[]);
 const jobs=(typeof JOBS!=='undefined'?JOBS:[]);
 /* thumb, esc, img, externalNote, linkRow, CAT, inSection and the link helpers
@@ -1074,22 +1284,103 @@ function dismissOnboard(){
   onboard.classList.remove('on');
   try{localStorage.setItem('room-controls-seen','1')}catch(_){}
 }
+const rotate=document.getElementById('rotate');
+/* Two cards asking for two different things at once is not a layout the hud
+   has. How the phone is held comes before what the controls are, so the
+   controls hint waits here and is released by whatever ends the rotate card. */
+let onboardPending=false;
+function showOnboard(){ if(onboardPending){onboardPending=false;onboard.classList.add('on')} }
+/* A visitor whose device has rotation locked at the OS level turns the phone
+   and nothing happens, and the page cannot see that: iOS exposes no API for
+   the setting, and the one inference available — screen.orientation.type
+   disagreeing with the accelerometer — costs a motion-permission prompt to
+   make, which is a worse thing to show someone than the problem it diagnoses.
+   Time is the signal that is already free. A card still up after this long
+   belongs either to someone who has not turned the phone or to someone who
+   turned it and got nothing, and the same sentence serves both, so there is
+   nothing to tell apart. */
+const STUCK_MS=8000;
+/* Where that switch lives differs, and the capability test already tells us
+   which: this card only ever shows on a touch device, and WebKit is the only
+   touch engine with no orientation lock API to its name. A UA string would say
+   the same thing less reliably. */
+const STUCK_HINT=(screen.orientation&&screen.orientation.lock)
+  ? 'Turned it and nothing happened? Auto-rotate is off — open quick settings and switch it on.'
+  : 'Turned it and nothing happened? Rotation Lock is on — open Control Center and switch it off.';
+let stuckTimer=0;
+/* The card covers the viewport and swallows every tap, so it is modal in fact
+   and aria-modal says so. #glass is the file's existing answer for what that
+   then obliges: the things behind go inert, or a screen reader walks straight
+   past the card into a room the pointer cannot reach. Focus moves to the one
+   button for the same reason. */
+function setRoomInert(on){
+  cv.toggleAttribute('inert',on);
+  document.getElementById('ui').toggleAttribute('inert',on);
+}
+function showRotate(){
+  rotate.classList.add('on');
+  rotate.removeAttribute('aria-hidden');
+  setRoomInert(true);
+  try{document.getElementById('rotateGo').focus({preventScroll:true})}catch(_){}
+  stuckTimer=setTimeout(()=>{
+    const stuck=document.getElementById('rotateStuck');
+    stuck.textContent=STUCK_HINT;
+    stuck.classList.add('on');
+  },STUCK_MS);
+}
+function dismissRotate(){
+  if(!rotate.classList.contains('on'))return;
+  clearTimeout(stuckTimer);
+  rotate.classList.remove('on');
+  rotate.setAttribute('aria-hidden','true');
+  setRoomInert(false);
+  try{localStorage.setItem('room-rotate-seen','1')}catch(_){}
+  showOnboard();
+}
 if(MOBILE_GPU){
   /* The readout's touch layout is a stylesheet concern, but the condition that
      selects it is not expressible as one media query — it is pointer:coarse OR
      a short side. Publish the answer instead of restating the test in CSS. */
   document.documentElement.classList.add('touch');
   let seen=false;try{seen=localStorage.getItem('room-controls-seen')==='1'}catch(_){}
-  if(!seen) onboard.classList.add('on');
+  onboardPending=!seen;
+  let turned=false;try{turned=localStorage.getItem('room-rotate-seen')==='1'}catch(_){}
+  /* Not MOBILE_GPU: that is true of a narrow desktop window too, and there is
+     no device to turn there. A pointer you can hold is the actual condition,
+     and it is CAN_TOUCH, declared once at the top rather than restated here. */
+  if(CAN_TOUCH&&!turned&&matchMedia('(orientation:portrait)').matches) showRotate();
+  else showOnboard();
 }
+/* Turning the phone answers the card, so it stops asking. The CSS has already
+   hidden it by then — this is what clears the flag and lets the controls hint
+   through. Rotating back does not bring it out again: it is one ask. */
+matchMedia('(orientation:landscape)').addEventListener('change',e=>{if(e.matches)dismissRotate()});
+/* The button only closes the card — it cannot turn anything, which is exactly
+   why it says Continue. Fullscreen stays where it was, on the first touch of
+   the room itself. */
+document.getElementById('rotateGo').onclick=dismissRotate;
 document.getElementById('onboardClose').onclick=dismissOnboard;
 /* Browsers only allow Fullscreen API entry from a user gesture. The first
    touch on the room requests it where supported; iOS uses the manifest/meta
-   path instead when the site is launched from the Home Screen. */
+   path instead when the site is launched from the Home Screen.
+
+   CAN_TOUCH, not MOBILE_GPU. The gate used to be the compact-viewport test,
+   which is also true of a desktop window narrower than 600px — so a visitor
+   with a mouse and a half-screen window clicked once on the room and the
+   browser went fullscreen, a state change they did not ask for and had to
+   find their own way out of. The same distinction the rotate card makes
+   above, for the same reason: a narrow window is not a device. */
 const STANDALONE=matchMedia('(display-mode:fullscreen)').matches||
   matchMedia('(display-mode:standalone)').matches||navigator.standalone===true;
+/* The room asks for landscape and does not take it. screen.orientation.lock()
+   would pin it on Android, and the manifest would pin an installed PWA, but a
+   pin is not a rotation — it means a visitor who turns the phone back is
+   ignored, and it means Android and iPhone behave differently for a difference
+   nobody outside this file can see. #rotate asks instead, and every platform
+   then follows the device. Do not reintroduce the lock without also having an
+   answer for how the visitor gets out of it. */
 function requestMobileFullscreen(){
-  if(!MOBILE_GPU||STANDALONE||document.fullscreenElement||!document.documentElement.requestFullscreen)return;
+  if(!CAN_TOUCH||STANDALONE||document.fullscreenElement||!document.documentElement.requestFullscreen)return;
   try{
     const pendingFullscreen=document.documentElement.requestFullscreen({navigationUI:'hide'});
     if(pendingFullscreen&&pendingFullscreen.catch)pendingFullscreen.catch(()=>{});
@@ -3253,6 +3544,14 @@ function cellMarkUpdate(dt){
    they had to agree. The room does not slug anything now; it looks the answer
    up, and the answer was produced by the run that named the files. */
 const clipOf=(typeof CLIP_OF!=='undefined'?CLIP_OF:{});
+/* Title -> the URL to play, hash and all. Every clip used to be requested at a
+   path that says nothing about its contents, so re-cutting one left every
+   browser that had the old cut playing the old cut, at the same address, with
+   nothing anywhere able to tell them otherwise — while the cover behind it,
+   baked into a sheet that carries WALL_SHEET_V, changed. vsrc is in
+   portfolio-shared.js beside thumb(), because the stills have the same
+   problem and now take the same answer. */
+const clipSrc=t=>{const c=clipOf[t];return c?vsrc('demos/clips/'+c+'.mp4'):null};
 /* Moved up here from beside the readout: the bin's card now names a clip per
    row, and that card is an object literal built while the props are being
    placed — a `const` declared further down is in its temporal dead zone by
@@ -3360,7 +3659,49 @@ function monitor(o){
    which is a better place to read about them than a screen across the room.
    This is the only prop that does not open a panel: everything it has to say
    fits in the hover readout, and a panel repeating one line would be noise. */
-const gCase=(typeof feat==='function'?feat():[]);
+/* Zone 1, resolved once. Both lists the wall panel is built from are cut from
+   it — which is the point: the wall and the page it opens are one source seen
+   two ways, not two orderings somebody has to keep in step. */
+const zWall=zoneOf('wall');
+
+/* All 33 builds, read in the order the wall reads them: its own eleven first,
+   the way the layout hangs them, then everything it does not hang.
+
+   This used to be `games`, straight out of portfolio-data.js — which is a
+   maintenance order, grouped by category, and it showed the moment you zoomed:
+   the wall's first cover was the panel's third tile and its fourth cover was
+   the panel's thirty-third, dead last, with Shooter2D above Demo and Turnbase
+   above Adventure. Zoom into a wall and the page that opens has to be that
+   wall's page. The visitor has just read eleven covers in a particular order
+   and the tiles under them are the same eleven; they read in the same order,
+   or it is a different list that merely happens to contain them, and finding
+   the cover you pressed becomes a search instead of a glance. The two side
+   columns never had this to fix — they pass Z.items through as their items,
+   because they hold nothing else. This is that, with the twenty-two the wall
+   has no cell for on the end. */
+const gWall=zWall?zWall.items.concat(games.filter(g=>zWall.items.indexOf(g)<0)):games;
+
+/* The write-ups that lead the wall panel — FEATURED, narrowed to what is
+   actually hanging on zone 1, in the order the wall hangs it.
+
+   The block exists on one claim, written down in three places: that every card
+   in it is also a cover on the wall behind it, which is why reading about it
+   here rather than on a screen across the room is the better offer. Two of the
+   six stopped being true when the layout moved them off zone 1 — the panel went
+   on leading with them anyway, so opening the wall put a set of six at the top
+   of a page about eleven, a third of it about builds that are not on the wall
+   at all. tools/wallsheet.py had been printing a warning about exactly that on
+   every run, which is the shape of a claim kept true by somebody remembering.
+
+   Intersecting is the same move the rest of this file makes: the way to
+   guarantee two things agree is not to check, it is to give them one source.
+   A featured build that is not on the wall keeps its tile in the archive below
+   and loses the lead, which is the honest outcome — put it back in
+   build_layout.txt and it comes back, in the cell the wall gives it. */
+const gCase=(()=>{
+  const all=(typeof feat==='function'?feat():[]);
+  return zWall?zWall.items.filter(g=>all.indexOf(g)>=0):all;
+})();
 monitor({id:'mon',x:-11,z:-25.5,w:13,h:7.5,col:ATHENA,
   name:'Athena Studio',tag:'where I work now',noPanel:true,
   /* The lockup says the studio name, so the copy around it says the two
@@ -3409,7 +3750,7 @@ monitor({id:'monR',x:.3,z:-25.8,ry:-.42,w:8,h:5,
      this plane with it instead of leaving every cell boundary off its
      tile until somebody runs #qa=1. */
   const PW=24, PX=-18, PY=26.5;
-  const Z=zoneOf('wall');
+  const Z=zWall;
   const PH=planeH(Z,PW,11);
   const wallTex=texL.load(Z?Z.src:'demos/models/wall.jpg');
   wallTex.colorSpace=T.SRGBColorSpace;sharpenTexture(wallTex);
@@ -3426,8 +3767,8 @@ monitor({id:'monR',x:.3,z:-25.8,ry:-.42,w:8,h:5,
      is the surface that carries them; `wallsheet.py` warns when one is not, so
      the claim is checked rather than assumed. */
   addScreen({id:'wall',name:'Selected work',
-    tag:gCase.length+' case files · all '+games.length+' builds',
-    col:'#5ad0ff',g:null,sc,w:PW,h:PH,kind:'grid',cols:4,lk:'WebGL',items:games,
+    tag:gCase.length+' case files · all '+gWall.length+' builds',
+    col:'#5ad0ff',g:null,sc,w:PW,h:PH,kind:'grid',cols:4,lk:'WebGL',items:gWall,
     /* wallItems null, not empty: hoverCell reads it as "this surface has no
        cells" and the wall degrades to a plain panel of all 33 rather than to a
        grid of dead hit targets. */
@@ -3482,12 +3823,21 @@ function sideWall(o){
   return addScreen({id:o.id,name:o.name,tag:o.tag,col:o.col,g:null,sc,w:o.w,h,
     kind:'grid',cols:1,lk:'WebGL',items,
     wallItems:items,wallCols:Z.cols,wallRows:Z.rows,
-    /* Not a panel of its own: a handful of tiles does not deserve a page, and the build
-       already has one in the panel named by panelAs — the reskin monitor for
-       the left column, and for the right one the wall's own archive, since the
-       MY GAMES monitor these three used to open is gone. Clicking a cover
-       opens that panel spotlit on the build, exactly as the back wall does. */
-    noPanel:true,panelAs:o.panelAs});
+    /* A panel of its own, which these two did not used to have. `panelAs` sent
+       a cover click to whichever archive already carried that build — monR for
+       the prototypes, the back wall for the rest — spotlit on it, on the
+       argument that a handful of tiles does not deserve a page. That is a
+       correct destination reached by the wrong journey: you press a column
+       captioned "3 more reskins" on the left wall, the camera flies across the
+       room to a monitor titled something else holding fifteen builds, and
+       yours is highlighted somewhere down the scroll. Nothing warned that this
+       would happen and nothing on arrival says that it did — the panel that
+       opens is not the thing that was pressed, which is the one promise a
+       click has to keep.
+       The column opens itself now. `more` keeps what the redirect was actually
+       for — the longer list, for a visitor who wants it — as a labelled
+       control at the foot of the panel. */
+    more:o.more});
 }
 /* Both are 7.5 wide. The left one sits as far back along its wall as the trim
    allows, 0.5 clear of the poster's light strip, because on that surface
@@ -3497,7 +3847,7 @@ function sideWall(o){
    a little further forward than square with the left one. Its trim starts at
    z=0.05, still clear of the glass. The height on each is whatever its zone's
    grid makes it — 1x3 on the left, 1x4 on the right. */
-sideWall({id:'wallL',panelAs:'monR',
+sideWall({id:'wallL',more:'monR',
   x:LX+.85,y:24.5,z:-3,ry:Math.PI/2,n:1,w:7.5,h:13.78,   // h: fallback only
   name:'More prototypes',tag:'3 more reskins',col:'#df7ff5',glow:0xdf7ff5});
 /* The right column carries four, so its sheet is 1x4 and 0.408 wide where the
@@ -3507,7 +3857,7 @@ sideWall({id:'wallL',panelAs:'monR',
    rather than narrower: the width is what sets how many screen pixels a cover
    gets, and this wall is solid and full height from z=-2 forward, so the room
    to grow is up and down. */
-sideWall({id:'wallR',panelAs:'wall',
+sideWall({id:'wallR',more:'wall',
   x:RX-.75,y:22,z:4.4,ry:-Math.PI/2,n:-1,w:7.5,h:18.37,  // h: fallback only
   name:'More of my own',tag:'4 more builds',col:'#7d77f7',glow:0x7d77f7});
 /* ── neon sign, above the tower ── */
@@ -3657,7 +4007,7 @@ const cornerLeds=[];
   deskRight.add(g);
   box(g,5.3,.51,2.88,0,0,.6,mMetal);
   const b=box(g,5.21,3.26,.47,0,.42,-.19,mDark); b.rotation.x=-.30;
-  const badge=texL.load('demos/models/badge.jpg?v=2');
+  const badge=texL.load('demos/models/badge.jpg?v=3');
   badge.colorSpace=T.SRGBColorSpace;sharpenTexture(badge);
   const sc=new T.Mesh(new T.PlaneGeometry(4.59,2.61),screenMat(badge));
   sc.position.set(0,1.95,.43); sc.rotation.x=-.30; g.add(sc);
@@ -5042,9 +5392,9 @@ const posterGlow=[];
            the six is WebGL, so the subtitle was the same three words six times
            over, under a card that already says "6 playable in browser", and
            the glyph beside it said it a third time. */
-        list:gCasual.map(x=>{const l=linkOf(x,'WebGL'), c=clipOf[x.title];
+        list:gCasual.map(x=>{const l=linkOf(x,'WebGL');
           return {u:l?l.url:null,img:thumb(x.info),t:x.title,
-                  clip:c?'demos/clips/'+c+'.mp4':null}}),
+                  clip:clipSrc(x.title)}}),
         acts:[]}});
     /* ── what is actually in the bin ──────────────────────────────
        Screenshots of the six, stuffed in and spilling out. Quads rather than
@@ -5933,7 +6283,7 @@ fit();
 
 /* ═══ hover + focus ═════════════════════════════════════════════ */
 const ray=new T.Raycaster(), ptr=new T.Vector2(-9,-9);
-let mx=0,my=0, hot=null, focus_=null, content_=null, fB=0;
+let mx=0,my=0, hot=null, focus_=null, fB=0;
 const tip=document.getElementById('tip'), glass=document.getElementById('glass');
 const panelSlot=document.getElementById('panelSlot');
 const panelBody=document.getElementById('gb');
@@ -5943,6 +6293,20 @@ panelBody.addEventListener('wheel',e=>{
   const unit=e.deltaMode===1?16:e.deltaMode===2?panelBody.clientHeight:1;
   panelBody.scrollTop+=e.deltaY*unit;e.preventDefault();e.stopPropagation();
 },{passive:false});
+/* Drives #glass::after. Recomputed on the three things that change how much is
+   left to scroll: the scrolling itself, a new body, and an image landing late —
+   every thumbnail is lazy, so a grid's real height arrives some frames after
+   its markup does and no scroll event marks the moment. `load` does not bubble,
+   which is what the capture flag is for. Deliberately not measured per frame:
+   these three reads force layout, and the render loop already places the panel
+   on every one of them. */
+function fadeGauge(){
+  const rest=panelBody.scrollHeight-panelBody.clientHeight-panelBody.scrollTop;
+  glass.style.setProperty('--sc',rest<=1?'0':Math.min(1,rest/40).toFixed(3));
+}
+panelBody.addEventListener('scroll',fadeGauge,{passive:true});
+panelBody.addEventListener('load',fadeGauge,true);
+addEventListener('resize',fadeGauge);
 const picks=SCREENS.map(s=>{ s.hit.userData.s=s; return s.hit });
 /* Every prop is raycastable and glows on hover; not every prop opens a panel.
    The index, the prev/next ring, the "3 of 10" counter and the #panel deep
@@ -6016,6 +6380,14 @@ function occUpdate(){
   });
 }
 const fPos=new T.Vector3(), fLook=new T.Vector3();
+/* Where the camera is going, as against where it currently is. Two of each
+   because a panel can be opened while another one is already open — from the
+   index, or from the pager — and by then `b` is 1, which makes `P.lerp(fPos,b)`
+   a plain assignment and every such switch a cut. Chasing the pose gives that
+   case the move the first open already gets, and leaves the open/close ramp
+   untouched. */
+const fPosT=new T.Vector3(), fLookT=new T.Vector3(), gUp=new T.Vector3(0,1,0);
+let poseSnap=true, travelling=false;
 /* Orbit frame around whatever is open: an orthonormal basis built off the
    panel's own normal, so it works for a monitor standing up and for a card
    lying flat on the desk without a special case. */
@@ -6328,12 +6700,11 @@ function gameCard(g,s,cell){
   const acts=(p?[p,...g.links.filter(l=>l!==p)]:[])
     .map((l,i)=>({u:l.url,t:actOfLink(l),pri:!i}));
   const cat=(typeof CAT!=='undefined'&&CAT[g.cat])?CAT[g.cat]:null;
-  const clip=clipOf[g.title];
   return {key:'g:'+g.title,accent:cat?cat.c:'#5ad0ff',eyebrow:cat?cat.long:'Build',
     count:String(cell+1).padStart(2,'0')+' / '+String(s.wallItems.length).padStart(2,'0'),
     title:g.title,sub:[availOf(g),g.wip?'Work in progress':''].filter(Boolean).join(' \u00b7 '),
     desc:g.desc||'',img:thumb(g.info),alt:thumb(g.intro),ar:'16/9',
-    clip:clip?'demos/clips/'+clip+'.mp4':null,acts};
+    clip:clipSrc(g.title),acts};
 }
 function cardFor(hit){
   if(!hit) return null;
@@ -6648,7 +7019,17 @@ function hudDrop(){
   /* The clip keeps running under the rewind. It is the picture being scanned
      off, and freezing it first is the one thing that would read as "this
      stopped" rather than "this is being taken away" — hudReset pauses it once
-     there is nothing left to see. */
+     there is nothing left to see.
+     The list is the exception, and it is an exception about arithmetic rather
+     than about feel. One decoder is what that effect costs; the bin's card
+     carries six rows and five of them have a clip, and they were kept running
+     for the whole HUD_SHUT — 545 ms that begin on the click that closes the
+     card, which is the same click that starts the fly-in. So the bin spent the
+     opening half-second of its zoom rendering the room, laying out a panel and
+     decoding five videos of something nobody is looking at any more. Six
+     posters scanning off look the same as six clips scanning off at a quarter
+     of the size, in a card that is already fading. */
+  hudListStop();
   HUD.classList.add('off');
   hudCancelShutdown();
   hudState.shut=setTimeout(()=>{hudState.shut=0;hudReset()},HUD_SHUT);
@@ -6780,8 +7161,10 @@ function setHot(hit){
   if(hit&&hot&&hit.s===hot.s&&hit.game===hot.game||!hit&&!hot) return;
   hot=hit;
   /* The glow says "this responds to you"; the pointer cursor says "this opens
-     something". Only one of those is true of a prop that opens no panel. */
-  cv.classList.toggle('hot',!!hit&&!(hit.s.noPanel&&!hit.game));
+     something". Only one of those is true of a prop that opens no panel. The
+     `&&!hit.game` this used to carry was for a cover on a noPanel surface,
+     which did open something; no surface is both any more. */
+  cv.classList.toggle('hot',!!hit&&!hit.s.noPanel);
   hudSet(hit);
   if(hit){
     const name=hit.game?hit.game.title:hit.s.name;
@@ -6809,13 +7192,11 @@ function activateHit(hit){
     if(card&&!hit.s.hudHoverOnly){ hudTap(hit,card); return }
   }
   /* A prop with nothing behind it swallows the click rather than opening an
-     empty panel. Its cover tiles, if it has any, still open theirs. */
-  if(hit.s.noPanel){
-    if(!hit.game) return;
-    const to=SCREENS.find(x=>x.id===hit.s.panelAs);
-    if(to) focusOn(to,hit.game);
-    return;
-  }
+     empty panel. Three are left — the centre monitor, the cat and the penguin —
+     and all three say everything they have in the room itself. None carries
+     cover tiles, which is why this no longer has a second branch: the two side
+     columns were the ones that did, and they open their own panel now. */
+  if(hit.s.noPanel) return;
   focusOn(hit.s,hit.game||null);
 }
 /* No dwell here: the dwell exists to stop a pointer sweeping across eleven
@@ -6858,14 +7239,39 @@ function caseHTML(items){
   }).join('')+'</div>';
 }
 const sectionHead=(t,n)=>`<div class="sh"><b>${esc(t)}</b><i>${esc(n)}</i></div>`;
+/* The way out of a short panel and into the archive holding the rest of its
+   kind. Only the two side columns carry one: three and four tiles against
+   fifteen and thirty-three, and `panelAs` used to make that jump for you
+   whether you had asked for it or not. Built from the target's own name, tag
+   and colour rather than from a string written here, so a renamed panel cannot
+   leave a stale label behind on somebody else's page. */
+function moreRow(s){
+  const to=s.more&&SCREENS.find(x=>x.id===s.more);
+  if(!to) return '';
+  return `<button type="button" class="pmore" data-panel="${esc(to.id)}">
+    <s style="background:${esc(to.col)}"></s>
+    <span><b>${esc(to.name)}</b><i>${esc(to.tag)}</i></span><u>&rarr;</u></button>`;
+}
 function bodyFor(s){
   if(s.kind==='grid'){
     const grid=`<div class="gr pg pg${s.cols}" style="--cols:${s.cols}">`+
       s.items.map(g=>{const l=linkOf(g,s.lk);
-        return `<a class="tile" data-g="${esc(g.title)}"${hrefAttr(l)}>${img(g)}
-          <b>${esc(g.title)}</b><i>${!l?'no public link yet':l.kind==='WebGL'?'▶ play now':esc(l.kind)}</i>${l?externalNote:''}</a>`}).join('')+'</div>';
-    if(!s.caseItems||!s.caseItems.length) return grid;
-    return sectionHead('Case files',s.caseItems.length+' written up')+caseHTML(s.caseItems)+
+        /* The chip carries what the old caption line carried — what this link
+           is, or that there isn't one — and the caption is spent on the build's
+           own one-liner, which portfolio-data has for every build and which no
+           surface in the room was showing. */
+        const chip=!l?'<em class="tb off">No link yet</em>'
+          :l.kind==='WebGL'?'<em class="tb">▶ Play</em>':`<em class="tb">${esc(l.kind)}</em>`;
+        return `<a class="tile" data-g="${esc(g.title)}"${hrefAttr(l)}>
+          <span class="tp">${img(g)}${chip}</span>
+          <b>${esc(g.title)}</b>${g.desc?`<i>${esc(g.desc)}</i>`:''}${l?externalNote:''}</a>`}).join('')+'</div>';
+    if(!s.caseItems||!s.caseItems.length) return grid+moreRow(s);
+    /* Says what the block is against the surface it opens off, rather than a
+       bare count: these are the covers behind you that have a write-up, so the
+       panel states that instead of leaving the reader to notice it. */
+    const lead=s.wallItems?s.caseItems.length+' of the '+s.wallItems.length+' on this wall'
+                          :s.caseItems.length+' written up';
+    return sectionHead('Case files',lead)+caseHTML(s.caseItems)+
            sectionHead('Everything else','all '+s.items.length+' builds')+grid;
   }
   if(s.kind==='list') return `<div class="gr pl">`+
@@ -6874,31 +7280,41 @@ function bodyFor(s){
         <span><b>${esc(g.title)}</b><i>${l?esc(l.kind):'no public link yet'}</i></span>${l?externalNote:''}</a>`}).join('')+'</div>';
   if(s.kind==='case') return caseHTML(s.items);
   if(s.kind==='jobs') return '<div class="tl">'+s.items.map(j=>`<article class="jr">
-    <div class="jm"><u>${esc(j.yr)}</u><i>${esc(j.co)}</i></div><div class="jd"><b>${esc(j.t)}</b>
+    <div class="jm"><u>${esc(j.yr)}</u><i>${j.url
+      ?`<a href="${esc(j.url)}" target="_blank" rel="noopener">${esc(j.co)}${externalNote}</a>`
+      :esc(j.co)}</i></div><div class="jd"><b>${esc(j.t)}</b>
     ${j.p?`<p>${esc(j.p)}</p>`:''}${j.ul?'<ul><li>'+j.ul.map(esc).join('</li><li>')+'</li></ul>':''}
     </div></article>`).join('')+'</div>';
   if(s.kind==='contact'){
     const primary=s.items.slice(0,2),social=s.items.slice(2);
     // the contact panel opens off the badge, so it leads with the same face
-    return `<div class="me"><img src="demos/models/avatar.jpg?v=2" alt="O Ngoc Duy" width="220" height="220">
-      <div class="mi"><b>O Ngoc Duy</b><i>Unity Game Developer · Ho Chi Minh City</i></div>
-      <div class="mcta">${primary.map(c=>`<a href="${esc(c.url)}" target="_blank" rel="noopener">
-        ${c.title==='Email'?'Email me':'View CV ↗'}${externalNote}</a>`).join('')}</div></div>
-      <div class="st">
-        <div><b>6+</b><i>Years</i></div><div><b>${games.length}</b><i>Shipped</i></div>
-        <div><b>4</b><i>Studios</i></div><div><b>2</b><i>Engines</i></div>
-      </div><div class="contact-links">`+
-      social.map(c=>`<a class="cr" href="${esc(c.url)}" target="_blank" rel="noopener">
-        <span><b>${esc(c.title)}</b><i>${esc(c.desc)}</i></span><u>${esc(c.go||'Open ↗')}</u>${externalNote}</a>`).join('')+
-      `</div><p class="colophon">Built with <a href="https://threejs.org/" target="_blank" rel="noopener">three.js</a>${externalNote}.
-       Props from the Synty POLYGON packs. The cat dozing on the sofa is
-       <a href="https://sketchfab.com/3d-models/sitting-catbritish-shorthair-blue-cat-ee5dcbdd0c2b4c33adf83d4c6708e6ae" target="_blank" rel="noopener">Sitting cat (British Shorthair Blue Cat)</a>${externalNote}
-       by <a href="https://sketchfab.com/3DChuang-Ke-Ji" target="_blank" rel="noopener">3D Creator</a>${externalNote},
-       <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC&nbsp;BY&nbsp;4.0</a>${externalNote},
-       decimated, cut at the neck and animated here. The penguin on the chair is
-       <a href="https://sketchfab.com/3d-models/cute-penguin-9th-may-2020-d2156bead52541e58a9c8ff3ec59624c" target="_blank" rel="noopener">Cute Penguin 9th May 2020</a>${externalNote}
-       by <a href="https://sketchfab.com/Felix_Lim" target="_blank" rel="noopener">Felix_Lim</a>${externalNote},
-       <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC&nbsp;BY&nbsp;4.0</a>${externalNote}, decimated here.</p>`;
+    const ext=externalNote;
+    const mail=primary.find(c=>c.title==='Email')||primary[0];
+    return `<div class="cw">
+      <div class="plate"><img src="demos/models/portrait.jpg?v=1" alt="O Ngoc Duy"
+        width="680" height="1106"></div>
+      <div class="cx">
+        <span class="eyeb">Open to work</span>
+        <b>O Ngoc Duy</b><i>Unity Game Developer · Ho Chi Minh City</i>
+        <p>Gameplay systems, multiplayer netcode and C++ tools. Remote, or on
+        site in Ho Chi Minh City.</p>
+        <a class="cmail" href="${esc(mail.url)}">${esc(mail.desc)}</a>
+        <div class="mcta">${primary.map(c=>`<a href="${esc(c.url)}" target="_blank" rel="noopener">
+          ${c.title==='Email'?'Email me':'View CV ↗'}${ext}</a>`).join('')}</div>
+        <div class="cfoot">
+          <div class="cfacts"><b>6+</b> years · <b>${games.length}</b> shipped ·
+            <b>4</b> studios · <b>2</b> engines</div>
+          <div class="clinks">`+
+          social.map(c=>`<a href="${esc(c.url)}" target="_blank" rel="noopener"
+            >${esc(c.title)} ↗${ext}</a>`).join('')+
+          `<a class="cred-link" href="LICENSE" target="_blank" rel="noopener">Credits ↗${ext}</a>`+
+          `</div>
+          <!-- The credit used to be a paragraph here. CC BY 4.0 permits the
+               attribution to be a link to a resource carrying it, and LICENSE
+               already lists every third-party asset with author, licence, URL
+               and what was changed — so the obligation moves to one word. -->
+        </div>
+      </div></div>`;
   }
   if(s.kind==='about') return `<div class="about-hero"><b>O Ngoc Duy</b>
     <p>Unity &amp; Unreal developer with 6+ years in production, building gameplay systems,
@@ -6924,7 +7340,6 @@ function setIndex(open){
   idxBtn.setAttribute('aria-expanded',String(open));
 }
 function renderPanelContent(s,animate=false){
-  content_=s;
   glass.dataset.kind=s.kind;glass.dataset.screen=s.id;
   glass.style.boxShadow='inset 0 3px 0 '+s.col;
   glass.querySelector('#gh s').style.background=s.col;
@@ -6933,11 +7348,10 @@ function renderPanelContent(s,animate=false){
   const next=PANELS[(pos+1)%PANELS.length];
   glass.querySelector('#gh i').textContent=(pos+1)+'/'+PANELS.length+' · '+s.tag;
   const prevBtn=document.getElementById('gp'),nextBtn=document.getElementById('gn');
-  prevBtn.title='Previous: '+prev.name+' (←)';prevBtn.setAttribute('aria-label','Previous content: '+prev.name);
-  nextBtn.title='Next: '+next.name+' (→)';nextBtn.setAttribute('aria-label','Next content: '+next.name);
-  const locate=document.getElementById('gv');
-  locate.hidden=s===focus_;locate.title='Move camera to '+s.name;
-  locate.setAttribute('aria-label','View '+s.name+' at its location in the room');
+  prevBtn.title='Previous: '+prev.name+' (←)';prevBtn.setAttribute('aria-label','Previous panel: '+prev.name);
+  nextBtn.title='Next: '+next.name+' (→)';nextBtn.setAttribute('aria-label','Next panel: '+next.name);
+  prevBtn.querySelector('u').textContent=prev.name;
+  nextBtn.querySelector('u').textContent=next.name;
   panelBody.innerHTML=bodyFor(s);panelBody.scrollTop=0;
   glass.scrollTop=0;glass.scrollLeft=0;   // no-op under overflow:clip; the fallback for hidden
   panelBody.classList.remove('swap');
@@ -6946,6 +7360,7 @@ function renderPanelContent(s,animate=false){
     const active=i===pos;x.classList.toggle('active',active);
     if(active)x.setAttribute('aria-current','true');else x.removeAttribute('aria-current');
   });
+  fadeGauge();
 }
 function focusOn(s,spotlight){
   const wasOpen=!!focus_;
@@ -6964,10 +7379,19 @@ function focusOn(s,spotlight){
   const rest=restPose(s);
   fN.copy(rest.n); fUp.copy(rest.up); fC.copy(rest.c);
   fDBase=rest.d; fD=fDBase; fYaw=0; fPit=0;
+  /* Opening out of the room is the `b` ramp's job: it carries the camera from
+     home to this pose, so the pose itself has to start where it ends. A switch
+     between two open panels has no ramp left to spend — see fPosT. */
+  poseSnap=!wasOpen;
+  travelling=wasOpen&&!REDUCED_MOTION;
+  glass.classList.toggle('travel',travelling);
   const pw=panelWidth(s),ph=SHEET?sheetRect().height:Math.round(pw*s.h/s.w);
   glass.style.width=pw+'px';glass.style.height=ph+'px';
   s.panelW=pw;s.panelH=ph;
-  renderPanelContent(s,false);
+  /* The content animates in only when it is replacing content — arriving out
+     of the room, the fly-in is the animation and a second one on top of it
+     reads as a flicker. This is what the pager used to pass for itself. */
+  renderPanelContent(s,wasOpen);
   if(spotlight) spotlightBuild(spotlight);
   hero.classList.add('dim'); hint.classList.add('dim');
   clockEl.classList.add('dim'); gridBtn.classList.add('dim');idxBtn.classList.add('dim');
@@ -6979,7 +7403,8 @@ function unfocus(){
      may otherwise retain the focused close button and reject the state change. */
   if(wasOpen&&document.activeElement instanceof Element&&glass.contains(document.activeElement))
     document.activeElement.blur();
-  focus_=null;content_=null;glass.classList.remove('on');panelBody.classList.remove('swap');
+  focus_=null;glass.classList.remove('on');glass.classList.remove('travel');
+  travelling=false;panelBody.classList.remove('swap');
   setPanelAccess(false);
   hero.classList.remove('dim'); hint.classList.remove('dim');
   clockEl.classList.remove('dim'); gridBtn.classList.remove('dim');idxBtn.classList.remove('dim');
@@ -6990,13 +7415,29 @@ function unfocus(){
   }
 }
 document.getElementById('gx').onclick=unfocus;
-/* Paging is deliberately content-only. Camera movement is a separate, labelled
-   action so an innocent "next" never teleports the visitor around the room. */
-const step=d=>{ const i=PANELS.indexOf(content_); if(i>=0)
-  renderPanelContent(PANELS[(i+d+PANELS.length)%PANELS.length],true) };
+/* Paging used to be content-only, with the camera behind a separate "View in
+   room" button, so that an innocent "next" could not teleport the visitor
+   around the room. What it did instead was leave the panel bolted to whichever
+   surface was opened first: two presses of > from the left monitor and the back
+   wall's 33 builds were being read inside that monitor's 1440x900 box, square
+   in front of that monitor, with that monitor's own corner of the room behind
+   them. Measured, the projected rect did not move by a pixel across all three.
+   A panel is a window onto a surface, so the surface has to be the one the
+   window is showing. Nothing teleports — the pose glides now, which was the
+   whole of the objection — and the extra button goes with the split. */
+const step=d=>{ const i=PANELS.indexOf(focus_); if(i>=0)
+  focusOn(PANELS[(i+d+PANELS.length)%PANELS.length]) };
 document.getElementById('gp').onclick=()=>step(-1);
 document.getElementById('gn').onclick=()=>step(1);
-document.getElementById('gv').onclick=()=>{if(content_)focusOn(content_)};
+/* The archive row at the foot of a side column's panel. A panel switch and not
+   a navigation, so it goes through focusOn like the pager does and inherits the
+   same glide — the jump `panelAs` used to make silently is the same jump, only
+   now it is a control the visitor pressed. */
+panelBody.addEventListener('click',e=>{
+  const b=e.target.closest('.pmore'); if(!b) return;
+  const to=SCREENS.find(x=>x.id===b.dataset.panel);
+  if(to) focusOn(to);
+});
 
 /* Keep the controls operable even if a fractional browser zoom or a transformed
    3D camera frame makes event.target disagree with the pixels the user sees.
@@ -7010,13 +7451,12 @@ CSSL.addEventListener('click',e=>{
   if(!focus_||e.detail===0) return;
   const x=e.clientX,y=e.clientY;
   const prev=document.getElementById('gp'),next=document.getElementById('gn');
-  const close=document.getElementById('gx'),locate=document.getElementById('gv');
+  const close=document.getElementById('gx');
   const closeHit=panelControlAt(close,x,y),prevHit=panelControlAt(prev,x,y);
-  const nextHit=panelControlAt(next,x,y),locateHit=!locate.hidden&&panelControlAt(locate,x,y);
-  if(closeHit||prevHit||nextHit||locateHit){
+  const nextHit=panelControlAt(next,x,y);
+  if(closeHit||prevHit||nextHit){
     e.preventDefault();e.stopImmediatePropagation();
     if(closeHit) unfocus();
-    else if(locateHit&&content_) focusOn(content_);
     else step(prevHit?-1:1);
     return;
   }
@@ -7109,18 +7549,34 @@ const gridColumns=el=>{
 function layoutOkFor(s){
   const w=focus_?.panelW||panelWidth(focus_||s),narrow=w<=560,compact=w<=380;
   if(s.kind==='grid'){
-    const expected=compact?1:(narrow&&s.cols>=3?2:s.cols);
+    /* Mirrors the container queries exactly, including the two that let a
+       2-column grid climb. Written as one expression so a change to either
+       breakpoint fails here loudly instead of passing on a stale number. */
+    const expected=compact?1
+      :s.cols===2?(w>=1300?4:w>=900?3:2)
+      :(narrow&&s.cols>=3?2:s.cols);
     return gridColumns(panelBody.querySelector('.pg'))===expected;
   }
   if(s.kind==='list')return gridColumns(panelBody.querySelector('.pl'))===(narrow?1:2);
   if(s.kind==='case')return gridColumns(panelBody.querySelector('.cs'))===(narrow?1:2);
   if(s.kind==='jobs')return gridColumns(panelBody.querySelector('.jr'))===(narrow?1:2);
   if(s.kind==='contact'){
-    const avatar=panelBody.querySelector('.me img');
-    const avatarSize=Math.min(220,Math.max(112,w*.31));
-    const avatarOk=avatar&&Math.abs(parseFloat(getComputedStyle(avatar).width)-avatarSize)<2;
-    return avatarOk&&gridColumns(panelBody.querySelector('.st'))===(narrow?2:4)&&
-      gridColumns(panelBody.querySelector('.contact-links'))===(narrow?1:3)&&!!panelBody.querySelector('.mcta');
+    const plate=panelBody.querySelector('.plate'),cx=panelBody.querySelector('.cx');
+    if(!plate||!cx)return false;
+    const split=gridColumns(panelBody.querySelector('.cw'))===(w>=900?2:1);
+    /* The plate's whole job is to be as tall as the panel, and the way it
+       silently fails is collapsing to its content: assert the height, not just
+       that the element exists. Beside a column it must reach the body's full
+       depth; stacked above one it is the 60cqi banner instead.
+       offsetHeight, not getBoundingClientRect: the panel carries a CSS zoom,
+       and a rect is scaled by it while clientHeight is not. Comparing the two
+       measured the plate in zoomed pixels against a body in layout pixels, so
+       the banner test read 491px as 520 against a 511px body and failed on a
+       layout that was correct — at 1280x720 only, which is why it survived. */
+    const bodyH=panelBody.clientHeight,ph=plate.offsetHeight;
+    const plateOk=w>=900?ph>=bodyH-2:ph>0&&ph<bodyH;
+    return split&&plateOk&&!!panelBody.querySelector('.cmail')&&
+      !!panelBody.querySelector('.mcta')&&!!panelBody.querySelector('.clinks a');
   }
   if(s.kind==='about'){
     const expected=compact?1:(narrow?2:4);
@@ -7128,6 +7584,15 @@ function layoutOkFor(s){
   }
   return false;
 }
+/* The harness measures settled panels, so it forces both transitions instead
+   of waiting them out: `fB` skips the open ramp, `poseSnap` skips the glide
+   between two poses. Without the second, every panel after the first was read
+   with the camera a third of the way there — its projected rect was still
+   somewhere between two surfaces, so alignment held but every hit-test in the
+   row missed. The one row that wants the glide, Content navigation, opens its
+   moves without this on purpose. */
+const qaFocus=s=>{focusOn(s);fB=1;poseSnap=true;travelling=false;
+  glass.classList.remove('travel')};
 async function runRoomQA(){
   const qa=document.getElementById('qa'),rows=[];
   const deadline=performance.now()+10000;
@@ -7137,7 +7602,7 @@ async function runRoomQA(){
     qa.classList.add('on');return;
   }
   for(const s of PANELS){
-    focusOn(s);fB=1;await nextFrames(4);
+    qaFocus(s);await nextFrames(4);
     const r=glass.getBoundingClientRect(),b=s.panelBounds||{};
     const aligned=Math.abs(r.left-b.left)<3&&Math.abs(r.top-b.top)<3&&
       Math.abs(r.width-b.width)<3&&Math.abs(r.height-b.height)<3;
@@ -7158,14 +7623,21 @@ async function runRoomQA(){
     const pass=aligned&&sharpLayout&&layout&&controls&&linksOk&&linkHit&&scrollOk;
     rows.push({name:s.name,pass,aligned,sharp:sharpLayout,layout,controls,links:links.length,linkHit,scroll:canScroll?scrollOk:'n/a'});
   }
-  const narrowAnchor=PANELS.find(s=>s.id==='ar');focusOn(narrowAnchor);fB=1;await nextFrames(3);
+  const narrowAnchor=PANELS.find(s=>s.id==='ar');qaFocus(narrowAnchor);await nextFrames(3);
   /* One of every panel kind: the wall now leads with prose and follows with
      the archive, so it stands in for the case layout as well as the grid. */
   const narrowTargets=['wall','holo','job','card','about'].map(id=>PANELS.find(s=>s.id===id));
-  let responsiveOk=true;
-  for(const target of narrowTargets){renderPanelContent(target,false);await nextFrames(1);responsiveOk&&=layoutOkFor(target)}
+  /* Which one broke, not just that one did: a bare false here sent the last
+     failure of this row into a bisect of five panel kinds. */
+  const narrowBad=[];
+  for(const target of narrowTargets){
+    renderPanelContent(target,false);await nextFrames(1);
+    if(!layoutOkFor(target))narrowBad.push(target.id);
+  }
+  const responsiveOk=!narrowBad.length;
   rows.push({name:'Narrow-anchor layouts',pass:responsiveOk,aligned:'n/a',sharp:'n/a',layout:responsiveOk,
-    controls:'n/a',links:'n/a',linkHit:'n/a',scroll:'container query'});
+    controls:'n/a',links:'n/a',linkHit:'n/a',
+    scroll:responsiveOk?'container query':'broken: '+narrowBad.join(', ')});
   /* The covers on a wall are pixels in a baked JPEG; its hit targets are cell
      indices into an array. Nothing running in the browser can read the JPEG,
      so this checks the half that is checkable — every cell centre lands on the
@@ -7201,30 +7673,38 @@ async function runRoomQA(){
   rows.push({name:'Wall cover mapping',pass:mapOk&&zoneRows.length>0,aligned:'n/a',
     sharp:'n/a',layout:mapOk,controls:'n/a',links:zoneRows.length,linkHit:'n/a',
     scroll:zoneRows.join(' · ')||'no walls'});
-  focusOn(PANELS[0]);fB=1;await nextFrames(3);
-  const anchor=focus_,start=content_,anchorCenter=fC.clone();
+  qaFocus(PANELS[0]);await nextFrames(3);
+  /* What this row used to assert was that paging left the camera exactly where
+     it was. That was the bug stated as a requirement: the panel stayed bolted
+     to the first surface opened while its contents walked on without it. It
+     asserts the opposite now — the pose target follows the panel being shown,
+     and a round trip lands back on the pose it started from. */
+  const start=focus_,startCenter=fC.clone();
   document.getElementById('gn').click();await nextFrames(2);
-  const nextOk=focus_===anchor&&content_!==start&&fC.distanceTo(anchorCenter)<1e-6&&
-    !document.getElementById('gv').hidden;
+  const nextOk=focus_===PANELS[1]&&fC.distanceTo(startCenter)>1e-4;
   document.getElementById('gp').click();await nextFrames(2);
-  const prevOk=focus_===anchor&&content_===start&&fC.distanceTo(anchorCenter)<1e-6;
+  const prevOk=focus_===start&&fC.distanceTo(startCenter)<1e-6;
+  /* A glide and not a cut is the entire reason the camera is allowed to move
+     here, so one frame after the press it has to be between the two poses
+     rather than already arrived. Reduced motion asks for the cut and gets it. */
+  const before=fPos.clone();
   document.getElementById('gn').click();await nextFrames(1);
-  const locateTarget=content_;document.getElementById('gv').click();await nextFrames(2);
-  const locateOk=focus_===locateTarget&&content_===locateTarget&&document.getElementById('gv').hidden;
+  const glideOk=REDUCED_MOTION||
+    (fPos.distanceTo(before)>1e-4&&fPos.distanceTo(fPosT)>1e-4);
   document.getElementById('gx').click();await nextFrames(2);
   const closeOk=!focus_&&glass.getAttribute('aria-hidden')==='true'&&glass.hasAttribute('inert');
-  focusOn(PANELS[0]);fB=1;await nextFrames(3);
+  qaFocus(PANELS[0]);await nextFrames(3);
   const xr=document.getElementById('gx').getBoundingClientRect();
   CSSL.dispatchEvent(new MouseEvent('click',{clientX:xr.left+xr.width/2,clientY:xr.top+xr.height/2,
     detail:1,bubbles:true,cancelable:true}));
   await nextFrames(2);const coordinateCloseOk=!focus_;
-  rows.push({name:'Content navigation',pass:nextOk&&prevOk&&locateOk&&closeOk&&coordinateCloseOk,aligned:'n/a',sharp:'n/a',layout:'n/a',
-    controls:nextOk&&prevOk&&locateOk,links:'n/a',linkHit:'n/a',
+  rows.push({name:'Content navigation',pass:nextOk&&prevOk&&glideOk&&closeOk&&coordinateCloseOk,aligned:'n/a',sharp:'n/a',layout:'n/a',
+    controls:nextOk&&prevOk&&glideOk,links:'n/a',linkHit:'n/a',
     scroll:closeOk&&coordinateCloseOk?'close ok':'close failed'});
   const passed=rows.filter(x=>x.pass).length,all=passed===rows.length;
   qa.innerHTML=`<h2 id="qaTitle">Room QA · ${all?'PASS':'FAIL'} ${passed}/${rows.length}</h2>
     <p>Checks run in this browser: projected bounds, elementFromPoint hit-test, real wheel scroll,
-    actionable links, responsive layouts, crisp DOM rendering, camera-stable paging, explicit View in room and two Close paths.</p><table><thead><tr><th>View</th><th>Result</th>
+    actionable links, responsive layouts, crisp DOM rendering, paging that carries the camera with it, and two Close paths.</p><table><thead><tr><th>View</th><th>Result</th>
     <th>Bounds</th><th>Crisp</th><th>Layout</th><th>Controls</th><th>Links</th><th>Link hit</th><th>Scroll/close</th></tr></thead><tbody>`+
     rows.map(x=>`<tr><td>${esc(x.name)}</td><td class="${x.pass?'pass':'fail'}">${x.pass?'PASS':'FAIL'}</td>
       <td>${x.aligned}</td><td>${x.sharp}</td><td>${x.layout}</td><td>${x.controls}</td><td>${x.links}</td><td>${x.linkHit}</td><td>${x.scroll}</td></tr>`).join('')+
@@ -7240,6 +7720,24 @@ if(HP.has('qa'))setTimeout(runRoomQA,0);
 let alive=true, first=true, last=performance.now();
 document.addEventListener('visibilitychange',()=>alive=!document.hidden);
 const P=new T.Vector3(), L=new T.Vector3();
+/* An exponential ease, converted from "this fraction of the way there per
+   frame" to "this fraction per 1/60 s". The camera's four eases were the last
+   things in this loop still written the first way — everything else here takes
+   dt, down to the plush's spring — and a fraction per frame makes the frame
+   rate the clock. The open ramp is 1.48 s of flight on a 60 Hz panel, 0.74 s
+   on the 120 Hz one most of this is read on, and 2.96 s on a machine that has
+   dropped to 30. That is the small half of it. The large half is that the rate
+   is not fixed for the length of a flight: the frames during a zoom are the
+   most expensive frames the room ever renders — a panel laying out, lazy
+   thumbnails decoding, and over the bin five clips still running — so the
+   camera speeds up and slows down with whatever the renderer is managing at
+   that instant, which is not a slow zoom, it is an uneven one. Nothing here
+   says how far to go; only how long to take getting there, so the same easing
+   now reads the same on every machine.
+   dt*.06 is dt/(1000/60), so at 16.67 ms this returns `rate` unchanged and
+   every number below stays the number it was tuned to. dt is already clamped
+   to 50 ms upstream, which caps the step a stalled frame can take. */
+const ease=(rate,dt)=>1-Math.pow(1-rate,dt*.06);
 
 function tick(now){
   requestAnimationFrame(tick);
@@ -7404,9 +7902,11 @@ function tick(now){
     else v.position.set(RX-3+d.lane,-8.9,BZ-66+190-u*380);
   });
 
-  fB+=((focus_?1:0)-fB)*.075;
+  const kRamp=ease(.075,dt), kOrbit=ease(.06,dt), kDist=ease(.05,dt),
+        kPose=ease(.10,dt);
+  fB+=((focus_?1:0)-fB)*kRamp;
   const b=fB<.001?0:fB>.999?1:fB;
-  yaw+=(tYaw-yaw)*.06; pit+=(tPit-pit)*.06; dist+=(tDist-dist)*.05;
+  yaw+=(tYaw-yaw)*kOrbit; pit+=(tPit-pit)*kOrbit; dist+=(tDist-dist)*kDist;
   P.set(Math.sin(yaw)*Math.cos(pit),Math.sin(pit),Math.cos(yaw)*Math.cos(pit))
    .multiplyScalar(dist).add(HOME);
   L.copy(HOME);
@@ -7416,13 +7916,30 @@ function tick(now){
     oR.normalize(); oU.copy(fN).cross(oR).normalize();
     const cy=Math.cos(fYaw),sy=Math.sin(fYaw),cp=Math.cos(fPit),sp=Math.sin(fPit);
     oD.copy(fN).multiplyScalar(cy*cp).addScaledVector(oR,sy*cp).addScaledVector(oU,sp);
-    fPos.copy(fC).addScaledVector(oD,fD);
-    fPos.x=clamp(fPos.x,LX+3,RX-3);                // never orbit through a wall
-    fPos.z=clamp(fPos.z,BZ+3,FZ-3); fPos.y=clamp(fPos.y,3,CY-3);
-    fLook.copy(fC);
+    fPosT.copy(fC).addScaledVector(oD,fD);
+    fPosT.x=clamp(fPosT.x,LX+3,RX-3);              // never orbit through a wall
+    fPosT.z=clamp(fPosT.z,BZ+3,FZ-3); fPosT.y=clamp(fPosT.y,3,CY-3);
+    fLookT.copy(fC);
+    /* Two points and an up vector, chased in world space rather than the pose
+       they were built from. Interpolating the pose would mean interpolating a
+       surface normal, and two surfaces at ninety degrees — the back wall and
+       the badge lying flat on the desk — pass through a normal of no length on
+       the way between them. A straight line between two camera positions has
+       no such case, and both ends are already clamped inside the room, which
+       is convex, so no point on that line is inside a wall either. */
+    if(poseSnap||REDUCED_MOTION){
+      fPos.copy(fPosT); fLook.copy(fLookT); gUp.copy(fUp); poseSnap=false;
+    }else{
+      fPos.lerp(fPosT,kPose); fLook.lerp(fLookT,kPose); gUp.lerp(fUp,kPose);
+      if(gUp.lengthSq()<1e-6) gUp.copy(fUp);
+    }
+    /* Arrived, so the panel comes back to full strength. */
+    if(travelling&&fPos.distanceToSquared(fPosT)<.02){
+      travelling=false; glass.classList.remove('travel');
+    }
   }
   if(b){ P.lerp(fPos,b); L.lerp(fLook,b) }
-  curUp.set(0,1,0).lerp(fUp,b);
+  curUp.set(0,1,0).lerp(gUp,b);
   if(curUp.lengthSq()<1e-6) curUp.set(0,1,0);
   camera.up.copy(curUp.normalize());
   camera.position.copy(P); camera.lookAt(L);

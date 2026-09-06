@@ -265,6 +265,9 @@ section[id]{scroll-margin-top:86px}
 .ent h3{font-size:18.5px;font-weight:650;letter-spacing:-.025em;margin-top:7px}
 .ent .co{font:600 10.5px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;
   color:var(--lm);margin-top:6px}
+.ent .co a{color:inherit;text-decoration:none;border-bottom:1px solid currentColor;
+  padding-bottom:2px;transition:.15s}
+.ent .co a:hover,.ent .co a:focus-visible{color:var(--cy)}
 .ent p,.ent li{color:var(--dim);font-size:14.5px;margin-top:9px}
 .ent ul{margin:4px 0 0 18px}
 .ent li{margin-top:5px}
@@ -376,7 +379,7 @@ footer{border-top:1px solid var(--line);margin-top:60px;padding:21px 0 44px;colo
   <div>
     <span class="eyebrow"><i></i>System status // open to work</span>
     <div class="hero-id cut">
-      <div class="avatar-holo"><img src="models/avatar.jpg?v=2" width="234" height="234"
+      <div class="avatar-holo"><img src="models/avatar.jpg?v=3" width="234" height="234"
         alt="O Ngoc Duy" decoding="async" fetchpriority="high"></div>
       <div class="id-copy"><span>Operator profile // 01</span><strong>O Ngoc Duy</strong><small>Unity · Unreal · Gameplay systems</small></div>
     </div>
@@ -426,7 +429,7 @@ footer{border-top:1px solid var(--line);margin-top:60px;padding:21px 0 44px;colo
 
 <section id="contact"><div class="wrap">
   <div class="cbox reveal">
-    <img class="face" src="models/avatar.jpg?v=2" width="96" height="96"
+    <img class="face" src="models/avatar.jpg?v=3" width="96" height="96"
       alt="O Ngoc Duy" loading="lazy" decoding="async">
     <h2>Open a new channel.</h2>
     <p>Open to Unity / Unreal roles — gameplay, multiplayer netcode and tools.</p>
@@ -446,7 +449,11 @@ footer{border-top:1px solid var(--line);margin-top:60px;padding:21px 0 44px;colo
 </div></section>
 
 <script src="portfolio-data.js?v=c1cb3ef6"></script>
-<script src="portfolio-shared.js?v=3028096f"></script>
+<!-- Same thumbnails as the room, so the same version map. This page plays no
+     clips but it draws every still through the same helper, and a map only
+     one of the two pages has is a stale picture on the other. -->
+<script src="asset-v.js?v=ff50ebb4"></script>
+<script src="portfolio-shared.js?v=688f84f5"></script>
 <script>
 /* ═══════════════════════════════════════════════════════════════
    The flat companion to room-3d.html. Same 33 builds, same links,
@@ -834,7 +841,9 @@ document.getElementById('clusters').addEventListener('click',e=>{
 /* ═══ timeline ══════════════════════════════════════════════════ */
 document.getElementById('log').innerHTML=JOBS.map(j=>`
   <div class="ent reveal"><div class="yr">${esc(j.yr)}</div><h3>${esc(j.t)}</h3>
-    <div class="co">${esc(j.co)}</div>${j.p?`<p>${esc(j.p)}</p>`:''}
+    <div class="co">${j.url
+      ?`<a href="${esc(j.url)}" target="_blank" rel="noopener">${esc(j.co)}${externalNote}</a>`
+      :esc(j.co)}</div>${j.p?`<p>${esc(j.p)}</p>`:''}
     ${j.ul?'<ul><li>'+j.ul.join('</li><li>')+'</li></ul>':''}</div>`).join('');
 
 watch();

@@ -38,9 +38,14 @@ const JOBS=[
   // every other row reads "company · where", so the role belongs in the title
   {yr:'10/2024 — Present',t:'Unity Game Developer · Team Leader',co:'Optimizer',
    p:'Responsible for project stability, task assignment, team support and reporting.'},
+  // url only where the row already prints a domain: a company name that does
+  // not look like a link should not quietly become one, and a printed .com that
+  // is not clickable is a control that does nothing.
   {yr:'9/2022 — 10/2024',t:'Unity Game Developer',co:'Bacoor · bountykinds.com',
+   url:'https://bountykinds.com',
    p:'Built ~70% of the project on the front-end side: main menu UI, map, items, data, gameplay and asset bundles.'},
   {yr:'2/2022 — 8/2022',t:'Unreal Game Developer (C++)',co:'Sipher · playsipher.com',
+   url:'https://playsipher.com',
    p:'Built the enemy core system, movement, weapon modules, animator, data and AI.'},
   {yr:'7/2019 — 2/2022',t:'Unity Game Developer',co:'Gameloft',
    p:'Worked on several projects — these are the publicly available titles:',
@@ -77,14 +82,46 @@ const countOf=k=>k==='all'?GAMES.length:GAMES.filter(g=>g.cat===k).length;
 
 /* Every string here comes from portfolio-data.js, which we own — but a title
    with an ampersand in it is one edit away, and finding out by watching a
-   panel render blank is a bad way to find out. */
-const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>
-  ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]);
+   panel render blank is a bad way to find out.
+
+   The apostrophe is here for a second reason, not for symmetry. Everywhere
+   else this lands in a double-quoted HTML attribute, where `"` is the only
+   quote that can end it — but img() below interpolates into a JS string
+   literal that is itself single-quoted, inside the attribute. Two titles
+   already carry an apostrophe (Beat'em up), and the paths are derived from
+   titles, so the distance between "does not happen" and "the onerror handler
+   is a syntax error" is one change to how a thumbnail gets named. */
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>
+  ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+
+/* A content hash on the end of a picture or a clip, from the map in
+   demos/asset-v.js. These are the only files either page names by a rule
+   instead of by a bake — thumb() rewrites an image path below, and the room
+   builds a clip path out of CLIP_OF — so their URLs do not move when the file
+   behind them does, and a browser holding the old bytes never finds out. The
+   place that showed is the wall: its cover is baked into a JPEG that carries
+   WALL_SHEET_V and updates, while the readout that opens over it and the panel
+   behind that go on playing the previous cut and drawing the previous crop.
+
+   Keyed from the site root, which is what these paths reduce to: the '../' is
+   here because this file is read from demos/ as well as from the root, and at
+   the root the URL parser clamps a leading '..' rather than letting it escape.
+   Absent map, absent key, absent path: return what came in. A missing asset-v.js
+   is a page with no cache-busting, not a page of broken images. */
+const vsrc=p=>{
+  if(!p) return p;
+  const v=(typeof ASSET_V!=='undefined'?ASSET_V:null);
+  if(!v) return p;
+  const h=v[p.replace(/^(?:\.\.\/)+/,'')];
+  return h?p+'?v='+h:p;
+};
 
 /* portfolio-data.js stores the full-size path; only the thumbnails are
-   shipped. Must agree with thumb_path() in tools/portfolio.py. */
-const thumb=p=>p?p.replace('../images/','../images/thumb/')
-                  .replace(/\.(jpe?g|png)$/i,'.jpg'):'';
+   shipped. Must agree with thumb_path() in tools/portfolio.py — which hashes
+   the same files vsrc() looks up, so the two cannot be pointed at different
+   pictures. */
+const thumb=p=>p?vsrc(p.replace('../images/','../images/thumb/')
+                       .replace(/\.(jpe?g|png)$/i,'.jpg')):'';
 
 const externalNote='<span class="sr"> (opens externally)</span>';
 
